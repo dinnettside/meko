@@ -148,6 +148,7 @@ Current phase: **2**
 ## Design
 
 - Trym decides the visual direction. Before styling the app or the videos, propose 2-3 directions (4-6 named hex colors, typefaces, a rough layout) and wait.
+- Chosen direction (Oct 13, 2026, Trym let Claude pick): "Night atlas". Ink #0F1B2D (background, sea), land #22334B, border #3A4F6E, paper #F4F1EA (text), dim #93A1B5, signal amber #FFB627 (the one thing to look at), teal #4FC3B4 (second highlight). Fraunces for headings, Archivo for everything else. Tokens live in `remotion/theme.ts` and `app/globals.css`.
 - Video style: flat, bold history-explainer look with clear maps, few elements per scene and big readable text.
 - Avoid generic AI-looking defaults: cream background with terracotta accent, black with acid green, identical rounded cards with soft shadows, gradient washes, all-caps labels above every heading.
 - One memorable element per screen, everything else calm. Motion only when it explains something.

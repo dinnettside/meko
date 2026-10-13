@@ -169,15 +169,15 @@ export function MakeVideo() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 sm:px-8">
       <header>
-        <h1 className="text-3xl font-bold">Meko</h1>
-        <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">
+        <h1 className="font-display text-5xl font-bold">Meko</h1>
+        <p className="mt-3 text-lg text-dim">
           Turn a topic into a short, fact-checked explainer video.
         </p>
       </header>
 
       <form onSubmit={makeVideo} className="flex flex-col gap-4 sm:flex-row sm:items-end">
         <label className="flex flex-1 flex-col gap-1">
-          <span className="text-sm font-medium">Topic</span>
+          <span className="text-sm font-medium text-dim">Topic</span>
           <input
             value={topic}
             onChange={(event) => setTopic(event.target.value)}
@@ -185,15 +185,15 @@ export function MakeVideo() {
             minLength={3}
             maxLength={200}
             placeholder="The French Revolution"
-            className="rounded border border-zinc-300 bg-transparent px-3 py-2 dark:border-zinc-700"
+            className="rounded border border-line bg-ink px-3 py-2 text-paper"
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">Audience</span>
+          <span className="text-sm font-medium text-dim">Audience</span>
           <select
             value={audience}
             onChange={(event) => setAudience(event.target.value)}
-            className="rounded border border-zinc-300 bg-transparent px-3 py-2 dark:border-zinc-700"
+            className="rounded border border-line bg-ink px-3 py-2 text-paper"
           >
             {AUDIENCES.map((option) => (
               <option key={option}>{option}</option>
@@ -201,11 +201,11 @@ export function MakeVideo() {
           </select>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">Length</span>
+          <span className="text-sm font-medium text-dim">Length</span>
           <select
             value={lengthSec}
             onChange={(event) => setLengthSec(Number(event.target.value))}
-            className="rounded border border-zinc-300 bg-transparent px-3 py-2 dark:border-zinc-700"
+            className="rounded border border-line bg-ink px-3 py-2 text-paper"
           >
             {LENGTHS.map((seconds) => (
               <option key={seconds} value={seconds}>
@@ -217,7 +217,7 @@ export function MakeVideo() {
         <button
           type="submit"
           disabled={running}
-          className="rounded bg-zinc-900 px-5 py-2 font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+          className="rounded bg-signal px-5 py-2 font-semibold text-ink disabled:opacity-50"
         >
           {running ? "Making video…" : "Make video"}
         </button>
@@ -235,19 +235,19 @@ export function MakeVideo() {
         <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div>
             <StoryboardPlayer storyboard={finished.storyboard} voice={finished.voice} />
-            <p className="mt-2 text-sm text-zinc-500">
+            <p className="mt-2 text-sm text-dim">
               Made in {Math.round(finished.ms / 1000)} seconds. Model cost ${finished.costUsd.toFixed(3)}.
             </p>
           </div>
           <aside>
-            <h2 className="text-lg font-semibold">Sources</h2>
+            <h2 className="font-display text-2xl font-bold">Sources</h2>
             <ol className="mt-2 flex list-decimal flex-col gap-2 pl-5">
               {finished.storyboard.sources.map((source) => (
                 <li key={source.id}>
-                  <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline">
+                  <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline decoration-line underline-offset-4 hover:decoration-signal">
                     {source.title}
                   </a>{" "}
-                  <span className="text-sm text-zinc-500">{hostname(source.url)}</span>
+                  <span className="text-sm text-dim">{hostname(source.url)}</span>
                 </li>
               ))}
             </ol>
@@ -268,12 +268,12 @@ function StepRow({ label, state, now }: { label: string; state: StepState; now: 
     failed: { mark: "✕", text: state.detail ?? "Failed" },
   }[state.status];
   return (
-    <li className={`flex gap-3 ${state.status === "waiting" ? "text-zinc-400" : ""}`}>
-      <span className="w-4 text-center" aria-hidden>
+    <li className={`flex gap-3 ${state.status === "waiting" ? "text-dim/60" : ""}`}>
+      <span className={`w-4 text-center ${state.status === "done" ? "text-teal" : ""}`} aria-hidden>
         {status.mark}
       </span>
       <span className="font-medium">{label}</span>
-      <span className={state.status === "failed" ? "text-red-600" : "text-zinc-500"}>{status.text}</span>
+      <span className={state.status === "failed" ? "text-alert" : "text-dim"}>{status.text}</span>
     </li>
   );
 }

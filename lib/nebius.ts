@@ -94,24 +94,24 @@ async function callModel(
   return { content: choice?.message.content ?? "", usage: { calls: 1, promptTokens, completionTokens, costUsd } };
 }
 
-type ParseResult<T> = { ok: true; data: T } | { ok: false; problems: string[] };
+// `data` is null when the reply is not valid JSON or breaks the schema. `problems` lists what is wrong.
+type ParseResult<T> = { data: T | null; problems: string[] };
 
 function parseJson<T>(content: string, schema: z.ZodType<T>, check?: (data: T) => string[]): ParseResult<T> {
   let raw: unknown;
   try {
     raw = JSON.parse(content);
   } catch {
-    return { ok: false, problems: ["The reply is not valid JSON."] };
+    return { data: null, problems: ["The reply is not valid JSON."] };
   }
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
     const problems = parsed.error.issues
       .slice(0, 5)
       .map((issue) => `${issue.path.map(String).join(".") || "(root)"}: ${issue.message}`);
-    return { ok: false, problems };
+    return { data: null, problems };
   }
-  const problems = check ? check(parsed.data) : [];
-  return problems.length > 0 ? { ok: false, problems: problems.slice(0, 10) } : { ok: true, data: parsed.data };
+  return { data: parsed.data, problems: check ? check(parsed.data).slice(0, 10) : [] };
 }
 
 // The prompt gets the JSON Schema too. Token Factory's docs say that works better than the schema alone.
@@ -131,6 +131,9 @@ type JsonRequest<T> = {
   messages: ChatCompletionMessageParam[];
   maxTokens: number;
   check?: (data: T) => string[]; // rules zod cannot check, one line per problem
+  // Called with the last answer if it still breaks a rule after every retry. Returns a fixed version to use.
+  // Without it, the call fails.
+  repair?: (data: T) => T;
 };
 
 // Asks the model for JSON that matches the schema, using strict json_schema output.
@@ -153,10 +156,14 @@ export async function chatJson<T>(request: JsonRequest<T>): Promise<{ data: T; u
     });
     usage = addUsage(usage, reply.usage);
     const result = parseJson(reply.content, request.schema, request.check);
-    if (result.ok) return { data: result.data, usage };
+    if (result.data && result.problems.length === 0) return { data: result.data, usage };
 
     problems = result.problems;
     console.warn(`[${request.step}] Invalid JSON on try ${attempt + 1}: ${problems.join("; ")}`);
+    if (attempt === MAX_FIX_ATTEMPTS && result.data && request.repair) {
+      console.warn(`[${request.step}] Repairing the last answer instead of failing.`);
+      return { data: request.repair(result.data), usage };
+    }
     messages = [
       ...baseMessages,
       { role: "assistant", content: reply.content },

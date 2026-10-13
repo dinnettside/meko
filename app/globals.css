@@ -1,26 +1,33 @@
 @import "tailwindcss";
 
+/* "Night atlas", the same palette as the videos (remotion/theme.ts). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #0f1b2d;
+  --land: #22334b;
+  --border: #3a4f6e;
+  --paper: #f4f1ea;
+  --dim: #93a1b5;
+  --signal: #ffb627;
+  --teal: #4fc3b4;
+  --alert: #ff7a6b;
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ink: var(--ink);
+  --color-land: var(--land);
+  --color-line: var(--border);
+  --color-paper: var(--paper);
+  --color-dim: var(--dim);
+  --color-signal: var(--signal);
+  --color-teal: var(--teal);
+  --color-alert: var(--alert);
+  --font-sans: var(--font-archivo);
+  --font-display: var(--font-fraunces);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-archivo), Helvetica, Arial, sans-serif;
 }
