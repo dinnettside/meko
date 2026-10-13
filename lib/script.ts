@@ -41,7 +41,8 @@ function scriptProblems(script: Script, factIds: Set<string>, targets: ReturnTyp
   }
   const sentences = script.scenes.flatMap((scene) => scene.sentences);
   const words = countWords(sentences.map((sentence) => sentence.text).join(" "));
-  if (words < targets.words * 0.8 || words > targets.maxWords) {
+  // The model tends to write too little, and a short script makes a short video, so the floor is 90%.
+  if (words < targets.words * 0.9 || words > targets.maxWords) {
     problems.push(`Write ${targets.words} words in total, at most ${targets.maxWords}. You wrote ${words}.`);
   }
   script.scenes.forEach((scene, index) => {
