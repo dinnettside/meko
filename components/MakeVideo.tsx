@@ -8,18 +8,25 @@ import type { VideoRequest } from "@/lib/pipeline";
 import type { ResearchResult } from "@/lib/research";
 import type { ScriptResult } from "@/lib/script";
 import type { Source, Storyboard } from "@/lib/storyboard";
+import type { VoiceResult } from "@/lib/voice";
 import { StoryboardPlayer } from "./StoryboardPlayer";
 
-type StepId = "research" | "script" | "factcheck" | "direct";
-type StepState = { status: "waiting" | "running" | "done" | "failed"; detail?: string; startedAt?: number; ms?: number };
+type StepId = "research" | "script" | "factcheck" | "direct" | "voice";
+type StepState = {
+  status: "waiting" | "running" | "done" | "skipped" | "failed";
+  detail?: string;
+  startedAt?: number;
+  ms?: number;
+};
 type Timed<T> = T & { ms: number };
-type Finished = { storyboard: Storyboard; costUsd: number; ms: number };
+type Finished = { storyboard: Storyboard; audio: Record<string, string>; costUsd: number; ms: number };
 
 const STEPS: { id: StepId; label: string }[] = [
   { id: "research", label: "Research the topic" },
   { id: "script", label: "Write the script" },
   { id: "factcheck", label: "Fact-check every sentence" },
   { id: "direct", label: "Direct the scenes" },
+  { id: "voice", label: "Record the voice-over" },
 ];
 
 const AUDIENCES = ["Kids (8 to 12)", "High school", "Adults"];
@@ -30,6 +37,7 @@ const waitingSteps = (): Record<StepId, StepState> => ({
   script: { status: "waiting" },
   factcheck: { status: "waiting" },
   direct: { status: "waiting" },
+  voice: { status: "waiting" },
 });
 
 const countWords = (text: string) => text.split(/\s+/).filter(Boolean).length;
@@ -132,7 +140,25 @@ export function MakeVideo() {
         },
       );
       const costUsd = [research, script, checked, directed].reduce((total, step) => total + step.usage.costUsd, 0);
-      setFinished({ storyboard: directed.storyboard, costUsd, ms: Date.now() - startedAt });
+
+      // Without a voice the video still works, silent with captions.
+      let storyboard = directed.storyboard;
+      let audio: Record<string, string> = {};
+      try {
+        const voiced = await runStep<VoiceResult>("voice", "/api/voice", { storyboard }, (result) => {
+          const seconds = result.storyboard.scenes.reduce((total, scene) => total + scene.durationSec, 0);
+          return `${result.characters} characters, ${Math.round(seconds)} seconds`;
+        });
+        if (voiced.skipped) {
+          setStep("voice", { status: "skipped", detail: voiced.skipped });
+        } else {
+          storyboard = voiced.storyboard;
+          audio = voiced.audio;
+        }
+      } catch {
+        // The voice step shows its own error.
+      }
+      setFinished({ storyboard, audio, costUsd, ms: Date.now() - startedAt });
     } catch {
       // The step that failed shows its own error.
     } finally {
@@ -208,7 +234,7 @@ export function MakeVideo() {
       {finished ? (
         <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div>
-            <StoryboardPlayer storyboard={finished.storyboard} />
+            <StoryboardPlayer storyboard={finished.storyboard} audio={finished.audio} />
             <p className="mt-2 text-sm text-zinc-500">
               Made in {Math.round(finished.ms / 1000)} seconds. Model cost ${finished.costUsd.toFixed(3)}.
             </p>
@@ -238,6 +264,7 @@ function StepRow({ label, state, now }: { label: string; state: StepState; now: 
     waiting: { mark: "○", text: "" },
     running: { mark: "…", text: `${elapsed.toFixed(0)} s` },
     done: { mark: "✓", text: `${((state.ms ?? 0) / 1000).toFixed(1)} s · ${state.detail ?? ""}` },
+    skipped: { mark: "–", text: state.detail ?? "Skipped" },
     failed: { mark: "✕", text: state.detail ?? "Failed" },
   }[state.status];
   return (

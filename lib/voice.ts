@@ -1,0 +1,62 @@
+import { z } from "zod";
+import { speak, voiceIsConfigured } from "./elevenlabs.ts";
+import type { Speech } from "./elevenlabs.ts";
+import { StoryboardSchema } from "./storyboard.ts";
+import type { Storyboard } from "./storyboard.ts";
+
+const PAUSE_SEC = 0.6;
+// ElevenLabs limits how many requests run at once. The Creator plan allows 5.
+const CONCURRENCY = 4;
+
+export const VoiceInputSchema = z.object({ storyboard: StoryboardSchema });
+
+export type VoiceResult = {
+  storyboard: Storyboard;
+  audio: Record<string, string>; // scene ID to a data URL with the MP3
+  characters: number;
+  skipped?: string; // why there is no voice, when there is none
+};
+
+// Runs `task` for every item, with at most `limit` running at the same time. Keeps the order.
+async function mapLimited<T, R>(items: T[], limit: number, task: (item: T, index: number) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await task(items[index], index);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
+// Records the narration of every scene. The scene lasts as long as its speech plus a short pause.
+export async function recordVoice({ storyboard }: z.infer<typeof VoiceInputSchema>): Promise<VoiceResult> {
+  if (!voiceIsConfigured()) {
+    return { storyboard, audio: {}, characters: 0, skipped: "No ElevenLabs key is set up." };
+  }
+  const scenes = storyboard.scenes;
+  const speeches: Speech[] = await mapLimited(scenes, CONCURRENCY, (scene, index) =>
+    speak({
+      text: scene.narration,
+      previousText: scenes[index - 1]?.narration,
+      nextText: scenes[index + 1]?.narration,
+      language: storyboard.language,
+    }),
+  );
+
+  return {
+    storyboard: {
+      ...storyboard,
+      scenes: scenes.map((scene, index) => ({
+        ...scene,
+        durationSec: Math.round((speeches[index].durationSec + PAUSE_SEC) * 10) / 10,
+      })),
+    },
+    audio: Object.fromEntries(
+      scenes.map((scene, index) => [scene.id, `data:audio/mpeg;base64,${speeches[index].audioBase64}`]),
+    ),
+    characters: scenes.reduce((total, scene) => total + scene.narration.length, 0),
+  };
+}

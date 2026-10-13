@@ -1,4 +1,4 @@
-import { AbsoluteFill, Series, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Html5Audio, Series, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import type { Scene, Storyboard } from "@/lib/storyboard";
 
 // Plays a storyboard. The look is neutral on purpose until the design direction is picked.
@@ -11,7 +11,8 @@ export function storyboardFrames(storyboard: Storyboard): number {
   return storyboard.scenes.reduce((total, scene) => total + sceneFrames(scene, storyboard.fps), 0);
 }
 
-export function StoryboardVideo({ storyboard }: { storyboard: Storyboard }) {
+// `audio` maps scene IDs to the recorded narration. Without it, the video plays silently with captions.
+export function StoryboardVideo({ storyboard, audio = {} }: { storyboard: Storyboard; audio?: Record<string, string> }) {
   return (
     <AbsoluteFill style={{ backgroundColor: "white", color: "#111", fontFamily: "Arial, Helvetica, sans-serif" }}>
       <Series>
@@ -19,6 +20,7 @@ export function StoryboardVideo({ storyboard }: { storyboard: Storyboard }) {
           <Series.Sequence key={scene.id} durationInFrames={sceneFrames(scene, storyboard.fps)}>
             <SceneView scene={scene} />
             <Caption text={scene.narration} />
+            {audio[scene.id] ? <Html5Audio src={audio[scene.id]} /> : null}
           </Series.Sequence>
         ))}
       </Series>

@@ -4,11 +4,11 @@ import { Player } from "@remotion/player";
 import type { Storyboard } from "@/lib/storyboard";
 import { StoryboardVideo, storyboardFrames } from "@/remotion/StoryboardVideo";
 
-export function StoryboardPlayer({ storyboard }: { storyboard: Storyboard }) {
+export function StoryboardPlayer({ storyboard, audio }: { storyboard: Storyboard; audio: Record<string, string> }) {
   return (
     <Player
       component={StoryboardVideo}
-      inputProps={{ storyboard }}
+      inputProps={{ storyboard, audio }}
       durationInFrames={storyboardFrames(storyboard)}
       fps={storyboard.fps}
       compositionWidth={storyboard.width}
