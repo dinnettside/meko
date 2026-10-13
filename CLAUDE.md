@@ -32,7 +32,8 @@ The point: explainer videos people can trust, made in about a minute.
 - Remotion with `@remotion/player` for in-browser playback (no server-side rendering for now)
 - LLM: Nebius Token Factory through the `openai` npm SDK (OpenAI-compatible)
   - base URL: `https://api.tokenfactory.nebius.com/v1/`
-  - env: `NEBIUS_API_KEY`, `NEBIUS_MODEL` (a Nemotron model, picked in Phase 0)
+  - env: `NEBIUS_API_KEY`, `NEBIUS_MODEL` (picked in Phase 0: `nvidia/Nemotron-3-Ultra-550b-a55b`, see `docs/model-check.md`)
+  - thinking off by default: `chat_template_kwargs: { enable_thinking: false }`
 - Web search: Tavily JS SDK (search + extract), env `TAVILY_API_KEY`
 - Voice (Phase 2): ElevenLabs, env `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`
 - Validation: zod
@@ -107,12 +108,11 @@ Known limitation: the map data has modern borders. Historical borders are out of
 
 ## Phases
 
-Current phase: **0**
+Current phase: **1**
 
 ### Phase 0: setup and model check (Oct 13-14)
-Approved plan with all details and progress, read it before continuing: @docs/phase-0-plan.md
-- [ ] Scaffold Next.js + Tailwind + Remotion Player, MIT LICENSE, README stub, `.env.example`
-- [ ] `scripts/check-models.ts`: list the models on Token Factory. For each NVIDIA/Nemotron candidate, test strict JSON output, tool calling and latency on a small task. Print a short report. Trym picks the model.
+- [x] Scaffold Next.js + Tailwind + Remotion Player, MIT LICENSE, README stub, `.env.example`
+- [x] `scripts/check-models.ts`: list the models on Token Factory. For each NVIDIA/Nemotron candidate, test strict JSON output, tool calling and latency on a small task. Print a short report. Trym picks the model.
 
 ### Phase 1: end-to-end MVP (done by Sun Oct 18, checkpoint)
 - [ ] Topic form, then research, script, factcheck and direct, then the video plays in the Remotion Player

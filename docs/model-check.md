@@ -6,6 +6,14 @@ Run on 2026-10-13 18:33 UTC against Nebius Token Factory with the openai SDK 7.3
 Sampling is temperature 1 and top_p 0.95, as NVIDIA recommends for Nemotron 3.
 Every call has a 90 s timeout and a max_tokens cap.
 
+## Decision
+
+On Oct 13, 2026, Trym set the order of the criteria: storyboard JSON 3/3 (required), facts JSON 3/3 (required), speed, tool calling, then price and Norwegian.
+
+- Choice: `nvidia/Nemotron-3-Ultra-550b-a55b`, with thinking off by default. It is the only model with 3/3 storyboards.
+- Second: `nvidia/Nemotron-3_5-Lightning`. It is the fastest and passed 3/3 facts, but only 2/3 storyboards.
+- A possible split later: Lightning for research (query planning and fact extraction), Ultra for script, fact-check and direct. That would mostly save money, since Lightning is only 0.3 to 0.5 s faster per call. We are not splitting yet.
+
 ## Recommendation
 
 Written by Claude after the run. Each test ran only 3 times, so treat the numbers as signals, not proof.
