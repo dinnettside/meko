@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isKnownCountry } from "./countries.ts";
+import { COUNTRIES, isKnownCountry } from "./countries.ts";
 import { addUsage, chatJson, emptyUsage } from "./nebius.ts";
 import { ResearchFactSchema, ScriptSchema, VideoRequestSchema, WORDS_PER_SECOND, countWords } from "./pipeline.ts";
 import type { Usage } from "./pipeline.ts";
@@ -62,6 +62,9 @@ type SceneVisual = z.infer<typeof SceneVisualSchema>;
 type SceneReply = z.infer<typeof SceneReplySchema>;
 type NarratedScene = { id: string; narration: string; factIds: string[] };
 type FactTexts = Map<string, string>; // fact ID to fact text
+
+// Markers are for cities, so a marker named after a country is a mistake.
+const countryNames = new Set(Object.values(COUNTRIES).map((country) => country.name.toLowerCase()));
 
 // Estimated from the word count until the voice-over sets the real length.
 export function sceneDuration(narration: string): number {
@@ -126,6 +129,9 @@ function sceneProblems({ visual, lines }: SceneReply, allowed: Set<string>, fact
       problems.push(`Unknown country codes: ${unknown.join(", ")}. Use ISO 3166-1 alpha-3 codes of today's countries.`);
     }
     for (const marker of visual.markers) {
+      if (countryNames.has(marker.label.trim().toLowerCase())) {
+        problems.push(`The marker "${marker.label}" names a country. Markers are for cities; highlight countries instead.`);
+      }
       if (!countryContains(marker.country, marker.lon, marker.lat)) {
         problems.push(
           `The marker "${marker.label}" at latitude ${marker.lat}, longitude ${marker.lon} is not in ${marker.country}. Check the country and the coordinates.`,
@@ -176,6 +182,7 @@ function repairScene({ visual, lines }: SceneReply, scene: NarratedScene, allowe
     .filter((arrow) => isKnownCountry(arrow.from) && isKnownCountry(arrow.to))
     .map((arrow) => ({ ...arrow, label: safeLabel(arrow.label) }));
   const markers = visual.markers
+    .filter((marker) => !countryNames.has(marker.label.trim().toLowerCase()))
     .filter((marker) => countryContains(marker.country, marker.lon, marker.lat))
     .filter((marker) => safeLabel(marker.label));
   const frame = visual.frame.filter(isKnownCountry);
