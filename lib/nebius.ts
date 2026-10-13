@@ -12,6 +12,8 @@ const BASE_URL = "https://api.tokenfactory.nebius.com/v1/";
 const CALL_TIMEOUT_MS = 45_000;
 // After invalid JSON we send the problems back and ask again, at most this many times.
 const MAX_FIX_ATTEMPTS = 2;
+// No new attempt starts after this, so a step always ends well within its route's time limit.
+const RETRY_WINDOW_MS = 60_000;
 
 // USD per 1M tokens, from docs/model-check.md (Oct 13, 2026).
 const PRICES: Record<string, { input: number; output: number }> = {
@@ -144,8 +146,12 @@ export async function chatJson<T>(request: JsonRequest<T>): Promise<{ data: T; u
   let messages = baseMessages;
   let usage = emptyUsage();
   let problems: string[] = [];
+  const started = performance.now();
 
   for (let attempt = 0; attempt <= MAX_FIX_ATTEMPTS; attempt++) {
+    if (attempt > 0 && performance.now() - started > RETRY_WINDOW_MS) {
+      throw new Error(`${request.step}: ran out of time after ${attempt} tries (${problems.join("; ")})`);
+    }
     const reply = await callModel(request.step, {
       messages,
       max_tokens: request.maxTokens,

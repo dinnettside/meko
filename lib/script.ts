@@ -1,10 +1,8 @@
 import { z } from "zod";
 import { chatJson } from "./nebius.ts";
-import { ResearchFactSchema, ScriptSentenceSchema, VideoRequestSchema, countWords } from "./pipeline.ts";
+import { ResearchFactSchema, ScriptSentenceSchema, VideoRequestSchema, WORDS_PER_SECOND, countWords } from "./pipeline.ts";
 import type { Script, Usage } from "./pipeline.ts";
 import { writeScriptPrompt } from "./prompts/write-script.ts";
-
-const WORDS_PER_SECOND = 2.5;
 
 export const ScriptInputSchema = z.object({
   request: VideoRequestSchema,
@@ -14,9 +12,10 @@ export const ScriptInputSchema = z.object({
 export type ScriptResult = { script: Script; usage: Usage };
 
 // About one scene every 8 to 15 seconds, and a word count that fits the length.
+// The short pauses between scenes take about 6% of the video.
 export function scriptTargets(lengthSec: number) {
-  const words = Math.round(lengthSec * WORDS_PER_SECOND);
-  const maxWords = Math.round(words * 1.15);
+  const words = Math.round(lengthSec * 0.94 * WORDS_PER_SECOND);
+  const maxWords = Math.round(words * 1.1);
   const minScenes = Math.max(3, Math.round(lengthSec / 15));
   const maxScenes = Math.max(minScenes + 2, Math.round(lengthSec / 8));
   // Short scenes keep the picture moving: at most about 16 seconds each, and a quick opening.

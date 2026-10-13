@@ -12,6 +12,8 @@ const SOURCES_PER_ROUND = [6, 3]; // new sources to read in round 1 and round 2
 const MAX_GAP_QUERIES = 3;
 const MAX_FACTS_PER_SOURCE = 6;
 const MIN_SOURCE_CHARS = 300;
+// The gap round only starts if research has taken less than this, so the route stays well within its time limit.
+const GAP_ROUND_BEFORE_MS = 40_000;
 
 // The max lengths end up in the JSON Schema, and Token Factory enforces them, so lists cannot run away.
 const QueriesSchema = z.object({ queries: z.array(z.string()).max(6) });
@@ -105,6 +107,7 @@ async function readSource(request: VideoRequest, result: SearchResult): Promise<
 }
 
 export async function research(request: VideoRequest): Promise<ResearchResult> {
+  const started = performance.now();
   let usage = emptyUsage();
   const plan = await chatJson({
     step: "research/plan",
@@ -135,6 +138,10 @@ export async function research(request: VideoRequest): Promise<ResearchResult> {
       }
     }
     if (round === MAX_ROUNDS - 1) break;
+    if (performance.now() - started > GAP_ROUND_BEFORE_MS) {
+      console.warn("[research] Skipping the gap round to stay within the time limit.");
+      break;
+    }
 
     // The gap check is a bonus. If it fails, we go on with the facts we have.
     let gapQueries: string[] = [];

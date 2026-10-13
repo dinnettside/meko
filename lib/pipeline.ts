@@ -35,6 +35,7 @@ export const CheckStatusSchema = z.enum(["supported", "revised", "removed"]);
 
 export const SentenceCheckSchema = z.object({
   sentenceId: z.string(),
+  factIds: z.array(z.string()), // the facts the sentence cites
   status: CheckStatusSchema,
   original: z.string(),
   revised: z.string(),
@@ -64,6 +65,9 @@ export type Usage = {
   completionTokens: number;
   costUsd: number;
 };
+
+// How fast the narrator speaks. Measured on the George voice with Multilingual v2 (2.33 words per second).
+export const WORDS_PER_SECOND = 2.3;
 
 export function countWords(text: string): number {
   return text.split(/\s+/).filter(Boolean).length;

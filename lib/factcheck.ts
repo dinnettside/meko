@@ -85,7 +85,14 @@ export async function factCheck({ script, facts }: z.infer<typeof FactCheckInput
           status = "supported";
           revised = "";
         }
-        report.push({ sentenceId, status, original: sentence.text, revised, reason: check?.reason ?? "" });
+        report.push({
+          sentenceId,
+          factIds: sentence.factIds,
+          status,
+          original: sentence.text,
+          revised,
+          reason: check?.reason ?? "",
+        });
         if (status === "removed") return [];
         return [{ text: status === "revised" ? revised : sentence.text, factIds: sentence.factIds }];
       }),

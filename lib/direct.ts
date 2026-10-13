@@ -1,14 +1,13 @@
 import { z } from "zod";
 import { isKnownCountry } from "./countries.ts";
 import { addUsage, chatJson, emptyUsage } from "./nebius.ts";
-import { ResearchFactSchema, ScriptSchema, VideoRequestSchema, countWords } from "./pipeline.ts";
+import { ResearchFactSchema, ScriptSchema, VideoRequestSchema, WORDS_PER_SECOND, countWords } from "./pipeline.ts";
 import type { Usage } from "./pipeline.ts";
 import { directScenePrompt, directTitlePrompt } from "./prompts/direct.ts";
 import { SourceSchema, StoryboardSchema, storyboardProblems } from "./storyboard.ts";
 import { countryContains } from "./world.ts";
 import type { Storyboard } from "./storyboard.ts";
 
-const WORDS_PER_SECOND = 2.5;
 const PAUSE_SEC = 0.6;
 const MIN_SCENE_SEC = 2.5;
 // The prompts ask for 8 and 4 words. One word over is not worth a retry.
