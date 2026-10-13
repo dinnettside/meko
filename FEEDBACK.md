@@ -22,4 +22,5 @@ From our model check on Oct 13, 2026 (see `docs/model-check.md`):
 - Nemotron 3 Nano 30B put years, fact IDs and coordinates into the country code fields of the map scene in all 6 storyboard tries.
 - In the app (Oct 13), Nemotron 3 Ultra with thinking off once filled a short list until it hit max_tokens (500 tokens in 2 s), even with strict `json_schema`. Adding `maxItems` to the schema fixed it.
 - Ultra did not always keep a fixed list of scene IDs. Asked to return one entry per given scene, it added an extra title scene in front, and two retries with the error message did not fix it. A schema with one required key per scene fixed it for good.
+- Ultra with thinking off tends to write fewer words than asked. Asked for about 195 words, it often wrote 120 to 160, so our word-count check sends it back for another try. A video can come out much shorter than requested without that check.
 - Norwegian bokmål is weak in all four models. Lightning garbles words ("avsaettes", "brødreaktighet"), Nano mixes in Danish and English ("omvæltninger", "clergy"), and Ultra calls Louis XVI "Henrikke 16.".

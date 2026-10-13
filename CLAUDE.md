@@ -124,8 +124,8 @@ Current phase: **3**
 
 ### Phase 3: trust and robustness (Oct 24-26)
 - [x] Fact-check report visible in the UI
-- [ ] Error handling and retries everywhere
-- [ ] `scripts/eval.ts`: run 10 topics, report % supported sentences, cost and time per video
+- [x] Error handling and retries everywhere
+- [ ] `scripts/eval.ts`: run 10 topics, report % supported sentences, cost and time per video (written; run on 2 topics so far, see `docs/eval.md`)
 
 ### Phase 4: ship (Oct 27-29)
 - [ ] Deploy to Vercel with environment variables
