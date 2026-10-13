@@ -24,15 +24,18 @@ Approved by Trym on Oct 13, 2026. When Phase 0 is done, delete this file and the
 
 1. [x] Scaffold: `npx create-next-app@16.4.0 meko --ts --eslint --tailwind --app --no-src-dir --turbopack --no-react-compiler --no-cache-components --import-alias "@/*" --agents-md --no-agent-feedback --use-npm`. Lint, `tsc --noEmit` and build pass, and the dev server loads the page.
 2. [x] Move CLAUDE.md in from Downloads: set the project name, import `@AGENTS.md`, add "Make the repo public" to Phase 4. Create `.env.local` with an empty `NEBIUS_API_KEY=` (gitignored).
-3. [ ] Repo files:
+3. [x] Repo files:
    - MIT `LICENSE`.
    - A README stub in English: what Meko does, setup, commands, and a note that Remotion has its own license, which is free for individuals.
    - `.env.example` with names only (`NEBIUS_API_KEY`, `NEBIUS_MODEL`, `TAVILY_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`), replacing the template's `MY_HOST` example.
    - An empty `FEEDBACK.md`.
-4. [ ] `.gitignore`: the template ignores `.env*`, which also hides `.env.example`. Add `!.env.example`. Then create the private GitHub repo and push.
-5. [ ] Remotion Player: `npm i --save-exact remotion@4.0.535 @remotion/player@4.0.535`. All Remotion packages must be on exactly the same version. Add one neutral test composition in `remotion/` (text fading in over 3 seconds) and a client component with `<Player>`, and replace the default home page with it. No styling yet, because Trym picks a design direction first.
-6. [ ] Add a `typecheck` script. Run typecheck, lint and build, then commit. Start the dev server so Trym can check http://localhost:3000: the player shows, and play, pause and seeking work.
+4. [x] `.gitignore`: the template ignores `.env*`, which also hides `.env.example`. Add `!.env.example`. Then create the private GitHub repo and push.
+5. [x] Remotion Player: `npm i --save-exact remotion@4.0.535 @remotion/player@4.0.535`. All Remotion packages must be on exactly the same version. Add one neutral test composition in `remotion/` (text fading in over 3 seconds) and a client component with `<Player>`, and replace the default home page with it. No styling yet, because Trym picks a design direction first.
+6. [x] Add a `typecheck` script. Run typecheck, lint and build, then commit. Start the dev server so Trym can check http://localhost:3000: the player shows, and play, pause and seeking work.
 7. [ ] `npm i openai@7.32.0 zod@4.6.7`. Write `scripts/check-models.ts` (spec below) and an `npm run check-models` script (`node --env-file-if-exists=.env.local scripts/check-models.ts`). Run typecheck, lint and build, then commit. Run the check only when the key is in `.env.local` and the credit is confirmed.
+   - Oct 13: script written and committed. Typecheck, lint and build pass, and a full run against a local mock server worked. The key is in `.env.local`. Not run yet: waiting for Trym to confirm the Token Factory credit.
+   - The npm script also has `--disable-warning=MODULE_TYPELESS_PACKAGE_JSON`, because package.json has no `"type"` field. `tsconfig.json` has `allowImportingTsExtensions` for the `.ts` imports.
+   - The Token Factory API reference also documents `reasoning_effort` (`none` to `max`). The script tries it as a second way to turn thinking off.
 8. [ ] Trym picks the model. Add `NEBIUS_MODEL` to `.env.local`, tick Phase 0 in CLAUDE.md, set "Current phase" to 1, delete this file and its pointer, then commit.
 
 ## check-models.ts spec
