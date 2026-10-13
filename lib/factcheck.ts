@@ -12,8 +12,10 @@ export const FactCheckInputSchema = z.object({
 
 export type FactCheckResult = { script: Script; report: FactCheckReport; usage: Usage };
 
+// The model lists the claims in each sentence before it judges the sentence, so small added details get caught.
 const CheckSchema = z.object({
   sentenceId: z.string(),
+  claims: z.array(z.object({ claim: z.string(), supported: z.boolean() })).min(1).max(8),
   status: CheckStatusSchema,
   revised: z.string(),
   reason: z.string(),
@@ -31,6 +33,9 @@ function checkProblems({ checks }: Checks, sentenceIds: string[]): string[] {
     seen.set(check.sentenceId, (seen.get(check.sentenceId) ?? 0) + 1);
     if (check.status === "revised" && check.revised.trim() === "") {
       problems.push(`Sentence ${check.sentenceId} is "revised" but has no revised text.`);
+    }
+    if (check.status === "supported" && check.claims.some((claim) => !claim.supported)) {
+      problems.push(`Sentence ${check.sentenceId} has unsupported claims, so it cannot be "supported".`);
     }
   }
   for (const id of sentenceIds) {
@@ -60,7 +65,7 @@ export async function factCheck({ script, facts }: z.infer<typeof FactCheckInput
     schemaName: "checks",
     schema: checksSchema(sentences.length),
     messages: factCheckPrompt(sentences),
-    maxTokens: 6000,
+    maxTokens: 10000,
     check: (result) => checkProblems(result, sentences.map((sentence) => sentence.id)),
   });
 

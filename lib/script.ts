@@ -19,7 +19,8 @@ export function scriptTargets(lengthSec: number) {
   const maxWords = Math.round(words * 1.15);
   const minScenes = Math.max(3, Math.round(lengthSec / 15));
   const maxScenes = Math.max(minScenes + 2, Math.round(lengthSec / 8));
-  return { words, maxWords, minScenes, maxScenes };
+  // Short scenes keep the picture moving: at most about 16 seconds each, and a quick opening.
+  return { words, maxWords, minScenes, maxScenes, maxSceneWords: 40, maxOpeningWords: 30 };
 }
 
 // Scene and sentence counts go into the JSON Schema, where Token Factory enforces them.
@@ -48,6 +49,10 @@ function scriptProblems(script: Script, factIds: Set<string>, targets: ReturnTyp
     if (scene.sentences.length < 1 || scene.sentences.length > 3) {
       problems.push(`Scene ${index + 1} has ${scene.sentences.length} sentences. Use 1 to 3.`);
     }
+    const sceneWords = countWords(scene.sentences.map((sentence) => sentence.text).join(" "));
+    const limit = index === 0 ? targets.maxOpeningWords : targets.maxSceneWords;
+    // A few words over the limit is fine and not worth a retry.
+    if (sceneWords > limit + 5) problems.push(`Scene ${index + 1} has ${sceneWords} words. Use at most ${limit}.`);
   });
   for (const sentence of sentences) {
     if (sentence.factIds.length === 0) problems.push(`This sentence cites no facts: "${sentence.text}"`);

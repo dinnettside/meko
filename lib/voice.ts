@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { speak, voiceIsConfigured } from "./elevenlabs.ts";
-import type { Speech } from "./elevenlabs.ts";
+import type { Speech, TimedWord } from "./elevenlabs.ts";
 import { StoryboardSchema } from "./storyboard.ts";
 import type { Storyboard } from "./storyboard.ts";
 
@@ -10,9 +10,12 @@ const CONCURRENCY = 4;
 
 export const VoiceInputSchema = z.object({ storyboard: StoryboardSchema });
 
+// The recorded narration of one scene: an MP3 data URL and when each word is said.
+export type SceneVoice = { audio: string; words: TimedWord[] };
+
 export type VoiceResult = {
   storyboard: Storyboard;
-  audio: Record<string, string>; // scene ID to a data URL with the MP3
+  voice: Record<string, SceneVoice>; // by scene ID
   characters: number;
   skipped?: string; // why there is no voice, when there is none
 };
@@ -34,7 +37,7 @@ async function mapLimited<T, R>(items: T[], limit: number, task: (item: T, index
 // Records the narration of every scene. The scene lasts as long as its speech plus a short pause.
 export async function recordVoice({ storyboard }: z.infer<typeof VoiceInputSchema>): Promise<VoiceResult> {
   if (!voiceIsConfigured()) {
-    return { storyboard, audio: {}, characters: 0, skipped: "No ElevenLabs key is set up." };
+    return { storyboard, voice: {}, characters: 0, skipped: "No ElevenLabs key is set up." };
   }
   const scenes = storyboard.scenes;
   const speeches: Speech[] = await mapLimited(scenes, CONCURRENCY, (scene, index) =>
@@ -54,8 +57,11 @@ export async function recordVoice({ storyboard }: z.infer<typeof VoiceInputSchem
         durationSec: Math.round((speeches[index].durationSec + PAUSE_SEC) * 10) / 10,
       })),
     },
-    audio: Object.fromEntries(
-      scenes.map((scene, index) => [scene.id, `data:audio/mpeg;base64,${speeches[index].audioBase64}`]),
+    voice: Object.fromEntries(
+      scenes.map((scene, index) => [
+        scene.id,
+        { audio: `data:audio/mpeg;base64,${speeches[index].audioBase64}`, words: speeches[index].words },
+      ]),
     ),
     characters: scenes.reduce((total, scene) => total + scene.narration.length, 0),
   };

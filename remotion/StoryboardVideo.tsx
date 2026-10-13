@@ -1,5 +1,7 @@
 import { AbsoluteFill, Html5Audio, Series, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import type { TimedWord } from "@/lib/elevenlabs";
 import type { Scene, Storyboard } from "@/lib/storyboard";
+import type { SceneVoice } from "@/lib/voice";
 
 // Plays a storyboard. The look is neutral on purpose until the design direction is picked.
 
@@ -11,16 +13,16 @@ export function storyboardFrames(storyboard: Storyboard): number {
   return storyboard.scenes.reduce((total, scene) => total + sceneFrames(scene, storyboard.fps), 0);
 }
 
-// `audio` maps scene IDs to the recorded narration. Without it, the video plays silently with captions.
-export function StoryboardVideo({ storyboard, audio = {} }: { storyboard: Storyboard; audio?: Record<string, string> }) {
+// `voice` holds the recorded narration by scene ID. Without it, the video plays silently with captions.
+export function StoryboardVideo({ storyboard, voice = {} }: { storyboard: Storyboard; voice?: Record<string, SceneVoice> }) {
   return (
     <AbsoluteFill style={{ backgroundColor: "white", color: "#111", fontFamily: "Arial, Helvetica, sans-serif" }}>
       <Series>
         {storyboard.scenes.map((scene) => (
           <Series.Sequence key={scene.id} durationInFrames={sceneFrames(scene, storyboard.fps)}>
             <SceneView scene={scene} />
-            <Caption text={scene.narration} />
-            {audio[scene.id] ? <Html5Audio src={audio[scene.id]} /> : null}
+            <Caption words={voice[scene.id]?.words ?? estimateWords(scene.narration, scene.durationSec)} />
+            {voice[scene.id] ? <Html5Audio src={voice[scene.id].audio} /> : null}
           </Series.Sequence>
         ))}
       </Series>
@@ -78,22 +80,58 @@ function Line({ text, delaySec }: { text: string; delaySec: number }) {
   return <div style={{ ...style, fontSize: 80, fontWeight: 700, lineHeight: 1.2, marginBottom: 36 }}>{text}</div>;
 }
 
-// No voice yet, so the narration is shown as a caption.
-function Caption({ text }: { text: string }) {
+// Without recorded timings, spread the words evenly over the scene, leaving a short pause at the end.
+function estimateWords(narration: string, durationSec: number): TimedWord[] {
+  const texts = narration.split(/\s+/).filter(Boolean);
+  const step = Math.max(0.5, durationSec - 0.6) / Math.max(1, texts.length);
+  return texts.map((text, index) => ({ text, start: index * step, end: (index + 1) * step }));
+}
+
+type CaptionLine = { words: TimedWord[]; start: number };
+
+// Short caption lines: at most 7 words, a new line after each sentence, and after a comma once a line has 4 words.
+function captionLines(words: TimedWord[]): CaptionLine[] {
+  const lines: CaptionLine[] = [];
+  let current: TimedWord[] = [];
+  for (const word of words) {
+    current.push(word);
+    const endsSentence = /[.!?]["')]?$/.test(word.text);
+    const endsClause = /[,;:]$/.test(word.text) && current.length >= 4;
+    if (current.length === 7 || endsSentence || endsClause) {
+      lines.push({ words: current, start: current[0].start });
+      current = [];
+    }
+  }
+  if (current.length > 0) lines.push({ words: current, start: current[0].start });
+  return lines;
+}
+
+// Shows the line being spoken. Words light up as the voice says them.
+function Caption({ words }: { words: TimedWord[] }) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const time = frame / fps;
+  const lines = captionLines(words);
+  const line = lines.findLast((candidate) => candidate.start <= time) ?? lines[0];
+  if (!line) return null;
   return (
-    <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 60 }}>
+    <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 140 }}>
       <div
         style={{
           maxWidth: 1600,
-          padding: "20px 32px",
+          padding: "16px 32px",
           backgroundColor: "rgba(0, 0, 0, 0.78)",
-          color: "white",
-          fontSize: 40,
-          lineHeight: 1.35,
+          fontSize: 52,
+          lineHeight: 1.3,
           textAlign: "center",
         }}
       >
-        {text}
+        {line.words.map((word, index) => (
+          <span key={index} style={{ color: word.start <= time ? "white" : "rgba(255, 255, 255, 0.45)" }}>
+            {index > 0 ? " " : ""}
+            {word.text}
+          </span>
+        ))}
       </div>
     </AbsoluteFill>
   );

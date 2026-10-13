@@ -108,19 +108,19 @@ Known limitation: the map data has modern borders. Historical borders are out of
 
 ## Phases
 
-Current phase: **1**
+Current phase: **2**
 
 ### Phase 0: setup and model check (Oct 13-14)
 - [x] Scaffold Next.js + Tailwind + Remotion Player, MIT LICENSE, README stub, `.env.example`
 - [x] `scripts/check-models.ts`: list the models on Token Factory. For each NVIDIA/Nemotron candidate, test strict JSON output, tool calling and latency on a small task. Print a short report. Trym picks the model.
 
 ### Phase 1: end-to-end MVP (done by Sun Oct 18, checkpoint)
-- [ ] Topic form, then research, script, factcheck and direct, then the video plays in the Remotion Player
-- [ ] Title and text scenes only, live progress for each step, source list next to the video
+- [x] Topic form, then research, script, factcheck and direct, then the video plays in the Remotion Player
+- [x] Title and text scenes only, live progress for each step, source list next to the video
 
 ### Phase 2: visuals and voice (Oct 19-23)
 - [ ] Map scenes, timeline scenes, transitions
-- [ ] ElevenLabs voice, scene timing from audio length
+- [x] ElevenLabs voice, scene timing from audio length
 
 ### Phase 3: trust and robustness (Oct 24-26)
 - [ ] Fact-check report visible in the UI

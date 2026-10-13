@@ -8,7 +8,7 @@ import type { VideoRequest } from "@/lib/pipeline";
 import type { ResearchResult } from "@/lib/research";
 import type { ScriptResult } from "@/lib/script";
 import type { Source, Storyboard } from "@/lib/storyboard";
-import type { VoiceResult } from "@/lib/voice";
+import type { SceneVoice, VoiceResult } from "@/lib/voice";
 import { StoryboardPlayer } from "./StoryboardPlayer";
 
 type StepId = "research" | "script" | "factcheck" | "direct" | "voice";
@@ -19,7 +19,7 @@ type StepState = {
   ms?: number;
 };
 type Timed<T> = T & { ms: number };
-type Finished = { storyboard: Storyboard; audio: Record<string, string>; costUsd: number; ms: number };
+type Finished = { storyboard: Storyboard; voice: Record<string, SceneVoice>; costUsd: number; ms: number };
 
 const STEPS: { id: StepId; label: string }[] = [
   { id: "research", label: "Research the topic" },
@@ -143,7 +143,7 @@ export function MakeVideo() {
 
       // Without a voice the video still works, silent with captions.
       let storyboard = directed.storyboard;
-      let audio: Record<string, string> = {};
+      let voice: Record<string, SceneVoice> = {};
       try {
         const voiced = await runStep<VoiceResult>("voice", "/api/voice", { storyboard }, (result) => {
           const seconds = result.storyboard.scenes.reduce((total, scene) => total + scene.durationSec, 0);
@@ -153,12 +153,12 @@ export function MakeVideo() {
           setStep("voice", { status: "skipped", detail: voiced.skipped });
         } else {
           storyboard = voiced.storyboard;
-          audio = voiced.audio;
+          voice = voiced.voice;
         }
       } catch {
         // The voice step shows its own error.
       }
-      setFinished({ storyboard, audio, costUsd, ms: Date.now() - startedAt });
+      setFinished({ storyboard, voice, costUsd, ms: Date.now() - startedAt });
     } catch {
       // The step that failed shows its own error.
     } finally {
@@ -234,7 +234,7 @@ export function MakeVideo() {
       {finished ? (
         <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div>
-            <StoryboardPlayer storyboard={finished.storyboard} audio={finished.audio} />
+            <StoryboardPlayer storyboard={finished.storyboard} voice={finished.voice} />
             <p className="mt-2 text-sm text-zinc-500">
               Made in {Math.round(finished.ms / 1000)} seconds. Model cost ${finished.costUsd.toFixed(3)}.
             </p>
