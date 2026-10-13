@@ -123,7 +123,7 @@ Current phase: **3**
 - [x] ElevenLabs voice, scene timing from audio length
 
 ### Phase 3: trust and robustness (Oct 24-26)
-- [ ] Fact-check report visible in the UI
+- [x] Fact-check report visible in the UI
 - [ ] Error handling and retries everywhere
 - [ ] `scripts/eval.ts`: run 10 topics, report % supported sentences, cost and time per video
 
