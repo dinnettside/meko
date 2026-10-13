@@ -42,6 +42,7 @@ You need Node.js 22.18 or newer and npm.
 | `npm run build` | Builds the app for production |
 | `npm run start` | Serves the production build |
 | `npm run lint` | Runs ESLint |
+| `npm run typecheck` | Generates route types and runs the TypeScript compiler |
 
 ## License
 
