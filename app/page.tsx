@@ -1,9 +1,5 @@
-import { VideoPlayer } from "@/components/VideoPlayer";
+import { MakeVideo } from "@/components/MakeVideo";
 
 export default function Home() {
-  return (
-    <main className="mx-auto w-full max-w-4xl p-8">
-      <VideoPlayer />
-    </main>
-  );
+  return <MakeVideo />;
 }
