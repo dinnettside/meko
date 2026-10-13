@@ -39,7 +39,7 @@ export function FactCheckReport({ report, facts, sources, numbered, activeSenten
   }, [activeSentenceId]);
 
   return (
-    <section className="flex min-h-0 flex-col">
+    <section className="flex min-h-0 min-w-0 flex-col break-words">
       <h2 className="font-display text-2xl font-bold">Fact-check</h2>
       <p className="mt-1 text-sm text-dim">
         Each sentence was checked against the exact words in its sources.{" "}

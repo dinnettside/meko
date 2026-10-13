@@ -292,7 +292,7 @@ export function MakeVideo() {
   }, []);
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-8">
+    <main className="mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-8 px-4 py-10 sm:px-8">
       <header>
         <h1 className="font-display text-5xl font-bold">Meko</h1>
         <p className="mt-3 text-lg text-dim">Turn a topic into a short, fact-checked explainer video.</p>
@@ -387,7 +387,7 @@ export function MakeVideo() {
 
       {finished ? (
         <section className="grid gap-8 lg:grid-cols-[3fr_2fr]">
-          <div className="flex flex-col gap-4">
+          <div className="flex min-w-0 flex-col gap-4">
             {finished.example ? (
               <p className="text-sm text-dim">
                 Example: “{finished.example.topic}”, made by Meko on{" "}
@@ -400,7 +400,7 @@ export function MakeVideo() {
             </p>
             <div>
               <h2 className="font-display text-2xl font-bold">Sources</h2>
-              <ol className="mt-2 flex list-decimal flex-col gap-2 pl-5">
+              <ol className="mt-2 flex list-decimal flex-col gap-2 pl-5 break-words">
                 {finished.storyboard.sources.map((source) => (
                   <li key={source.id}>
                     <a
