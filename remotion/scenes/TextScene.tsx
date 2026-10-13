@@ -1,11 +1,11 @@
 import { AbsoluteFill } from "remotion";
 import { useEase } from "../motion";
-import { CAPTION_SPACE, COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, MOTION, VIDEO } from "@/lib/theme";
 
 // Up to three short lines. The first is the key point: bigger, brighter and marked in amber.
 export function TextScene({ lines }: { lines: string[] }) {
   return (
-    <AbsoluteFill style={{ justifyContent: "center", padding: `0 220px ${CAPTION_SPACE}px` }}>
+    <AbsoluteFill style={{ justifyContent: "center", padding: `0 ${VIDEO.sideMargin}px ${VIDEO.captionSpace}px` }}>
       {lines.map((line, index) => (
         <Line key={index} text={line} index={index} />
       ))}
@@ -14,7 +14,7 @@ export function TextScene({ lines }: { lines: string[] }) {
 }
 
 function Line({ text, index }: { text: string; index: number }) {
-  const progress = useEase(0.2 + index * 0.6, 0.6);
+  const progress = useEase(0.2 + index * MOTION.stagger, MOTION.entrance);
   const isKey = index === 0;
   return (
     <div
@@ -31,7 +31,7 @@ function Line({ text, index }: { text: string; index: number }) {
       <div
         style={{
           fontFamily: isKey ? FONTS.display : FONTS.body,
-          fontSize: isKey ? 96 : 64,
+          fontSize: isKey ? VIDEO.fontSize.keyLine : VIDEO.fontSize.line,
           fontWeight: isKey ? 700 : 500,
           lineHeight: 1.12,
           color: isKey ? COLORS.paper : COLORS.dim,

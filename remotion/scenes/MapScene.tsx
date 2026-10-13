@@ -4,7 +4,7 @@ import type { Scene } from "@/lib/storyboard";
 import { countryContains } from "@/lib/world";
 import { layoutMap } from "../geo";
 import { ease } from "../motion";
-import { CAPTION_SPACE, COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, MOTION, VIDEO } from "@/lib/theme";
 
 type MapSceneData = Extract<Scene, { kind: "map" }>;
 type Point = [number, number];
@@ -12,14 +12,13 @@ type Box = { x: number; y: number; w: number; h: number };
 type LabelSpec = { text: string; strong: boolean; startSec: number; at: Point; offsets: Point[] };
 type PlacedLabel = { text: string; strong: boolean; startSec: number; x: number; y: number };
 
-const WIDTH = 1920;
-const HEIGHT = 1080;
+const { width: WIDTH, height: HEIGHT, captionSpace: CAPTION_SPACE } = VIDEO;
 const BOX: [[number, number], [number, number]] = [
-  [240, 110],
-  [WIDTH - 240, HEIGHT - CAPTION_SPACE - 30],
+  [VIDEO.mapPadding, 110],
+  [WIDTH - VIDEO.mapPadding, HEIGHT - CAPTION_SPACE - 30],
 ];
 const TONES = { primary: COLORS.signal, secondary: COLORS.teal, muted: COLORS.muted };
-const fontSize = (strong: boolean) => (strong ? 46 : 38);
+const fontSize = (strong: boolean) => (strong ? VIDEO.fontSize.mapLabelStrong : VIDEO.fontSize.mapLabel);
 
 // Rough size of a label, since text cannot be measured here. Archivo is about 0.56 em wide per character.
 function labelBox(x: number, y: number, text: string, strong: boolean): Box {
@@ -113,7 +112,7 @@ export function MapScene({ scene }: { scene: MapSceneData }) {
   const { fps } = useVideoConfig();
   const plan = useMemo(() => planMap(scene), [scene]);
 
-  const camera = ease(frame, fps, 0, 1.8);
+  const camera = ease(frame, fps, 0, MOTION.cameraMove);
   const scale = 0.84 + 0.16 * camera;
   const centerX = WIDTH / 2;
   const centerY = (BOX[0][1] + BOX[1][1]) / 2;

@@ -1,9 +1,8 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import { ease } from "../motion";
-import { CAPTION_SPACE, COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, VIDEO } from "@/lib/theme";
 
-const WIDTH = 1920;
-const HEIGHT = 1080;
+const { width: WIDTH, height: HEIGHT, captionSpace: CAPTION_SPACE } = VIDEO;
 const LEFT = 260;
 const RIGHT = WIDTH - 260;
 const AXIS_Y = (HEIGHT - CAPTION_SPACE) / 2 + 20;
@@ -51,7 +50,7 @@ export function TimelineScene({ events, focusIndex }: { events: { year: number; 
                 y={AXIS_Y - 70}
                 textAnchor="middle"
                 fontFamily={FONTS.display}
-                fontSize={isFocus ? 92 : 64}
+                fontSize={isFocus ? VIDEO.fontSize.focusYear : VIDEO.fontSize.year}
                 fontWeight={700}
                 fill={isFocus ? COLORS.signal : COLORS.paper}
               >
@@ -62,7 +61,7 @@ export function TimelineScene({ events, focusIndex }: { events: { year: number; 
                 y={AXIS_Y + 90}
                 textAnchor="middle"
                 fontFamily={FONTS.body}
-                fontSize={40}
+                fontSize={VIDEO.fontSize.eventLabel}
                 fontWeight={isFocus ? 700 : 500}
                 fill={isFocus ? COLORS.paper : COLORS.dim}
               >

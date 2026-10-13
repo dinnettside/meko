@@ -1,6 +1,6 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
-import { COLORS, FONTS } from "./theme";
+import { COLORS, FONTS, VIDEO } from "@/lib/theme";
 
 type CaptionLine = { words: TimedWord[]; start: number };
 
@@ -37,21 +37,21 @@ export function Caption({ words }: { words: TimedWord[] }) {
   const line = lines.findLast((candidate) => candidate.start <= time) ?? lines[0];
   if (!line) return null;
   return (
-    <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 120 }}>
+    <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: VIDEO.captionBottom }}>
       <div
         style={{
           maxWidth: 1600,
           padding: "16px 34px",
-          backgroundColor: "rgba(6, 12, 22, 0.82)",
+          backgroundColor: COLORS.captionBackground,
           fontFamily: FONTS.body,
-          fontSize: 50,
+          fontSize: VIDEO.fontSize.caption,
           fontWeight: 500,
           lineHeight: 1.3,
           textAlign: "center",
         }}
       >
         {line.words.map((word, index) => (
-          <span key={index} style={{ color: word.start <= time ? COLORS.paper : "rgba(147, 161, 181, 0.6)" }}>
+          <span key={index} style={{ color: word.start <= time ? COLORS.paper : COLORS.captionUpcoming }}>
             {index > 0 ? " " : ""}
             {word.text}
           </span>

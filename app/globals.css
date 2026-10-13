@@ -1,15 +1,7 @@
 @import "tailwindcss";
 
-/* "Night atlas", the same palette as the videos (remotion/theme.ts). */
+/* The colors come from lib/theme.ts, which app/layout.tsx sets as CSS variables on <html>. */
 :root {
-  --ink: #0f1b2d;
-  --land: #22334b;
-  --border: #3a4f6e;
-  --paper: #f4f1ea;
-  --dim: #93a1b5;
-  --signal: #ffb627;
-  --teal: #4fc3b4;
-  --alert: #ff7a6b;
   color-scheme: dark;
 }
 

@@ -1,6 +1,6 @@
 import { AbsoluteFill } from "remotion";
 import { useEase } from "../motion";
-import { CAPTION_SPACE, COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, VIDEO } from "@/lib/theme";
 
 // The opening: a big serif heading with an amber rule under it.
 export function TitleScene({ heading, subheading }: { heading: string; subheading?: string }) {
@@ -8,12 +8,12 @@ export function TitleScene({ heading, subheading }: { heading: string; subheadin
   const ruleIn = useEase(0.7, 0.8);
   const subheadingIn = useEase(1.0, 0.7);
   return (
-    <AbsoluteFill style={{ justifyContent: "center", padding: `0 220px ${CAPTION_SPACE}px` }}>
+    <AbsoluteFill style={{ justifyContent: "center", padding: `0 ${VIDEO.sideMargin}px ${VIDEO.captionSpace}px` }}>
       <div
         style={{
           maxWidth: 1450,
           fontFamily: FONTS.display,
-          fontSize: 136,
+          fontSize: VIDEO.fontSize.title,
           fontWeight: 700,
           lineHeight: 1.04,
           color: COLORS.paper,
@@ -25,7 +25,7 @@ export function TitleScene({ heading, subheading }: { heading: string; subheadin
       </div>
       <div style={{ width: 260 * ruleIn, height: 12, marginTop: 56, backgroundColor: COLORS.signal }} />
       {subheading ? (
-        <div style={{ marginTop: 44, fontFamily: FONTS.body, fontSize: 54, color: COLORS.dim, opacity: subheadingIn }}>
+        <div style={{ marginTop: 44, fontFamily: FONTS.body, fontSize: VIDEO.fontSize.subtitle, color: COLORS.dim, opacity: subheadingIn }}>
           {subheading}
         </div>
       ) : null}

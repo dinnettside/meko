@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo, Fraunces } from "next/font/google";
+import { cssVariables } from "@/lib/theme";
 import "./globals.css";
 
 // Fraunces for headings and Archivo for everything else, in the app and in the videos.
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable} h-full antialiased`}>
+    <html lang="en" className={`${display.variable} ${body.variable} h-full antialiased`} style={cssVariables}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

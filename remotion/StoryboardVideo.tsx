@@ -7,9 +7,7 @@ import { MapScene } from "./scenes/MapScene";
 import { TextScene } from "./scenes/TextScene";
 import { TimelineScene } from "./scenes/TimelineScene";
 import { TitleScene } from "./scenes/TitleScene";
-import { COLORS, FONTS } from "./theme";
-
-const FADE_SEC = 0.35;
+import { COLORS, FONTS, MOTION } from "@/lib/theme";
 
 export function sceneFrames(scene: Scene, fps: number): number {
   return Math.max(1, Math.round(scene.durationSec * fps));
@@ -44,7 +42,7 @@ export function StoryboardVideo({ storyboard, voice = {} }: { storyboard: Storyb
 // Every scene fades in from the dark ground and back out to it.
 function Fade({ frames, fps, children }: { frames: number; fps: number; children: ReactNode }) {
   const frame = useCurrentFrame();
-  const fade = Math.min(FADE_SEC * fps, frames / 3);
+  const fade = Math.min(MOTION.sceneFade * fps, frames / 3);
   const opacity = interpolate(frame, [0, fade, frames - fade, frames], [0, 1, 1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
