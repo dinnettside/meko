@@ -3,13 +3,17 @@ import { COUNTRIES, isKnownCountry } from "./countries.ts";
 import { addUsage, chatJson, emptyUsage } from "./nebius.ts";
 import { ResearchFactSchema, ScriptSchema, VideoRequestSchema, WORDS_PER_SECOND, countWords } from "./pipeline.ts";
 import type { Usage } from "./pipeline.ts";
-import { directScenePrompt, directTitlePrompt } from "./prompts/direct.ts";
+import { directScenePrompt, directTitlePrompt, placesPrompt } from "./prompts/direct.ts";
 import { SourceSchema, StoryboardSchema, storyboardProblems } from "./storyboard.ts";
+import { geoDistance } from "d3-geo";
 import { countryContains } from "./world.ts";
 import type { Storyboard } from "./storyboard.ts";
 
 const PAUSE_SEC = 0.6;
 const MIN_SCENE_SEC = 2.5;
+const EARTH_RADIUS_KM = 6371;
+// How far apart two independent answers for a city's position may be.
+const MAX_MARKER_GAP_KM = 250;
 // The prompts ask for 8 and 4 words. One word over is not worth a retry.
 const MAX_LINE_WORDS = 9;
 const MAX_LABEL_WORDS = 5;
@@ -63,8 +67,10 @@ type SceneReply = z.infer<typeof SceneReplySchema>;
 type NarratedScene = { id: string; narration: string; factIds: string[] };
 type FactTexts = Map<string, string>; // fact ID to fact text
 
-// Markers are for cities, so a marker named after a country is a mistake.
+// Markers are for cities, so a marker named after a country or a region is a mistake.
 const countryNames = new Set(Object.values(COUNTRIES).map((country) => country.name.toLowerCase()));
+const REGION_WORDS = /\b(asia|europe|africa|america|middle east|steppes?|desert|basin|ocean|sea|mountains|range|empire|dynasty|kingdom|route|road)\b/i;
+const isPlaceLabel = (label: string) => !countryNames.has(label.trim().toLowerCase()) && !REGION_WORDS.test(label);
 
 // Estimated from the word count until the voice-over sets the real length.
 export function sceneDuration(narration: string): number {
@@ -129,8 +135,8 @@ function sceneProblems({ visual, lines }: SceneReply, allowed: Set<string>, fact
       problems.push(`Unknown country codes: ${unknown.join(", ")}. Use ISO 3166-1 alpha-3 codes of today's countries.`);
     }
     for (const marker of visual.markers) {
-      if (countryNames.has(marker.label.trim().toLowerCase())) {
-        problems.push(`The marker "${marker.label}" names a country. Markers are for cities; highlight countries instead.`);
+      if (!isPlaceLabel(marker.label)) {
+        problems.push(`The marker "${marker.label}" names a country or region. Markers are for cities; highlight countries instead.`);
       }
       if (!countryContains(marker.country, marker.lon, marker.lat)) {
         problems.push(
@@ -182,7 +188,7 @@ function repairScene({ visual, lines }: SceneReply, scene: NarratedScene, allowe
     .filter((arrow) => isKnownCountry(arrow.from) && isKnownCountry(arrow.to))
     .map((arrow) => ({ ...arrow, label: safeLabel(arrow.label) }));
   const markers = visual.markers
-    .filter((marker) => !countryNames.has(marker.label.trim().toLowerCase()))
+    .filter((marker) => isPlaceLabel(marker.label))
     .filter((marker) => countryContains(marker.country, marker.lon, marker.lat))
     .filter((marker) => safeLabel(marker.label));
   const frame = visual.frame.filter(isKnownCountry);
@@ -200,6 +206,57 @@ function sameAs(a: SceneVisual, b: SceneVisual): boolean {
     return a.events.map((e) => e.year).join(",") === b.events.map((e) => e.year).join(",");
   }
   return false;
+}
+
+// Asks again, in one separate call, where each city lies. A marker only stays if both answers agree: its
+// coordinates fall inside the country of the second answer, and the two positions are within 250 km. This catches
+// coordinates that are simply wrong, which the first check misses when the model names a country that matches its
+// own wrong coordinates, and mix-ups like the city of Karakorum and the Karakoram mountains.
+async function verifyMarkers(
+  title: string,
+  visuals: SceneVisual[],
+  narrations: string[], // the narration of the scene each visual belongs to
+): Promise<{ visuals: SceneVisual[]; usage: Usage }> {
+  // Each place once, with the narration of the first scene that shows it, to tell apart similar names.
+  const contextOf = new Map<string, string>();
+  visuals.forEach((visual, index) => {
+    if (visual.kind !== "map") return;
+    for (const marker of visual.markers) if (!contextOf.has(marker.label)) contextOf.set(marker.label, narrations[index]);
+  });
+  const places = [...contextOf.keys()];
+  if (places.length === 0) return { visuals, usage: emptyUsage() };
+  let secondOpinion = new Map<string, { country: string; lat: number; lon: number }>();
+  let usage = emptyUsage();
+  try {
+    const reply = await chatJson({
+      step: "direct/places",
+      schemaName: "places",
+      schema: z.object({
+        places: z.array(z.object({ country: z.string(), lat: z.number(), lon: z.number() })).length(places.length),
+      }),
+      messages: placesPrompt(title, places.map((name) => ({ name, context: contextOf.get(name) ?? "" }))),
+      maxTokens: 800,
+    });
+    secondOpinion = new Map(places.map((place, index) => [place, reply.data.places[index]]));
+    usage = reply.usage;
+  } catch (error) {
+    // Without the second opinion the markers cannot be trusted, so they are left out.
+    console.warn(`[direct/places] Leaving out the map markers: ${error}`);
+  }
+  return {
+    usage,
+    visuals: visuals.map((visual) => {
+      if (visual.kind !== "map") return visual;
+      const markers = visual.markers.filter((marker) => {
+        const other = secondOpinion.get(marker.label);
+        if (!other || !countryContains(other.country, marker.lon, marker.lat)) return false;
+        const km = geoDistance([marker.lon, marker.lat], [other.lon, other.lat]) * EARTH_RADIUS_KM;
+        return km <= MAX_MARKER_GAP_KM;
+      });
+      if (markers.length < visual.markers.length) console.warn(`[direct/places] Dropped ${visual.markers.length - markers.length} marker(s)`);
+      return { ...visual, markers };
+    }),
+  };
 }
 
 // The storyboard contract has no fact IDs on timeline events and no countries on markers.
@@ -251,16 +308,22 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     }),
   );
   const [title, ...scenes] = await Promise.all([titleCall, ...sceneCalls]);
-  const usage = [title, ...scenes].reduce((total, call) => addUsage(total, call.usage), emptyUsage());
+  const checked = await verifyMarkers(
+    script.title,
+    scenes.map(({ data }) => data.visual),
+    rest.map((scene) => scene.narration),
+  );
+  const usage = [title, ...scenes, checked].reduce((total, call) => addUsage(total, call.usage), emptyUsage());
 
   // The calls ran apart, so a map or timeline can repeat the one before, or come third in a row of the same kind.
   // Then the later scene shows its lines instead, to keep some rhythm.
   const visuals: SceneVisual[] = [];
   scenes.forEach(({ data }, index) => {
+    const visual = checked.visuals[index];
     const [before, previous] = [visuals[index - 2], visuals[index - 1]];
-    const repeats = previous && sameAs(previous, data.visual);
-    const thirdInRow = data.visual.kind !== "text" && before?.kind === data.visual.kind && previous?.kind === data.visual.kind;
-    visuals.push(repeats || thirdInRow ? textVisual(data.lines, rest[index], allowedFor(rest[index])) : data.visual);
+    const repeats = previous && sameAs(previous, visual);
+    const thirdInRow = visual.kind !== "text" && before?.kind === visual.kind && previous?.kind === visual.kind;
+    visuals.push(repeats || thirdInRow ? textVisual(data.lines, rest[index], allowedFor(rest[index])) : visual);
   });
 
   const usedSourceIds = new Set(

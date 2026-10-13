@@ -1,4 +1,4 @@
-import { geoCentroid, geoMercator, geoPath } from "d3-geo";
+import { geoBounds, geoCentroid, geoMercator, geoPath } from "d3-geo";
 import { COUNTRIES } from "@/lib/countries";
 import { countries, countryFeature, mainland, mapIdOf } from "@/lib/world";
 
@@ -16,8 +16,13 @@ export function layoutMap(frameCodes: string[], box: [[number, number], [number,
     .map((code) => countryFeature(code))
     .flatMap((country) => (country ? [mainland(country)] : []))
     .filter((shape) => shape !== null);
-  const projection = geoMercator();
-  if (focus.length > 0) projection.fitExtent(box, { type: "FeatureCollection", features: focus });
+  const collection = { type: "FeatureCollection" as const, features: focus };
+  // Turn the globe so the countries sit in the middle. Without this, a country that crosses the 180th
+  // meridian, like Russia, is cut in two and the camera has to show the whole world.
+  const [[west], [east]] = geoBounds(collection);
+  const middle = focus.length === 0 ? 0 : west <= east ? (west + east) / 2 : (west + east + 360) / 2;
+  const projection = geoMercator().rotate([-middle, 0]);
+  if (focus.length > 0) projection.fitExtent(box, collection);
   const path = geoPath(projection);
 
   return {

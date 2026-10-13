@@ -2,6 +2,28 @@ import type { ChatCompletionMessageParam } from "openai/resources/chat/completio
 
 type Fact = { id: string; text: string };
 
+// A second opinion on where the map's cities lie, asked without coordinates.
+export function placesPrompt(title: string, places: { name: string; context: string }[]): ChatCompletionMessageParam[] {
+  return [
+    {
+      role: "system",
+      content: [
+        "For each place, give its latitude and longitude and the ISO 3166-1 alpha-3 code of the country where it lies today, in the same order.",
+        "Each place comes with the narration it appears in. Use it to tell apart places with similar names, like a city and a mountain range.",
+      ].join("\n"),
+    },
+    {
+      role: "user",
+      content: [
+        `Video: ${title}`,
+        "",
+        "Places:",
+        ...places.map((place, index) => `${index + 1}. ${place.name} (narration: "${place.context}")`),
+      ].join("\n"),
+    },
+  ];
+}
+
 // The opening scene only needs a title.
 export function directTitlePrompt(title: string, narration: string): ChatCompletionMessageParam[] {
   return [

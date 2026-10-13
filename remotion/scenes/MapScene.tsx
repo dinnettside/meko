@@ -156,24 +156,14 @@ export function MapScene({ scene }: { scene: MapSceneData }) {
 // A curved arrow that draws itself. The head appears when the line arrives.
 function Arrow({ from, to, control, progress }: { from: Point; to: Point; control: Point; progress: number }) {
   const angle = (Math.atan2(to[1] - control[1], to[0] - control[0]) * 180) / Math.PI;
+  const d = `M ${from[0]} ${from[1]} Q ${control[0]} ${control[1]} ${to[0]} ${to[1]}`;
+  const head = { opacity: progress > 0.9 ? (progress - 0.9) * 10 : 0, transform: `translate(${to[0]} ${to[1]}) rotate(${angle})` };
+  // A dark edge under the amber line keeps the arrow visible over an amber country.
   return (
     <g>
-      <path
-        d={`M ${from[0]} ${from[1]} Q ${control[0]} ${control[1]} ${to[0]} ${to[1]}`}
-        fill="none"
-        stroke={COLORS.signal}
-        strokeWidth={8}
-        strokeLinecap="round"
-        pathLength={1}
-        strokeDasharray={1}
-        strokeDashoffset={1 - progress}
-      />
-      <path
-        d="M 0 0 L -30 -16 L -30 16 Z"
-        fill={COLORS.signal}
-        opacity={progress > 0.9 ? (progress - 0.9) * 10 : 0}
-        transform={`translate(${to[0]} ${to[1]}) rotate(${angle})`}
-      />
+      <path d={d} fill="none" stroke={COLORS.ink} strokeWidth={16} strokeLinecap="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - progress} />
+      <path d={d} fill="none" stroke={COLORS.signal} strokeWidth={8} strokeLinecap="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - progress} />
+      <path d="M 0 0 L -30 -16 L -30 16 Z" fill={COLORS.signal} stroke={COLORS.ink} strokeWidth={4} strokeLinejoin="round" {...head} />
     </g>
   );
 }
