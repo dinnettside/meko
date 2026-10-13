@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Meko
 
-## Getting Started
+Meko turns a topic into a short, fact-checked, animated explainer video.
 
-First, run the development server:
+You type a topic, an audience and a length, for example "The French Revolution, high school, 90 seconds". An agent researches the topic on the web, writes a narration script where every claim is backed by a source, fact-checks its own script and directs each scene. The video plays right away in the browser, with the source list next to it.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Meko is built for the Nebius x NVIDIA Global AI Hackathon. The agent runs on NVIDIA Nemotron models served by Nebius Token Factory.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Meko is a work in progress.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+You need Node.js 22.18 or newer and npm.
 
-## Learn More
+1. Install the dependencies:
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   npm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. Copy `.env.example` to `.env.local` and fill in the values. `.env.local` is gitignored, so your keys stay on your machine. Not every variable is used yet.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   | Name | What it is |
+   | --- | --- |
+   | `NEBIUS_API_KEY` | API key for Nebius Token Factory |
+   | `NEBIUS_MODEL` | The Nemotron model ID to use on Token Factory |
+   | `TAVILY_API_KEY` | API key for Tavily web search |
+   | `ELEVENLABS_API_KEY` | API key for ElevenLabs text-to-speech |
+   | `ELEVENLABS_VOICE_ID` | The ElevenLabs voice to use |
 
-## Deploy on Vercel
+3. Start the dev server and open http://localhost:3000:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   npm run dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Starts the dev server on http://localhost:3000 |
+| `npm run build` | Builds the app for production |
+| `npm run start` | Serves the production build |
+| `npm run lint` | Runs ESLint |
+
+## License
+
+Meko's own code is MIT licensed, see [LICENSE](LICENSE).
+
+Meko uses [Remotion](https://www.remotion.dev) to play the videos. Remotion is not MIT licensed. It has its own license, which is free for individuals, non-profits and companies with up to 3 employees. Larger companies need a paid company license. See the [Remotion license](https://www.remotion.dev/docs/license).
