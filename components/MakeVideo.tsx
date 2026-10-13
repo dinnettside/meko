@@ -55,6 +55,7 @@ const STEPS: { id: StepId; label: string; timeoutMs: number }[] = [
 ];
 
 const AUDIENCES = ["Kids (8 to 12)", "High school", "Adults"];
+const SUGGESTIONS = ["The Black Death", "How vaccines work", "The fall of the Berlin Wall"];
 const LENGTHS = [60, 90, 120];
 const EXAMPLE = { json: "/examples/silk-road.json", audioFolder: "/examples/silk-road" };
 
@@ -346,6 +347,19 @@ export function MakeVideo() {
             {running ? "Making video…" : "Make video"}
           </button>
         </form>
+        <p className="flex flex-wrap items-center gap-2 text-sm text-dim">
+          Try:
+          {SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              onClick={() => setTopic(suggestion)}
+              className="rounded border border-line px-2 py-0.5 hover:border-signal hover:text-paper"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </p>
         <p className="text-sm text-dim">
           Takes under a minute.{" "}
           <button
@@ -358,6 +372,17 @@ export function MakeVideo() {
           </button>
         </p>
       </div>
+
+      {!started && !finished ? (
+        <section className="max-w-3xl">
+          <h2 className="font-display text-2xl font-bold">How Meko keeps it honest</h2>
+          <ol className="mt-3 flex list-decimal flex-col gap-2 pl-5 text-dim">
+            <li>Every fact comes with the exact words from its source, and Meko checks that those words are really there.</li>
+            <li>Every sentence of the script is checked claim by claim against those words before it is spoken.</li>
+            <li>Next to the video you see the verdict, the quotes and the sources for every sentence.</li>
+          </ol>
+        </section>
+      ) : null}
 
       {started ? (
         <div className="flex flex-col gap-3">
