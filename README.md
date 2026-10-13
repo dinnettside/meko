@@ -43,6 +43,7 @@ You need Node.js 22.18 or newer and npm.
 | `npm run start` | Serves the production build |
 | `npm run lint` | Runs ESLint |
 | `npm run typecheck` | Generates route types and runs the TypeScript compiler |
+| `npm run check-models` | Tests the NVIDIA models on Token Factory and writes `docs/model-check.md`. Makes paid API calls, capped at 1 USD |
 
 ## License
 
