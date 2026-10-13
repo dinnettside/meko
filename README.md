@@ -24,7 +24,7 @@ You need Node.js 22.18 or newer and npm.
    | --- | --- |
    | `NEBIUS_API_KEY` | API key for Nebius Token Factory |
    | `NEBIUS_MODEL` | The Nemotron model ID to use on Token Factory |
-   | `TAVILY_API_KEY` | API key for Tavily web search |
+   | `TAVILY_API_KEY` | API key for Tavily web search. Without it, Meko uses Tavily's free keyless mode, which has a low hourly limit and is only meant for development |
    | `ELEVENLABS_API_KEY` | API key for ElevenLabs text-to-speech |
    | `ELEVENLABS_VOICE_ID` | The ElevenLabs voice to use |
 
