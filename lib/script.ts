@@ -11,15 +11,15 @@ export const ScriptInputSchema = z.object({
 
 export type ScriptResult = { script: Script; usage: Usage };
 
-// About one scene every 8 to 15 seconds, and a word count that fits the length.
+// About one scene every 8 to 12 seconds, so the picture changes often, and a word count that fits the length.
 // The short pauses between scenes take about 6% of the video.
 export function scriptTargets(lengthSec: number) {
   const words = Math.round(lengthSec * 0.94 * WORDS_PER_SECOND);
   const maxWords = Math.round(words * 1.1);
-  const minScenes = Math.max(3, Math.round(lengthSec / 15));
+  const minScenes = Math.max(3, Math.round(lengthSec / 12));
   const maxScenes = Math.max(minScenes + 2, Math.round(lengthSec / 8));
-  // Short scenes keep the picture moving: at most about 16 seconds each, and a quick opening.
-  return { words, maxWords, minScenes, maxScenes, maxSceneWords: 40, maxOpeningWords: 30 };
+  // Short scenes keep the picture moving: at most about 15 seconds each, and a quick opening.
+  return { words, maxWords, minScenes, maxScenes, maxSceneWords: 35, maxOpeningWords: 25 };
 }
 
 // Scene and sentence counts go into the JSON Schema, where Token Factory enforces them.
