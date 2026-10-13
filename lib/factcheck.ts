@@ -12,18 +12,17 @@ export const FactCheckInputSchema = z.object({
 
 export type FactCheckResult = { script: Script; report: FactCheckReport; usage: Usage };
 
-const ChecksSchema = z.object({
-  checks: z.array(
-    z.object({
-      sentenceId: z.string(),
-      status: CheckStatusSchema,
-      revised: z.string(),
-      reason: z.string(),
-    }),
-  ),
+const CheckSchema = z.object({
+  sentenceId: z.string(),
+  status: CheckStatusSchema,
+  revised: z.string(),
+  reason: z.string(),
 });
 
-type Checks = z.infer<typeof ChecksSchema>;
+// Exactly one check per sentence. Token Factory enforces the list length from the JSON Schema.
+const checksSchema = (sentenceCount: number) => z.object({ checks: z.array(CheckSchema).length(sentenceCount) });
+
+type Checks = { checks: z.infer<typeof CheckSchema>[] };
 
 function checkProblems({ checks }: Checks, sentenceIds: string[]): string[] {
   const problems: string[] = [];
@@ -59,7 +58,7 @@ export async function factCheck({ script, facts }: z.infer<typeof FactCheckInput
   const { data, usage } = await chatJson({
     step: "factcheck",
     schemaName: "checks",
-    schema: ChecksSchema,
+    schema: checksSchema(sentences.length),
     messages: factCheckPrompt(sentences),
     maxTokens: 6000,
     check: (result) => checkProblems(result, sentences.map((sentence) => sentence.id)),
@@ -74,8 +73,13 @@ export async function factCheck({ script, facts }: z.infer<typeof FactCheckInput
         const sentenceId = `${scene.id}.${index + 1}`;
         // checkProblems made sure every sentence has exactly one check.
         const check = checkById.get(sentenceId);
-        const status = check?.status ?? "removed";
-        const revised = status === "revised" ? (check?.revised.trim() ?? "") : "";
+        let status = check?.status ?? "removed";
+        let revised = status === "revised" ? (check?.revised.trim() ?? "") : "";
+        // A "revision" that changes nothing counts as supported.
+        if (status === "revised" && revised === sentence.text.trim()) {
+          status = "supported";
+          revised = "";
+        }
         report.push({ sentenceId, status, original: sentence.text, revised, reason: check?.reason ?? "" });
         if (status === "removed") return [];
         return [{ text: status === "revised" ? revised : sentence.text, factIds: sentence.factIds }];

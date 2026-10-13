@@ -21,7 +21,7 @@ export type DirectResult = { storyboard: Storyboard; usage: Usage };
 
 // Phase 1 only renders title and text scenes.
 const TitleVisualSchema = z.object({ heading: z.string(), subheading: z.string().optional() });
-const TextVisualSchema = z.object({ lines: z.array(z.string()) });
+const TextVisualSchema = z.object({ lines: z.array(z.string()).min(1).max(3) });
 
 type Visual = z.infer<typeof TitleVisualSchema> | z.infer<typeof TextVisualSchema>;
 type Visuals = Record<string, Visual>;

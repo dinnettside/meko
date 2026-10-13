@@ -13,9 +13,15 @@ const MAX_GAP_QUERIES = 3;
 const MAX_FACTS_PER_SOURCE = 6;
 const MIN_SOURCE_CHARS = 300;
 
-const QueriesSchema = z.object({ queries: z.array(z.string()) });
-const GapsSchema = z.object({ gaps: z.array(z.string()), queries: z.array(z.string()) });
-const ExtractedSchema = z.object({ facts: z.array(z.object({ text: z.string(), quote: z.string() })) });
+// The max lengths end up in the JSON Schema, and Token Factory enforces them, so lists cannot run away.
+const QueriesSchema = z.object({ queries: z.array(z.string()).max(6) });
+const GapsSchema = z.object({
+  gaps: z.array(z.string()).max(MAX_GAP_QUERIES),
+  queries: z.array(z.string()).max(MAX_GAP_QUERIES),
+});
+const ExtractedSchema = z.object({
+  facts: z.array(z.object({ text: z.string(), quote: z.string() })).max(MAX_FACTS_PER_SOURCE),
+});
 
 type ReadSource = {
   title: string;
@@ -130,16 +136,23 @@ export async function research(request: VideoRequest): Promise<ResearchResult> {
     }
     if (round === MAX_ROUNDS - 1) break;
 
-    const gaps = await chatJson({
-      step: "research/gaps",
-      schemaName: "gaps",
-      schema: GapsSchema,
-      messages: findGapsPrompt(request, read.flatMap((source) => source.facts.map((fact) => fact.text))),
-      maxTokens: 500,
-    });
-    usage = addUsage(usage, gaps.usage);
-    if (gaps.data.queries.length === 0) break;
-    queries = gaps.data.queries.slice(0, MAX_GAP_QUERIES);
+    // The gap check is a bonus. If it fails, we go on with the facts we have.
+    let gapQueries: string[] = [];
+    try {
+      const gaps = await chatJson({
+        step: "research/gaps",
+        schemaName: "gaps",
+        schema: GapsSchema,
+        messages: findGapsPrompt(request, read.flatMap((source) => source.facts.map((fact) => fact.text))),
+        maxTokens: 800,
+      });
+      usage = addUsage(usage, gaps.usage);
+      gapQueries = gaps.data.queries;
+    } catch (error) {
+      console.warn(`[research] Skipping the gap round: ${error}`);
+    }
+    if (gapQueries.length === 0) break;
+    queries = gapQueries;
   }
 
   const sources: ResearchSource[] = [];

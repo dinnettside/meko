@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { chatJson } from "./nebius.ts";
-import { ResearchFactSchema, ScriptSchema, VideoRequestSchema, countWords } from "./pipeline.ts";
+import { ResearchFactSchema, ScriptSentenceSchema, VideoRequestSchema, countWords } from "./pipeline.ts";
 import type { Script, Usage } from "./pipeline.ts";
 import { writeScriptPrompt } from "./prompts/write-script.ts";
 
@@ -20,6 +20,17 @@ export function scriptTargets(lengthSec: number) {
   const minScenes = Math.max(3, Math.round(lengthSec / 15));
   const maxScenes = Math.max(minScenes + 2, Math.round(lengthSec / 8));
   return { words, maxWords, minScenes, maxScenes };
+}
+
+// Scene and sentence counts go into the JSON Schema, where Token Factory enforces them.
+function scriptSchema(targets: ReturnType<typeof scriptTargets>): z.ZodType<Script> {
+  return z.object({
+    title: z.string(),
+    scenes: z
+      .array(z.object({ id: z.string(), sentences: z.array(ScriptSentenceSchema).min(1).max(3) }))
+      .min(targets.minScenes)
+      .max(targets.maxScenes),
+  });
 }
 
 function scriptProblems(script: Script, factIds: Set<string>, targets: ReturnType<typeof scriptTargets>): string[] {
@@ -53,7 +64,7 @@ export async function writeScript({ request, facts }: z.infer<typeof ScriptInput
   const { data, usage } = await chatJson({
     step: "script",
     schemaName: "script",
-    schema: ScriptSchema,
+    schema: scriptSchema(targets),
     messages: writeScriptPrompt(request, facts, targets),
     maxTokens: 4000,
     check: (script) => scriptProblems(script, factIds, targets),
