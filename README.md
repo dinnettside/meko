@@ -45,6 +45,11 @@ You need Node.js 22.18 or newer and npm.
 | `npm run typecheck` | Generates route types and runs the TypeScript compiler |
 | `npm run check-models` | Tests the NVIDIA models on Token Factory and writes `docs/model-check.md`. Makes paid API calls, capped at 1 USD |
 
+## Known limitations
+
+- Maps use today's borders, from Natural Earth via world-atlas. Historical borders are out of scope, so a map about the Roman Empire shows modern countries.
+- Norwegian output is not supported yet. The models we tested write weak Norwegian.
+
 ## License
 
 Meko's own code is MIT licensed, see [LICENSE](LICENSE).

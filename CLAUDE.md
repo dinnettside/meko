@@ -108,7 +108,7 @@ Known limitation: the map data has modern borders. Historical borders are out of
 
 ## Phases
 
-Current phase: **2**
+Current phase: **3**
 
 ### Phase 0: setup and model check (Oct 13-14)
 - [x] Scaffold Next.js + Tailwind + Remotion Player, MIT LICENSE, README stub, `.env.example`
@@ -119,7 +119,7 @@ Current phase: **2**
 - [x] Title and text scenes only, live progress for each step, source list next to the video
 
 ### Phase 2: visuals and voice (Oct 19-23)
-- [ ] Map scenes, timeline scenes, transitions
+- [x] Map scenes, timeline scenes, transitions
 - [x] ElevenLabs voice, scene timing from audio length
 
 ### Phase 3: trust and robustness (Oct 24-26)

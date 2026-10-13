@@ -5,6 +5,7 @@ import { ResearchFactSchema, ScriptSchema, VideoRequestSchema, countWords } from
 import type { Usage } from "./pipeline.ts";
 import { directScenePrompt, directTitlePrompt } from "./prompts/direct.ts";
 import { SourceSchema, StoryboardSchema, storyboardProblems } from "./storyboard.ts";
+import { countryContains } from "./world.ts";
 import type { Storyboard } from "./storyboard.ts";
 
 const WORDS_PER_SECOND = 2.5;
@@ -39,8 +40,12 @@ const SceneVisualSchema = z.discriminatedUnion("kind", [
         }),
       )
       .min(1)
-      .max(6),
+      .max(5),
     arrows: z.array(z.object({ from: z.string(), to: z.string(), label: z.string().optional() })).max(3),
+    // Cities as dots. `country` is where the city lies today, and the code checks the point is in it.
+    markers: z
+      .array(z.object({ label: z.string(), lon: z.number(), lat: z.number(), country: z.string() }))
+      .max(3),
   }),
   z.object({
     kind: z.literal("timeline"),
@@ -76,7 +81,11 @@ const eventIsBacked = (event: { year: number; factId: string }, factTexts: FactT
 function shownText(visual: SceneVisual): string[] {
   if (visual.kind === "text") return visual.lines;
   if (visual.kind === "timeline") return visual.events.map((event) => event.label);
-  return [...visual.highlights.map((h) => h.label ?? ""), ...visual.arrows.map((a) => a.label ?? "")];
+  return [
+    ...visual.highlights.map((h) => h.label ?? ""),
+    ...visual.arrows.map((a) => a.label ?? ""),
+    ...visual.markers.map((m) => m.label),
+  ];
 }
 
 const lineIsSafe = (line: string, allowed: Set<string>) =>
@@ -116,6 +125,13 @@ function sceneProblems({ visual, lines }: SceneReply, allowed: Set<string>, fact
     const unknown = [...new Set(codes.filter((code) => !isKnownCountry(code)))];
     if (unknown.length > 0) {
       problems.push(`Unknown country codes: ${unknown.join(", ")}. Use ISO 3166-1 alpha-3 codes of today's countries.`);
+    }
+    for (const marker of visual.markers) {
+      if (!countryContains(marker.country, marker.lon, marker.lat)) {
+        problems.push(
+          `The marker "${marker.label}" at latitude ${marker.lat}, longitude ${marker.lon} is not in ${marker.country}. Check the country and the coordinates.`,
+        );
+      }
     }
     return problems;
   }
@@ -160,9 +176,12 @@ function repairScene({ visual, lines }: SceneReply, scene: NarratedScene, allowe
   const arrows = visual.arrows
     .filter((arrow) => isKnownCountry(arrow.from) && isKnownCountry(arrow.to))
     .map((arrow) => ({ ...arrow, label: safeLabel(arrow.label) }));
+  const markers = visual.markers
+    .filter((marker) => countryContains(marker.country, marker.lon, marker.lat))
+    .filter((marker) => safeLabel(marker.label));
   const frame = visual.frame.filter(isKnownCountry);
   if (highlights.length === 0) return fallback;
-  return { kind: "map", frame: frame.length > 0 ? frame : highlights.map((h) => h.country), highlights, arrows };
+  return { kind: "map", frame: frame.length > 0 ? frame : highlights.map((h) => h.country), highlights, arrows, markers };
 }
 
 // Same kind, same countries or same events: the viewer would see the same picture twice.
@@ -177,10 +196,11 @@ function sameAs(a: SceneVisual, b: SceneVisual): boolean {
   return false;
 }
 
-// The storyboard contract has no fact IDs on timeline events.
-function withoutFactIds(visual: SceneVisual) {
-  if (visual.kind !== "timeline") return visual;
-  return { ...visual, events: visual.events.map(({ year, label }) => ({ year, label })) };
+// The storyboard contract has no fact IDs on timeline events and no countries on markers.
+function forStoryboard(visual: SceneVisual) {
+  if (visual.kind === "timeline") return { ...visual, events: visual.events.map(({ year, label }) => ({ year, label })) };
+  if (visual.kind === "map") return { ...visual, markers: visual.markers.map(({ lon, lat, label }) => ({ lon, lat, label })) };
+  return visual;
 }
 
 export async function direct({ request, script, facts, sources }: z.infer<typeof DirectInputSchema>): Promise<DirectResult> {
@@ -227,12 +247,14 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
   const [title, ...scenes] = await Promise.all([titleCall, ...sceneCalls]);
   const usage = [title, ...scenes].reduce((total, call) => addUsage(total, call.usage), emptyUsage());
 
-  // The calls ran apart, so a map or timeline can repeat the one before. Then the later scene shows its lines.
+  // The calls ran apart, so a map or timeline can repeat the one before, or come third in a row of the same kind.
+  // Then the later scene shows its lines instead, to keep some rhythm.
   const visuals: SceneVisual[] = [];
   scenes.forEach(({ data }, index) => {
-    const previous = visuals[index - 1];
+    const [before, previous] = [visuals[index - 2], visuals[index - 1]];
     const repeats = previous && sameAs(previous, data.visual);
-    visuals.push(repeats ? textVisual(data.lines, rest[index], allowedFor(rest[index])) : data.visual);
+    const thirdInRow = data.visual.kind !== "text" && before?.kind === data.visual.kind && previous?.kind === data.visual.kind;
+    visuals.push(repeats || thirdInRow ? textVisual(data.lines, rest[index], allowedFor(rest[index])) : data.visual);
   });
 
   const usedSourceIds = new Set(
@@ -245,7 +267,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     width: 1920,
     height: 1080,
     scenes: narrated.map((scene, index) => ({
-      ...(index === 0 ? { kind: "title", ...title.data } : withoutFactIds(visuals[index - 1])),
+      ...(index === 0 ? { kind: "title", ...title.data } : forStoryboard(visuals[index - 1])),
       id: scene.id,
       narration: scene.narration,
       factIds: scene.factIds,
