@@ -21,7 +21,7 @@ export type SearchResult = z.infer<typeof SearchResponseSchema>["results"][numbe
 
 // Sources a trustworthy explainer should rest on: encyclopedias, museums, public bodies and science organizations.
 // Tavily prefers them, but other sites can still come up.
-const PREFERRED_DOMAINS = [
+export const PREFERRED_DOMAINS = [
   "wikipedia.org", "en.wikipedia.org", "britannica.com", "worldhistory.org", "newworldencyclopedia.org", "encyclopedia.com",
   "history.com", "nationalgeographic.com", "smithsonianmag.com", "si.edu", "khanacademy.org", "bbc.co.uk", "bbc.com",
   "loc.gov", "archives.gov", "metmuseum.org", "britishmuseum.org", "unesco.org", "un.org", "nasa.gov", "nih.gov",

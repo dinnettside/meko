@@ -175,6 +175,9 @@ export function sceneDuration(narration: string): number {
 const eventIsBacked = (event: { year: number; factId: string }, facts: FactMap) =>
   yearsIn(facts.get(event.factId)?.text ?? "").includes(event.year);
 
+// Words for places a world map cannot show.
+const SPACE_WORDS = /\b(moon|lunar|mars|orbit|orbital|spacecraft|planet|planets|galaxy|asteroid|comet|crater)\b/i;
+
 // Whether a source quote holds a whole sentence of 5 to 30 words, which is what a quote scene shows.
 const hasWholeSentence = (quote: string) =>
   (quote.match(/(^|[.!?]["”’)]?\s+)["'“‘(]?[A-Z0-9][^.!?]*[.!?]/g) ?? []).some((sentence) => {
@@ -337,8 +340,9 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
         if (mismatch) {
           problems.push(`The label "${highlight.label}" is on ${highlight.country}, but ${mismatch}. Label each country with its own name or a region it lies in.`);
         }
-        // Coloring all of a big country to point at one port in it misleads, so cities go in markers.
-        if (highlight.label && (CITY_WORDS.test(highlight.label) || visual.markers.some((m) => m.label === highlight.label))) {
+        // Coloring all of a big country to point at one port in it misleads, so cities go in markers. A city in
+        // brackets, like "Crimea (Kaffa)", is one too.
+        if (highlight.label && (CITY_WORDS.test(highlight.label) || /[()]/.test(highlight.label) || visual.markers.some((m) => m.label === highlight.label))) {
           problems.push(`"${highlight.label}" names a city. Put cities in markers, and highlight only countries or regions.`);
         }
       }
@@ -440,6 +444,10 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
       ) {
         problems.push("A chart compares amounts, not dates. Use a timeline for dates.");
       }
+      // Latitude and longitude are a place, not two amounts.
+      if (/\b(latitude|longitude|coordinates?)\b/i.test([visual.title, ...visual.bars.map((bar) => bar.label)].join(" "))) {
+        problems.push("Coordinates are not amounts to compare. Use a map or another kind.");
+      }
       // "Tonnes: 130, Tons: 143" is one amount in two units, not two things to compare.
       if (visual.bars.filter((bar) => UNIT_LABEL.test(bar.label.trim())).length >= 2) {
         problems.push("The bars are one amount in different units. A chart compares different things in one unit.");
@@ -473,6 +481,7 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
       if (!/^["'“‘(]?[A-Z0-9]/.test(text)) problems.push("The quote starts in the middle of a sentence. Start where the sentence starts.");
       if (/[.!?]["”’)]?\s+\S/.test(text)) problems.push("The quote runs across two sentences. Copy one whole sentence.");
       else if (!/[.!?]["”’)]?$/.test(text)) problems.push("The quote stops in the middle of a sentence. Copy the whole sentence, to its end.");
+      if (/[|•·]/.test(text)) problems.push("The quote is a heading or a list, not a sentence. Copy a sentence someone wrote.");
       if (!lineIsGrounded(text, source)) problems.push("The quote is not about what this scene says. Pick words that say what the narration says.");
       break;
     }
@@ -570,7 +579,7 @@ function repairScene(
         text &&
         countWords(text) <= MAX_MAP_LABEL_WORDS &&
         mapLabelIsGrounded({ text, country }, source) &&
-        !(country && (labelMismatch(text, country) || CITY_WORDS.test(text)))
+        !(country && (labelMismatch(text, country) || CITY_WORDS.test(text) || /[()]/.test(text)))
           ? safeLabel(text)
           : undefined;
       const highlights = visual.highlights
@@ -844,9 +853,12 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
   // system works, and for the Moon landing. Asking the model which scenes name places let the Moon through.
   const hasPlaces = rest.map((scene) => namesAPlace(sourceFor(scene)));
   const geographic = hasPlaces.filter(Boolean).length >= 2;
+  // A scene's own narration must name the place, and never space: facts about "the American spaceflight" once
+  // gave a scene about the Moon landing a map of the United States labeled "Tranquility Base".
+  const mapFits = rest.map((scene) => namesAPlace(scene.narration) && !SPACE_WORDS.test(scene.narration));
   const limits = kindLimits(rest.length, geographic);
   missing.forEach((kinds, index) => {
-    if (!geographic || !hasPlaces[index]) kinds.push("map");
+    if (!geographic || !mapFits[index]) kinds.push("map");
   });
   const plannedKinds = plan ? pickKinds(plan.data.scenes.map((scene) => scene.kinds), missing, limits) : rest.map(() => undefined);
   if (plan) console.log(`[direct/plan] ${plannedKinds.map((kind) => kind ?? "free").join(", ")}`);

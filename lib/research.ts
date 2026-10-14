@@ -4,7 +4,7 @@ import type { ResearchFact, ResearchSource, Usage, VideoRequest } from "./pipeli
 import { extractFactsPrompt } from "./prompts/extract-facts.ts";
 import { findGapsPrompt } from "./prompts/find-gaps.ts";
 import { planQueriesPrompt } from "./prompts/plan-queries.ts";
-import { searchWeb } from "./tavily.ts";
+import { PREFERRED_DOMAINS, searchWeb } from "./tavily.ts";
 import type { SearchResult } from "./tavily.ts";
 
 const MAX_ROUNDS = 2;
@@ -72,13 +72,29 @@ async function searchAll(queries: string[]): Promise<SearchResult[][]> {
   return results;
 }
 
-// Takes the best new page from each query in turn, so every part of the plan gets a source.
+// How far a site can be trusted as a source: encyclopedias, museums, public bodies and universities first, then
+// other organizations, then everything else. Shops and blogs only come in when a search finds nothing better.
+function trustTier(url: string): number {
+  let host: string;
+  try {
+    host = new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return 2;
+  }
+  if (PREFERRED_DOMAINS.some((domain) => host === domain || host.endsWith(`.${domain}`))) return 0;
+  if (/\.(gov|edu|mil|int)(\.[a-z]{2})?$|\.ac\.[a-z]{2}$|\.museum$/.test(host)) return 0;
+  return host.endsWith(".org") ? 1 : 2;
+}
+
+// Takes the best new page from each query in turn, so every part of the plan gets a source. Within a query, the
+// most trusted sites come first, in Tavily's order.
 function pickSources(resultsPerQuery: SearchResult[][], alreadyRead: Set<string>, count: number): SearchResult[] {
   const picked: SearchResult[] = [];
   const seen = new Set(alreadyRead);
-  const longest = Math.max(0, ...resultsPerQuery.map((list) => list.length));
+  const ranked = resultsPerQuery.map((list) => [...list].sort((a, b) => trustTier(a.url) - trustTier(b.url)));
+  const longest = Math.max(0, ...ranked.map((list) => list.length));
   for (let rank = 0; rank < longest && picked.length < count; rank++) {
-    for (const list of resultsPerQuery) {
+    for (const list of ranked) {
       const result = list[rank];
       if (!result || picked.length === count) continue;
       const url = result.url.replace(/#.*$/, "").replace(/\/$/, "");
