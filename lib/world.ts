@@ -1,4 +1,4 @@
-import { geoArea, geoContains } from "d3-geo";
+import { geoArea, geoCentroid, geoContains } from "d3-geo";
 import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon } from "geojson";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
@@ -46,4 +46,11 @@ export function countryContains(code: string, lon: number, lat: number): boolean
   if (!country) return false;
   const offsets = [0, -0.3, 0.3];
   return offsets.some((dLon) => offsets.some((dLat) => geoContains(country, [lon + dLon, lat + dLat])));
+}
+
+// The middle of a country's mainland, as [longitude, latitude].
+export function countryCenter(code: string): [number, number] | null {
+  const country = countryFeature(code);
+  const shape = country ? mainland(country) : null;
+  return shape ? geoCentroid(shape) : null;
 }
