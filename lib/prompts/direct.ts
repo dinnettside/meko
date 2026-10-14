@@ -9,6 +9,7 @@ export function placesPrompt(title: string, places: { name: string; context: str
       role: "system",
       content: [
         "For each place, give its latitude and longitude and the ISO 3166-1 alpha-3 code of the country where it lies today, in the same order.",
+        'Set "isPlace" to false when the name is not a place on Earth at all, like a person, an institution, a group or an event.',
         "Each place comes with the narration it appears in. Use it to tell apart places with similar names, like a city and a mountain range.",
       ].join("\n"),
     },
@@ -36,7 +37,7 @@ export function directPlanPrompt(
         "You plan the pictures of a short explainer video. For every scene, in order, rank the 3 kinds of picture that would show its narration best, best first.",
         "Kinds: map (places, borders, movement between places), timeline (a time that other years in the video put in context), stat (one striking number), compare (two or more amounts in the same unit), quote (a source's own words say it best), steps (a process or a chain of causes, where each step leads to the next), text (only when nothing else fits).",
         'Each scene lists under "cannot" the kinds its facts have no data for, like a timeline without years. Never list those.',
-        "Use a map when the scene is about where something happens or a movement between places.",
+        "Use a map when the scene is about where something happens on Earth or a movement between places on Earth. Never for space, the human body or ideas.",
         "The video should not show the same kind again and again, so the other choices matter: the best one is not always used.",
       ].join("\n"),
     },

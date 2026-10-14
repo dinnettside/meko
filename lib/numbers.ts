@@ -38,7 +38,21 @@ export function amountsIn(text: string): string[] {
   return [...amounts.values()];
 }
 
-// Whether a text uses the number as a date: as a year, or as a decade like "the 1400s".
+const MONTHS = "january|february|march|april|may|june|july|august|september|october|november|december";
+
+// Whether a text uses the number as a date: as a year, a decade like "the 1400s", or a day like "July 1".
 export function isDateIn(value: number, text: string): boolean {
-  return yearsIn(text).includes(value) || new RegExp(`(^|[^\\d.,])${value}'?s\\b`).test(text.replace(/(\d),(?=\d{3})/g, "$1"));
+  const plain = text.replace(/(\d),(?=\d{3})/g, "$1");
+  return (
+    yearsIn(plain).includes(value) ||
+    new RegExp(`(^|[^\\d.,])${value}'?s\\b`).test(plain) ||
+    new RegExp(`\\b(${MONTHS})\\s+${value}\\b|\\b${value}(st|nd|rd|th)?\\s+(of\\s+)?(${MONTHS})\\b`, "i").test(plain)
+  );
+}
+
+// Whether a text says the value is part of the total, like "25 of Europe's 75 million" or "1 out of 3". A range
+// ("4 to 5 million") or a later count is not, and dots for value out of total would mislead.
+export function isPartOf(value: number, total: number, text: string): boolean {
+  const plain = text.replace(/(\d),(?=\d{3})/g, "$1");
+  return new RegExp(`(^|[^\\d.])${value}(?![\\d.])[^.]{0,40}\\b(of|out of|among)\\b[^.]{0,25}(^|[^\\d.])${total}(?![\\d.])`, "i").test(plain);
 }
