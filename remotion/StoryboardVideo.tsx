@@ -11,7 +11,9 @@ import type { CheckCounts } from "./Credits";
 import { YearMark } from "./YearMark";
 import { SourceChip } from "./SourceChip";
 import { CompareScene } from "./scenes/CompareScene";
+import { ChangeScene } from "./scenes/ChangeScene";
 import { ListScene } from "./scenes/ListScene";
+import { VersusScene } from "./scenes/VersusScene";
 import { MapScene } from "./scenes/MapScene";
 import { QuoteScene } from "./scenes/QuoteScene";
 import { StatScene } from "./scenes/StatScene";
@@ -159,7 +161,7 @@ function SceneView({
     case "map":
       return <MapScene scene={scene} previous={previous?.kind === "map" ? previous : undefined} {...timing} />;
     case "timeline":
-      return <TimelineScene events={scene.events} focusIndex={scene.focusIndex} {...timing} />;
+      return <TimelineScene events={scene.events} focusIndex={scene.focusIndex} eras={scene.eras} {...timing} />;
     case "stat":
       return <StatScene value={scene.value} valueMax={scene.valueMax} unit={scene.unit} label={scene.label} total={scene.total} {...timing} />;
     case "compare":
@@ -172,5 +174,9 @@ function SceneView({
       return <StepsScene steps={scene.steps} {...timing} />;
     case "list":
       return <ListScene items={scene.items} summary={isLast} {...timing} />;
+    case "versus":
+      return <VersusScene left={scene.left} right={scene.right} rows={scene.rows} {...timing} />;
+    case "change":
+      return <ChangeScene from={scene.from} to={scene.to} year={scene.year} {...timing} />;
   }
 }

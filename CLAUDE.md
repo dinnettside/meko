@@ -90,13 +90,15 @@ type Scene =
       arrows?: { from: string; to: string; label?: string }[];
       markers?: { lon: number; lat: number; label: string }[];
     })
-  | (SceneBase & { kind: "timeline"; events: { year: number; label: string; date?: string }[]; focusIndex: number }) // `date` (added Oct 14, 2026 with Trym's OK) is a day and month like "20 July", for events in the same year
+  | (SceneBase & { kind: "timeline"; events: { year: number; label: string; date?: string }[]; focusIndex: number; eras?: { start: number; end: number; label: string }[] }) // `date` (added Oct 14, 2026 with Trym's OK) is a day and month like "20 July", for events in the same year; `eras` (added Oct 14, 2026 with Trym's OK) are periods drawn as bands under the events
   // Added Oct 14, 2026 with Trym's OK:
   | (SceneBase & { kind: "stat"; value: number; valueMax?: number; unit?: string; label: string; total?: number }) // one big number; `total` draws value out of total as dots; `valueMax` (added Oct 14, 2026 with Trym's OK) is the high end when the number is a range, like 25 to 50 million
   | (SceneBase & { kind: "compare"; title: string; unit?: string; bars: { label: string; value: number }[] }) // a bar chart
   | (SceneBase & { kind: "quote"; text: string; sourceId: string }) // a source's exact words
   | (SceneBase & { kind: "steps"; steps: string[] }) // a process or a chain of causes
-  | (SceneBase & { kind: "list"; items: { title: string; detail?: string }[] }); // added Oct 14, 2026 with Trym's OK: 2-4 things of one kind side by side, as cards without arrows
+  | (SceneBase & { kind: "list"; items: { title: string; detail?: string }[] }) // added Oct 14, 2026 with Trym's OK: 2-4 things of one kind side by side, as cards without arrows
+  | (SceneBase & { kind: "versus"; left: string; right: string; rows: { label: string; left: string; right: string }[] }) // added Oct 14, 2026 with Trym's OK: two sides compared point by point, as a scoreboard
+  | (SceneBase & { kind: "change"; from: string; to: string; year?: number }); // added Oct 14, 2026 with Trym's OK: an old name or status struck through and replaced
 
 type Storyboard = {
   title: string;
@@ -109,7 +111,7 @@ type Storyboard = {
 };
 ```
 
-Phase 1 renders only `title` and `text`. `map` and `timeline` come in Phase 2. `stat`, `compare`, `quote`, `steps` and `list` were added after Phase 2 so the videos feel less like slides.
+Phase 1 renders only `title` and `text`. `map` and `timeline` come in Phase 2. `stat`, `compare`, `quote`, `steps`, `list`, `versus` and `change` were added after Phase 2 so the videos feel less like slides.
 Known limitation: the map data has modern borders. Historical borders are out of scope (say so in the README).
 
 ## Phases

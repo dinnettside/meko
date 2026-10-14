@@ -54,12 +54,14 @@ const MapSceneSchema = z.object({
     .optional(),
 });
 
-// `date` is a day and month like "20 July", so events from the same year can share a timeline.
+// `date` is a day and month like "20 July", so events from the same year can share a timeline. `eras` are periods,
+// like a dynasty or a war, drawn as bands under the events.
 const TimelineSceneSchema = z.object({
   ...sceneBase,
   kind: z.literal("timeline"),
   events: z.array(z.object({ year: z.number(), label: z.string(), date: z.string().optional() })),
   focusIndex: z.number(),
+  eras: z.array(z.object({ start: z.number(), end: z.number(), label: z.string() })).optional(),
 });
 
 // One big number. With `total`, the video draws `value` out of `total` as a grid of dots. With `valueMax`, the
@@ -105,6 +107,24 @@ const ListSceneSchema = z.object({
   items: z.array(z.object({ title: z.string(), detail: z.string().optional() })),
 });
 
+// Two sides compared point by point, like a scoreboard: each row names a point and what it is for each side.
+const VersusSceneSchema = z.object({
+  ...sceneBase,
+  kind: z.literal("versus"),
+  left: z.string(),
+  right: z.string(),
+  rows: z.array(z.object({ label: z.string(), left: z.string(), right: z.string() })),
+});
+
+// An old name or status struck through and replaced by the new one, like Constantinople becoming Istanbul.
+const ChangeSceneSchema = z.object({
+  ...sceneBase,
+  kind: z.literal("change"),
+  from: z.string(),
+  to: z.string(),
+  year: z.number().optional(),
+});
+
 export const SceneSchema = z.discriminatedUnion("kind", [
   TitleSceneSchema,
   TextSceneSchema,
@@ -115,6 +135,8 @@ export const SceneSchema = z.discriminatedUnion("kind", [
   QuoteSceneSchema,
   StepsSceneSchema,
   ListSceneSchema,
+  VersusSceneSchema,
+  ChangeSceneSchema,
 ]);
 
 export const StoryboardSchema = z.object({

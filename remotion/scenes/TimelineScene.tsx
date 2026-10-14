@@ -1,5 +1,6 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
+import { timeKey } from "@/lib/numbers";
 import { formatYear } from "../format";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
@@ -19,16 +20,23 @@ function wrap(label: string): string[] {
   return [words.slice(0, half).join(" "), words.slice(half).join(" ")];
 }
 
+const ERA_TOP = AXIS_Y + 200;
+const ERA_HEIGHT = 48;
+const ERA_ROW = 64;
+
 // Events in order along a line. The axis draws from left to right, the events come in one by one as the narration
 // names them, an amber line follows time from event to event, and the event the scene is about stands out in amber.
+// Periods, like a dynasty or a war, lie as bands under the events, from their start to their end.
 export function TimelineScene({
   events,
   focusIndex,
+  eras = [],
   words,
   durationSec,
 }: {
   events: { year: number; label: string; date?: string }[];
   focusIndex: number;
+  eras?: { start: number; end: number; label: string }[];
   words: TimedWord[];
   durationSec: number;
 }) {
@@ -43,6 +51,27 @@ export function TimelineScene({
     oneYear ? (event.date ?? "") : event.date ? `${event.date} ${formatYear(event.year)}` : formatYear(event.year);
   // Long headings, like "20 July 1969", get smaller type so they do not run into each other.
   const longHeadings = events.some((event) => heading(event).length > 7);
+  // Events are evenly spaced, so a period is placed between them by time: a year halfway between two events lies
+  // halfway between their dots. Years before the first or after the last event sit at the ends of the line.
+  const keys = events.map((event) => timeKey(event.year, event.date));
+  const xOfYear = (year: number) => {
+    const key = timeKey(year);
+    if (events.length < 2 || key <= keys[0]) return LEFT;
+    if (key >= keys[keys.length - 1]) return RIGHT;
+    const after = keys.findIndex((other) => other >= key);
+    const share = (key - keys[after - 1]) / Math.max(1, keys[after] - keys[after - 1]);
+    return LEFT + step * (after - 1 + share);
+  };
+  // Overlapping periods go on separate rows: each goes on the first row where it overlaps nothing.
+  const rows: [number, number][][] = [];
+  const eraRows = eras.map((era) => {
+    const span: [number, number] = [xOfYear(era.start), xOfYear(era.end)];
+    const free = (row: [number, number][]) => row.every(([start, end]) => span[1] <= start || span[0] >= end);
+    let row = rows.findIndex(free);
+    if (row === -1) row = rows.push([]) - 1;
+    rows[row].push(span);
+    return row;
+  });
   const starts = revealTimes(
     events.map((event) => `${Math.abs(event.year)} ${event.date ?? ""} ${event.label}`),
     words,
@@ -67,6 +96,21 @@ export function TimelineScene({
         {events.length > 1 ? (
           <line x1={LEFT} y1={AXIS_Y} x2={LEFT + step * reached} y2={AXIS_Y} stroke={COLORS.signal} strokeWidth={6} strokeLinecap="round" />
         ) : null}
+        {eras.map((era, index) => {
+          const x1 = xOfYear(era.start);
+          const x2 = Math.max(x1 + 24, xOfYear(era.end));
+          const y = ERA_TOP + eraRows[index] * ERA_ROW;
+          const grow = ease(frame, fps, 0.3 + index * 0.25, 0.9);
+          return (
+            <g key={`era-${index}`} opacity={grow}>
+              <rect x={x1} y={y} width={(x2 - x1) * grow} height={ERA_HEIGHT} fill={COLORS.land} stroke={COLORS.border} strokeWidth={2} />
+              <rect x={x1} y={y} width={8} height={ERA_HEIGHT} fill={COLORS.teal} />
+              <text x={x1 + 22} y={y + ERA_HEIGHT / 2} dominantBaseline="middle" fontFamily={FONTS.body} fontSize={30} fontWeight={600} fill={COLORS.paper}>
+                {era.label} · {formatYear(era.start)}–{formatYear(era.end)}
+              </text>
+            </g>
+          );
+        })}
         {oneYear ? (
           <text
             x={WIDTH / 2}

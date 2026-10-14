@@ -67,6 +67,8 @@ const SceneVisualSchema = z.discriminatedUnion("kind", [
       .min(2)
       .max(5),
     focusIndex: z.number().int(),
+    // Periods drawn as bands under the events, each from the fact that gives its start and end year.
+    eras: z.array(z.object({ start: z.number().int(), end: z.number().int(), label: z.string(), factId: z.string() })).max(3),
   }),
   z.object({
     kind: z.literal("stat"),
@@ -89,9 +91,16 @@ const SceneVisualSchema = z.discriminatedUnion("kind", [
     kind: z.literal("list"),
     items: z.array(z.object({ title: z.string(), detail: z.string().optional() })).min(2).max(4),
   }),
+  z.object({
+    kind: z.literal("versus"),
+    left: z.string(),
+    right: z.string(),
+    rows: z.array(z.object({ label: z.string(), left: z.string(), right: z.string() })).min(2).max(4),
+  }),
+  z.object({ kind: z.literal("change"), from: z.string(), to: z.string(), year: z.number().int().optional() }),
 ]);
 
-const SCENE_KINDS = ["map", "timeline", "stat", "compare", "quote", "steps", "list", "text"] as const;
+const SCENE_KINDS = ["map", "timeline", "stat", "compare", "quote", "steps", "list", "versus", "change", "text"] as const;
 type SceneKind = (typeof SCENE_KINDS)[number];
 
 // How often each kind may appear among a video's scenes. Maps are the strongest picture and follow on from each
@@ -107,6 +116,8 @@ function kindLimits(scenes: number, geographic: boolean): Record<SceneKind, numb
     // Without maps, a process topic like how vaccines work needs more steps to avoid plain text.
     steps: geographic ? 2 : 3,
     list: 2,
+    versus: 1,
+    change: 1,
     text: 2,
   };
 }
@@ -169,6 +180,22 @@ const isPlaceLabel = (label: string) => !countryNames.has(label.trim().toLowerCa
 export function sceneDuration(narration: string): number {
   const seconds = narration.length / CHARS_PER_SECOND + PAUSE_SEC;
   return Math.max(MIN_SCENE_SEC, Math.round(seconds * 10) / 10);
+}
+
+// What is wrong with a period on a timeline: its fact must state both its years, in order, and its label must use
+// the scene's or the fact's words.
+function eraProblems(era: { start: number; end: number; label: string; factId: string }, facts: FactMap, source: string): string[] {
+  const problems: string[] = [];
+  const fact = facts.get(era.factId);
+  if (!fact) return [`The period "${era.label}" cites ${era.factId}, which is not a fact in this video.`];
+  const years = yearsIn(fact.text);
+  if (!(era.start < era.end)) problems.push(`The period "${era.label}" must start before it ends.`);
+  if (!years.includes(era.start) || !years.includes(era.end)) {
+    problems.push(`The period "${era.label}" runs ${era.start} to ${era.end}, but fact ${era.factId} gives ${years.length > 0 ? years.join(", ") : "no year"}. Use a period its fact states, or leave eras empty.`);
+  }
+  if (countWords(era.label) > MAX_LABEL_WORDS) problems.push(`The period label "${era.label}" is too long. Use at most 4 words.`);
+  if (!isGrounded(era.label, `${source} ${fact.text}`)) problems.push(`"${era.label}" says something the narration does not. Use the narration's own words.`);
+  return problems;
 }
 
 // An event's year must be one its fact states, with the same sign for BC.
@@ -245,7 +272,7 @@ function shownText(visual: SceneVisual): string[] {
     case "text":
       return visual.lines;
     case "timeline":
-      return visual.events.map((event) => event.label);
+      return [...visual.events.map((event) => event.label), ...visual.eras.map((era) => era.label)];
     case "map":
       return [
         ...visual.highlights.map((h) => h.label ?? ""),
@@ -268,6 +295,10 @@ function shownText(visual: SceneVisual): string[] {
       return visual.steps;
     case "list":
       return visual.items.flatMap((item) => [item.title, item.detail ?? ""]);
+    case "versus":
+      return [visual.left, visual.right, ...visual.rows.flatMap((row) => [row.label, row.left, row.right])];
+    case "change":
+      return [visual.from, visual.to, visual.year === undefined ? "" : String(visual.year)];
   }
 }
 
@@ -398,6 +429,7 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
       if (visual.focusIndex < 0 || visual.focusIndex >= visual.events.length) {
         problems.push(`focusIndex is ${visual.focusIndex}, but there are only ${visual.events.length} events.`);
       }
+      for (const era of visual.eras) problems.push(...eraProblems(era, facts, source));
       break;
     }
     case "stat":
@@ -460,6 +492,9 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
     case "list": {
       const titles = visual.items.map((item) => item.title.trim().toLowerCase());
       if (new Set(titles).size < titles.length) problems.push("Two items have the same title. Each item is a different thing.");
+      if (visual.items.some((item) => yearsIn(item.title).length > 0 || datesIn(item.title).length > 0)) {
+        problems.push("A list item is a date. Dates belong on a timeline; a list shows things of one kind.");
+      }
       for (const item of visual.items) {
         if (tooLong(item.title, 4)) problems.push(`The title "${item.title}" is too long. Use at most 3 words.`);
         if (item.detail && tooLong(item.detail, 7)) problems.push(`The detail "${item.detail}" is too long. Use at most 6 words.`);
@@ -468,6 +503,37 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
       }
       break;
     }
+    case "versus": {
+      if (visual.left.trim().toLowerCase() === visual.right.trim().toLowerCase()) problems.push("The two sides must be different.");
+      for (const side of [visual.left, visual.right]) {
+        if (tooLong(side, 4)) problems.push(`The side "${side}" is too long. Use at most 3 words.`);
+        if (!isGrounded(side, source)) problems.push(ungrounded(side));
+      }
+      for (const row of visual.rows) {
+        if (tooLong(row.label, 4)) problems.push(`The point "${row.label}" is too long. Use at most 3 words.`);
+        for (const cell of [row.label, row.left, row.right]) {
+          if (tooLong(cell, 6)) problems.push(`"${cell}" is too long. Use at most 5 words.`);
+          // Each side's answer is a claim, so every word of it must come from the narration or facts: a one-word
+          // cell like "Adequate" would otherwise slip through.
+          const { matched, total } = groundedWords(cell, source);
+          if (matched < total) problems.push(ungrounded(cell));
+        }
+      }
+      break;
+    }
+    case "change":
+      if (visual.from.trim().toLowerCase() === visual.to.trim().toLowerCase()) problems.push("The old and the new must be different.");
+      for (const side of [visual.from, visual.to]) {
+        if (tooLong(side, 4)) problems.push(`"${side}" is too long: a change shows a name or a status, in at most 4 words.`);
+        // Striking out a name says it was the name before, so the old one must be stated, word for word: no
+        // "Prince Mehmed" when the narration only says Sultan Mehmed II.
+        const { matched, total } = groundedWords(side, source);
+        if (matched < total) problems.push(`"${side}" is not what the narration or facts call it. Use their exact words for both names.`);
+      }
+      if (visual.year !== undefined && !yearsIn(source).includes(visual.year)) {
+        problems.push(`The year ${visual.year} is not in this scene's narration or facts. Leave it out.`);
+      }
+      break;
     case "quote": {
       const fact = facts.get(visual.factId);
       const text = visual.text.trim();
@@ -572,7 +638,8 @@ function repairScene(
         return event === (focus && sameYear.includes(focus) ? focus : sameYear[0]);
       });
       const focusIndex = Math.max(0, focus ? dated.indexOf(focus) : dated.length - 1);
-      return new Set(dated.map(key)).size >= 2 ? { kind: "timeline", events: dated, focusIndex } : fallback;
+      const eras = visual.eras.filter((era) => eraProblems(era, facts, source).length === 0);
+      return new Set(dated.map(key)).size >= 2 ? { kind: "timeline", events: dated, focusIndex, eras } : fallback;
     }
     case "map": {
       const mapLabel = (text: string | undefined, country?: string) =>
@@ -599,6 +666,17 @@ function repairScene(
       const frame = visual.frame.flatMap((place) => resolvePlace(visual, place) ?? []);
       if (highlights.length === 0) return fallback;
       return { kind: "map", frame: frame.length > 0 ? frame : highlights.map((h) => h.country), highlights, arrows, markers };
+    }
+    case "versus": {
+      // Points the narration does not back go; two or more good ones still make a scoreboard.
+      const fullyGrounded = (text: string) => {
+        const { matched, total } = groundedWords(text, source);
+        return matched === total;
+      };
+      const cellOk = (cell: string) => countWords(cell) <= 6 && fullyGrounded(cell) && safe(cell);
+      const rows = visual.rows.filter((row) => [row.label, row.left, row.right].every(cellOk));
+      const sidesOk = [visual.left, visual.right].every((side) => countWords(side) <= 4 && isGrounded(side, source) && safe(side));
+      return sidesOk && rows.length >= 2 ? { ...visual, rows } : fallback;
     }
     case "list": {
       // Items the narration does not back go; two or more good ones still make a list.
@@ -751,7 +829,13 @@ async function verifyMarkers(
 // its source instead of its fact.
 function forStoryboard(visual: SceneVisual, facts: FactMap) {
   if (visual.kind === "timeline") {
-    return { ...visual, events: visual.events.map(({ year, label, date }) => (date ? { year, label, date } : { year, label })) };
+    const eras = visual.eras.map(({ start, end, label }) => ({ start, end, label }));
+    return {
+      kind: "timeline" as const,
+      focusIndex: visual.focusIndex,
+      events: visual.events.map(({ year, label, date }) => (date ? { year, label, date } : { year, label })),
+      ...(eras.length > 0 ? { eras } : {}),
+    };
   }
   if (visual.kind === "map") {
     return {
