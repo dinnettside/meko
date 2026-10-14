@@ -10,17 +10,19 @@ import { StoryboardVideo, storyboardFrames } from "@/remotion/StoryboardVideo";
 export function StoryboardPlayer({
   storyboard,
   voice,
+  sites,
   playerRef,
 }: {
   storyboard: Storyboard;
   voice: Record<string, SceneVoice>;
+  sites: Record<string, string[]>;
   playerRef?: Ref<PlayerRef>;
 }) {
   return (
     <Player
       ref={playerRef}
       component={StoryboardVideo}
-      inputProps={{ storyboard, voice }}
+      inputProps={{ storyboard, voice, sites }}
       durationInFrames={storyboardFrames(storyboard)}
       fps={storyboard.fps}
       compositionWidth={storyboard.width}

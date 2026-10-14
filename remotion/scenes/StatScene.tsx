@@ -44,8 +44,17 @@ export function StatScene({
         padding: `0 ${VIDEO.sideMargin}px ${VIDEO.captionSpace}px`,
       }}
     >
-      <div style={{ flex: 1 }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 32, flexWrap: "wrap" }}>
+      {/* Without dots, the number stands in the middle of the screen. */}
+      <div style={{ flex: 1, textAlign: share === null ? "center" : "left" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: share === null ? "center" : "flex-start",
+            gap: 32,
+            flexWrap: "wrap",
+          }}
+        >
           <span style={{ fontFamily: FONTS.display, fontSize: 260, fontWeight: 700, lineHeight: 1, color: COLORS.signal }}>
             {countUp(value, count)}
           </span>
@@ -55,7 +64,17 @@ export function StatScene({
             </span>
           ) : null}
         </div>
-        <div style={{ marginTop: 36, maxWidth: 1000, fontFamily: FONTS.body, fontSize: 60, color: COLORS.dim, opacity: labelIn }}>
+        <div
+          style={{
+            marginTop: 36,
+            maxWidth: 1000,
+            marginInline: share === null ? "auto" : 0,
+            fontFamily: FONTS.body,
+            fontSize: 60,
+            color: COLORS.dim,
+            opacity: labelIn,
+          }}
+        >
           {label}
         </div>
       </div>

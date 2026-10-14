@@ -14,6 +14,7 @@ import type { SceneVoice, VoiceResult } from "@/lib/voice";
 import { FactCheckReport } from "./FactCheckReport";
 import { sentenceSpans } from "./sentence-timing";
 import { StoryboardPlayer } from "./StoryboardPlayer";
+import { sceneSites } from "@/remotion/SourceChip";
 
 type StepId = "research" | "script" | "factcheck" | "direct" | "voice";
 type StepState = {
@@ -146,6 +147,7 @@ export function MakeVideo() {
     () => (finished ? sentenceSpans(finished.storyboard, finished.voice, finished.report.checks) : []),
     [finished],
   );
+  const sites = useMemo(() => (finished ? sceneSites(finished.storyboard, finished.facts) : {}), [finished]);
   useEffect(() => {
     const player = playerRef.current;
     if (!player || spans.length === 0) return;
@@ -419,7 +421,7 @@ export function MakeVideo() {
                 {new Date(finished.example.madeAt).toLocaleDateString("en-GB", { dateStyle: "long" })}.
               </p>
             ) : null}
-            <StoryboardPlayer storyboard={finished.storyboard} voice={finished.voice} playerRef={playerRef} />
+            <StoryboardPlayer storyboard={finished.storyboard} voice={finished.voice} sites={sites} playerRef={playerRef} />
             <p className="text-sm text-dim">
               Made in {Math.round(finished.ms / 1000)} seconds. Model cost ${finished.costUsd.toFixed(3)}.
             </p>

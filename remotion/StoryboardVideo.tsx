@@ -6,6 +6,7 @@ import { COLORS, FONTS, MOTION } from "@/lib/theme";
 import type { TimedWord } from "@/lib/elevenlabs";
 import type { SceneVoice } from "@/lib/voice";
 import { Caption, estimateWords } from "./Caption";
+import { SourceChip } from "./SourceChip";
 import { CompareScene } from "./scenes/CompareScene";
 import { MapScene } from "./scenes/MapScene";
 import { QuoteScene } from "./scenes/QuoteScene";
@@ -40,9 +41,19 @@ export function storyboardFrames(storyboard: Storyboard): number {
 }
 
 const NO_VOICE: Record<string, SceneVoice> = {};
+const NO_SITES: Record<string, string[]> = {};
 
 // `voice` holds the recorded narration by scene ID. Without it, the video plays silently with captions.
-export function StoryboardVideo({ storyboard, voice = NO_VOICE }: { storyboard: Storyboard; voice?: Record<string, SceneVoice> }) {
+// `sites` holds the sites behind each scene's facts, shown in a corner of the scene.
+export function StoryboardVideo({
+  storyboard,
+  voice = NO_VOICE,
+  sites = NO_SITES,
+}: {
+  storyboard: Storyboard;
+  voice?: Record<string, SceneVoice>;
+  sites?: Record<string, string[]>;
+}) {
   const overlap = overlapFrames(storyboard.fps);
   // The opening globe turns to the countries of the first map in the video.
   const firstMap = storyboard.scenes.find((scene) => scene.kind === "map");
@@ -64,6 +75,8 @@ export function StoryboardVideo({ storyboard, voice = NO_VOICE }: { storyboard: 
             <Series.Sequence key={scene.id} durationInFrames={frames} offset={index === 0 ? 0 : -overlap}>
               <Fade frames={frames} fade={overlap} fadeOut={isLast}>
                 <SceneView scene={scene} previous={storyboard.scenes[index - 1]} words={words} storyboard={storyboard} region={region} />
+                {/* The title has no claims to source, and a quote names its own source. */}
+                {scene.kind !== "title" && scene.kind !== "quote" ? <SourceChip sites={sites[scene.id] ?? []} /> : null}
                 <Caption words={words} />
               </Fade>
               {voice[scene.id] ? <Html5Audio src={voice[scene.id].audio} /> : null}
