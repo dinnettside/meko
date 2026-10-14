@@ -5,7 +5,8 @@ import { z } from "zod";
 export const SourceSchema = z.object({
   id: z.string(),
   title: z.string(),
-  url: z.string(),
+  // Only web addresses, so a link to a source can never run code in the page.
+  url: z.string().regex(/^https?:\/\//i, "must be an http or https address"),
 });
 
 export const FactSchema = z.object({
