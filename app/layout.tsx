@@ -8,6 +8,7 @@ const display = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
   axes: ["opsz"],
+  style: ["normal", "italic"],
 });
 
 const body = Archivo({

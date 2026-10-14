@@ -2,7 +2,7 @@ import type { SentenceCheck } from "@/lib/pipeline";
 import type { Storyboard } from "@/lib/storyboard";
 import type { SceneVoice } from "@/lib/voice";
 import { estimateWords } from "@/remotion/Caption";
-import { sceneFrames } from "@/remotion/StoryboardVideo";
+import { sceneFrames, sceneStarts } from "@/remotion/StoryboardVideo";
 
 export type SentenceSpan = { sentenceId: string; startFrame: number; endFrame: number };
 
@@ -16,8 +16,9 @@ export function sentenceSpans(
   checks: SentenceCheck[],
 ): SentenceSpan[] {
   const spans: SentenceSpan[] = [];
-  let sceneStart = 0;
-  for (const scene of storyboard.scenes) {
+  const starts = sceneStarts(storyboard);
+  storyboard.scenes.forEach((scene, sceneIndex) => {
+    const sceneStart = starts[sceneIndex];
     const frames = sceneFrames(scene, storyboard.fps);
     const words = voice[scene.id]?.words ?? estimateWords(scene.narration, scene.durationSec);
     const spoken = checks.filter((check) => check.sentenceId.startsWith(`${scene.id}.`) && check.status !== "removed");
@@ -29,7 +30,6 @@ export function sentenceSpans(
       spans.push({ sentenceId: check.sentenceId, startFrame, endFrame: sceneStart + frames });
       wordIndex += countWords(check.status === "revised" ? check.revised : check.original);
     });
-    sceneStart += frames;
-  }
+  });
   return spans;
 }

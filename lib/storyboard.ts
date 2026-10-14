@@ -60,11 +60,49 @@ const TimelineSceneSchema = z.object({
   focusIndex: z.number(),
 });
 
+// One big number. With `total`, the video draws `value` out of `total` as a grid of dots.
+const StatSceneSchema = z.object({
+  ...sceneBase,
+  kind: z.literal("stat"),
+  value: z.number(),
+  unit: z.string().optional(),
+  label: z.string(),
+  total: z.number().optional(),
+});
+
+// A bar chart. All bars share one unit.
+const CompareSceneSchema = z.object({
+  ...sceneBase,
+  kind: z.literal("compare"),
+  title: z.string(),
+  unit: z.string().optional(),
+  bars: z.array(z.object({ label: z.string(), value: z.number() })),
+});
+
+// A source's exact words, shown with the source's name.
+const QuoteSceneSchema = z.object({
+  ...sceneBase,
+  kind: z.literal("quote"),
+  text: z.string(),
+  sourceId: z.string(),
+});
+
+// A process or a chain of causes, drawn as boxes with arrows.
+const StepsSceneSchema = z.object({
+  ...sceneBase,
+  kind: z.literal("steps"),
+  steps: z.array(z.string()),
+});
+
 export const SceneSchema = z.discriminatedUnion("kind", [
   TitleSceneSchema,
   TextSceneSchema,
   MapSceneSchema,
   TimelineSceneSchema,
+  StatSceneSchema,
+  CompareSceneSchema,
+  QuoteSceneSchema,
+  StepsSceneSchema,
 ]);
 
 export const StoryboardSchema = z.object({
@@ -88,7 +126,11 @@ export function storyboardProblems(storyboard: Storyboard, factIds: string[]): s
   const knownFacts = new Set(factIds);
   const isCountryCode = (code: string) => /^[A-Z]{3}$/.test(code);
 
+  const sourceIds = new Set(storyboard.sources.map((source) => source.id));
   for (const scene of storyboard.scenes) {
+    if (scene.kind === "quote" && !sourceIds.has(scene.sourceId)) {
+      problems.push(`Scene ${scene.id}: the quote's source "${scene.sourceId}" is not in the source list`);
+    }
     if (!(scene.durationSec > 0)) {
       problems.push(`Scene ${scene.id}: durationSec must be above 0, got ${scene.durationSec}`);
     }

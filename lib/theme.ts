@@ -9,6 +9,7 @@ export const COLORS = {
   land: "#22334B", // countries
   border: "#3A4F6E", // country borders, axis lines and input borders
   muted: "#3E5573", // countries shown for context
+  globe: "#15263D", // the sea on the globe in the opening, a little lighter than the background
   paper: "#F4F1EA", // main text
   dim: "#93A1B5", // secondary text
   signal: "#FFB627", // the one thing to look at

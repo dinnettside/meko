@@ -90,7 +90,12 @@ type Scene =
       arrows?: { from: string; to: string; label?: string }[];
       markers?: { lon: number; lat: number; label: string }[];
     })
-  | (SceneBase & { kind: "timeline"; events: { year: number; label: string }[]; focusIndex: number });
+  | (SceneBase & { kind: "timeline"; events: { year: number; label: string }[]; focusIndex: number })
+  // Added Oct 14, 2026 with Trym's OK:
+  | (SceneBase & { kind: "stat"; value: number; unit?: string; label: string; total?: number }) // one big number; `total` draws value out of total as dots
+  | (SceneBase & { kind: "compare"; title: string; unit?: string; bars: { label: string; value: number }[] }) // a bar chart
+  | (SceneBase & { kind: "quote"; text: string; sourceId: string }) // a source's exact words
+  | (SceneBase & { kind: "steps"; steps: string[] }); // a process or a chain of causes
 
 type Storyboard = {
   title: string;
@@ -103,7 +108,7 @@ type Storyboard = {
 };
 ```
 
-Phase 1 renders only `title` and `text`. `map` and `timeline` come in Phase 2.
+Phase 1 renders only `title` and `text`. `map` and `timeline` come in Phase 2. `stat`, `compare`, `quote` and `steps` were added after Phase 2 so the videos feel less like slides.
 Known limitation: the map data has modern borders. Historical borders are out of scope (say so in the README).
 
 ## Phases

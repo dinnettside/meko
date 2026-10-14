@@ -68,10 +68,17 @@ async function withRateLimitRetry<T>(request: () => Promise<T>): Promise<T> {
   }
 }
 
-// One model call. Logs tokens, latency and cost.
+// Timeouts, dropped connections and server errors are worth one more try. Bad requests are not.
+const isTransient = (error: unknown) =>
+  error instanceof OpenAI.APIUserAbortError ||
+  error instanceof OpenAI.APIConnectionError ||
+  error instanceof OpenAI.InternalServerError;
+
+// One model call, tried at most twice. Logs tokens, latency and cost.
 async function callModel(
   step: string,
   params: Omit<ChatCompletionCreateParamsNonStreaming, "model">,
+  timeoutMs: number,
 ): Promise<{ content: string; usage: Usage }> {
   const model = getModel();
   // NVIDIA recommends temperature 1 and top_p 0.95 for Nemotron 3 in every mode.
@@ -79,10 +86,20 @@ async function callModel(
   // Thinking off: 2 to 10 times faster, and it did not improve results in docs/model-check.md.
   Object.assign(body, { chat_template_kwargs: { enable_thinking: false } });
 
-  const started = performance.now();
-  const completion = await withRateLimitRetry(() =>
-    getClient().chat.completions.create(body, { signal: AbortSignal.timeout(CALL_TIMEOUT_MS) }),
-  );
+  let started = performance.now();
+  let completion;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      completion = await withRateLimitRetry(() =>
+        getClient().chat.completions.create(body, { signal: AbortSignal.timeout(timeoutMs) }),
+      );
+      break;
+    } catch (error) {
+      if (attempt >= 1 || !isTransient(error)) throw error;
+      console.warn(`[${step}] ${error instanceof Error ? error.message : error}. Trying once more.`);
+      started = performance.now();
+    }
+  }
   const ms = Math.round(performance.now() - started);
 
   const promptTokens = completion.usage?.prompt_tokens ?? 0;
@@ -133,6 +150,7 @@ type JsonRequest<T> = {
   messages: ChatCompletionMessageParam[];
   maxTokens: number;
   check?: (data: T) => string[]; // rules zod cannot check, one line per problem
+  timeoutMs?: number; // per model call, 45 s unless set
   // Called with the last answer if it still breaks a rule after every retry. Returns a fixed version to use.
   // Without it, the call fails.
   repair?: (data: T) => T;
@@ -152,14 +170,18 @@ export async function chatJson<T>(request: JsonRequest<T>): Promise<{ data: T; u
     if (attempt > 0 && performance.now() - started > RETRY_WINDOW_MS) {
       throw new Error(`${request.step}: ran out of time after ${attempt} tries (${problems.join("; ")})`);
     }
-    const reply = await callModel(request.step, {
-      messages,
-      max_tokens: request.maxTokens,
-      response_format: {
-        type: "json_schema",
-        json_schema: { name: request.schemaName, schema: jsonSchema, strict: true },
+    const reply = await callModel(
+      request.step,
+      {
+        messages,
+        max_tokens: request.maxTokens,
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: request.schemaName, schema: jsonSchema, strict: true },
+        },
       },
-    });
+      request.timeoutMs ?? CALL_TIMEOUT_MS,
+    );
     usage = addUsage(usage, reply.usage);
     const result = parseJson(reply.content, request.schema, request.check);
     if (result.data && result.problems.length === 0) return { data: result.data, usage };
