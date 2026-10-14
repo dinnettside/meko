@@ -1,22 +1,41 @@
 import { z } from "zod";
 import { COUNTRIES, isKnownCountry } from "./countries.ts";
-import { addUsage, chatJson, emptyUsage } from "./nebius.ts";
-import { CHARS_PER_SECOND, ResearchFactSchema, ScriptSchema, VideoRequestSchema, countWords } from "./pipeline.ts";
+import { addUsage, chatJson, emptyUsage, usageOf } from "./nebius.ts";
+import { CHARS_PER_SECOND, ResearchFactListSchema, ScriptSchema, SourceListSchema, VideoRequestSchema, countWords } from "./pipeline.ts";
 import type { ResearchFact, Usage } from "./pipeline.ts";
 import { directPlanPrompt, directScenePrompt, directTitlePrompt, placesPrompt } from "./prompts/direct.ts";
-import { amountsIn, datesIn, isDateIn, isPartOf, numbersIn, rangesIn, statesDate, timeKey, yearsIn } from "./numbers.ts";
-import { COUNTRY_ALIASES, labelMismatch, namesAPlace } from "./regions.ts";
-import { quoteIsInSource } from "./research.ts";
-import { contentWords } from "./words.ts";
-import { SourceSchema, StoryboardSchema, storyboardProblems } from "./storyboard.ts";
+import {
+  amountsIn,
+  datesIn,
+  isDateIn,
+  isDayAndMonth,
+  isNameNumber,
+  isPartOf,
+  numbersIn,
+  rangesIn,
+  statesDate,
+  timeKey,
+  yearRangesIn,
+  yearsIn,
+} from "./numbers.ts";
+import { isCountryName, labelMismatch, namesAPlace, namesCity, namesCountry } from "./regions.ts";
+import { questionProblems } from "./script.ts";
+import { claimWords, contentWords, groundedWords, isSentenceOf, sameWords, sentencesOf, wholeSentencesOf } from "./words.ts";
+import { StoryboardSchema, storyboardProblems } from "./storyboard.ts";
 import { geoDistance } from "d3-geo";
-import { countryCenter, countryContains } from "./world.ts";
+import { canDraw, countryCenter, countryContains } from "./world.ts";
 import type { Storyboard } from "./storyboard.ts";
 
 const PAUSE_SEC = 0.6;
 const MIN_SCENE_SEC = 2.5;
 // Scene calls are small and usually take 1 to 3 seconds, so a slow one is better tried again early.
 const SCENE_CALL_TIMEOUT_MS = 20_000;
+// The route may run for 120 s. Directing starts no model call after 90 s, so slow calls cannot sink the video.
+const DIRECT_DEADLINE_MS = 90_000;
+// The plan only helps, so a slow plan gives way and the scenes pick their own kinds.
+const PLAN_DEADLINE_MS = 30_000;
+// Scene calls stop this long before the deadline, to leave time for the check of map markers.
+const MARKER_CHECK_MS = 10_000;
 const EARTH_RADIUS_KM = 6371;
 // How far apart two independent answers for a city's position may be.
 const MAX_MARKER_GAP_KM = 250;
@@ -29,8 +48,8 @@ const MAX_MAP_LABEL_WORDS = 4;
 export const DirectInputSchema = z.object({
   request: VideoRequestSchema,
   script: ScriptSchema,
-  facts: z.array(ResearchFactSchema),
-  sources: z.array(SourceSchema),
+  facts: ResearchFactListSchema,
+  sources: SourceListSchema,
 });
 
 export type DirectResult = { storyboard: Storyboard; usage: Usage };
@@ -124,8 +143,9 @@ function kindLimits(scenes: number, geographic: boolean): Record<SceneKind, numb
 
 // Picks one kind per scene from the model's ranked choices, keeping the rhythm: no kind twice in a row except maps,
 // no four maps in a row, each kind at most as often as `limits` allows, and no kind the scene's facts have no data
-// for. First choices are placed before second choices, so a kind goes to the scenes it suits best. A scene where
-// none of its choices fits gets no plan and picks its own kind.
+// for. First choices are placed before second choices, so a kind goes to the scenes it suits best. Text comes last:
+// a scene gets it only when none of its other choices fits. A scene where none of its choices fits gets no plan and
+// picks its own kind.
 function pickKinds(choices: SceneKind[][], missing: SceneKind[][], limits: Record<SceneKind, number>): (SceneKind | undefined)[] {
   const picked: (SceneKind | undefined)[] = choices.map(() => undefined);
   const fits = (kind: SceneKind, index: number) => {
@@ -137,9 +157,12 @@ function pickKinds(choices: SceneKind[][], missing: SceneKind[][], limits: Recor
   for (let rank = 0; rank < 3; rank++) {
     choices.forEach((ranked, index) => {
       const kind = ranked[rank];
-      if (picked[index] === undefined && kind && fits(kind, index)) picked[index] = kind;
+      if (picked[index] === undefined && kind && kind !== "text" && fits(kind, index)) picked[index] = kind;
     });
   }
+  choices.forEach((ranked, index) => {
+    if (picked[index] === undefined && ranked.includes("text") && fits("text", index)) picked[index] = "text";
+  });
   return picked;
 }
 
@@ -153,18 +176,72 @@ type SceneReply = z.infer<typeof SceneReplySchema>;
 type NarratedScene = { id: string; narration: string; factIds: string[] };
 type FactMap = Map<string, ResearchFact>; // by fact ID
 
-// A number right after a name, like "Apollo 11" or "Chapter 11", names something; it is not an amount.
-// Capitalized words that often start a sentence before an amount do not count.
-const AMOUNT_STARTERS =
-  "About|Around|Over|Nearly|Almost|Some|In|By|On|At|From|To|Only|Just|More|Less|Fewer|Up|With|The|A|An|After|Before|Since|Until|Under|Roughly|Approximately|Exactly|Of|For|And|But|Or|All|Each|Every|Their|Its|His|Her|Our|Today|Then|Now|Still|Another|At least";
-const isNameNumber = (value: number, text: string) =>
-  new RegExp(`(^|[^\\p{L}])(?!(?:${AMOUNT_STARTERS})\\s)\\p{Lu}\\p{L}+\\s+${String(value).replace(".", "\\.")}(?![\\d.,])`, "u").test(
-    text.replace(/(\d),(?=\d{3})/g, "$1"),
-  );
-
 // A bar labeled with a unit instead of a thing.
 const UNIT_LABEL = /^(tonnes?|tons?|kilo(gram)?s?|kg|pounds?|lbs?|km|kilomet(er|re)s?|miles?|met(er|re)s?|feet|years?|days?|dollars?|euros?|percent|%)$/i;
 const isPercent = (unit?: string) => /^(%|percent|per cent)$/i.test(unit ?? "");
+
+// Units that mean the same: "km" and "kilometres", "%" and "per cent".
+const UNIT_NAMES: Record<string, string> = {
+  "%": "percent", "per cent": "percent", km: "kilometer", kilometre: "kilometer", kilometres: "kilometer", kilometers: "kilometer",
+  mi: "mile", m: "meter", metre: "meter", metres: "meter", meters: "meter", kg: "kilogram", kilograms: "kilogram",
+  lb: "pound", lbs: "pound", tonne: "ton", tonnes: "ton",
+};
+const unitKey = (unit: string) => {
+  const word = unit.trim().toLowerCase();
+  return (UNIT_NAMES[word] ?? word).replace(/s$/, "");
+};
+
+// Whether a range is in the stat's unit: "25 to 50 million" fits a stat in millions or of "million people", and a
+// stat without a unit whose label has the word, like "ships" in "ships sank". "4 to 5 years" does not fit a stat in
+// millions. A range with no unit word after it fits any stat.
+function unitFits(rangeUnit: string, stat: { unit?: string; label: string }): boolean {
+  if (!rangeUnit) return true;
+  const key = unitKey(rangeUnit);
+  const unit = stat.unit ?? "";
+  return [unit, ...unit.split(/\s+/), ...claimWords(stat.label)].some((word) => word !== "" && unitKey(word) === key);
+}
+
+// The amounts a text gives: not the day of a date like "9 November", and not a number in a name like "Apollo 11".
+const amountsFor = (text: string) =>
+  amountsIn(text).filter((amount) => {
+    const value = Number.parseFloat(amount);
+    return !isDateIn(value, text) && !isNameNumber(value, text);
+  });
+
+// Measure words a chart's numbers come with. A bar whose sentence gives its number in another of these, like "50
+// percent" in a chart of millions, says something else.
+const MEASURES = new Set(["percent", "million", "billion", "thousand", "hundred", "kilometer", "mile", "meter", "ton", "kilogram", "pound", "dollar", "euro", "year", "month", "day", "hour"]);
+
+// Whether one sentence of the scene gives a bar's number for its thing. The label uses the sentence's words, every
+// place it names is in the sentence, the number shares a clause with a word of the label, so "17,000 were executed
+// and 10,000 died in prison" cannot pair 10,000 with "executed", and the number does not come in another measure
+// than the chart's.
+function barIsStated(bar: { label: string; value: number }, unit: string | undefined, source: string): boolean {
+  const value = String(bar.value);
+  const chartUnit = unitKey((unit ?? "").split(/\s+/)[0] ?? "");
+  return sentencesOf(source).some((sentence) => {
+    const places = claimWords(bar.label).filter((word) => namesAPlace(word));
+    if (!isGrounded(bar.label, sentence) || places.some((word) => groundedWords(word, sentence).matched === 0)) return false;
+    // Clauses end at commas (not those in "17,000"), semicolons and words like "and".
+    return sentence.split(/(?<!\d),|,(?!\d)|[;:]|\b(?:and|but|while|whereas)\b/).some((clause) => {
+      const tokens = clause.match(/-?\d[\d,]*(?:\.\d+)?|%|\p{L}+/gu) ?? [];
+      return tokens.some((token, index) => {
+        if (numbersIn(token)[0] !== value) return false;
+        const next = unitKey(tokens[index + 1] ?? "");
+        const otherMeasure = unit !== undefined && MEASURES.has(next) && next !== chartUnit;
+        return !otherMeasure && groundedWords(bar.label, clause).matched > 0;
+      });
+    });
+  });
+}
+
+// Whether a label is only a date or a time, like "July 20, 1969" or "After 4:00 PM EDT", with nothing that happens.
+const DATE_PARTS = /\b(january|february|march|april|may|june|july|august|september|october|november|december|edt|est|utc|gmt|am|pm|a\.m|p\.m|after|before|around|about|on|at|in)\b/gi;
+const isOnlyADate = (text: string) => /\d/.test(text) && claimWords(text.replace(DATE_PARTS, " ")).every((word) => /^\d+$/.test(word));
+
+// Event labels sit side by side under a timeline, and long ones run into their neighbors. The more events, the less
+// room each label has.
+const maxEventLabelChars = (events: number) => (events <= 3 ? 40 : events === 4 ? 34 : 30);
 
 // Dates are not amounts: "14th century" or "700 CE" in a stat or a chart means the model should have used a timeline.
 const DATE_WORDS = /\b(\d+(st|nd|rd|th)|century|centuries|ce|bce|bc|ad)\b|\bc\.$/i;
@@ -175,6 +252,8 @@ const countryNames = new Set(Object.values(COUNTRIES).map((country) => country.n
 const REGION_WORDS = /\b(asia|europe|africa|america|middle east|steppes?|desert|basin|ocean|sea|mountains|range|empire|dynasty|kingdom|route|road)\b/i;
 const CITY_WORDS = /\b(port|city|town|capital|harbou?r|village)\b/i;
 const isPlaceLabel = (label: string) => !countryNames.has(label.trim().toLowerCase()) && !REGION_WORDS.test(label);
+// A country code a map can draw: a real one, and not Antarctica.
+const isMapCountry = (code: string) => isKnownCountry(code) && canDraw(code);
 
 // Estimated from the word count until the voice-over sets the real length.
 export function sceneDuration(narration: string): number {
@@ -182,17 +261,26 @@ export function sceneDuration(narration: string): number {
   return Math.max(MIN_SCENE_SEC, Math.round(seconds * 10) / 10);
 }
 
-// What is wrong with a period on a timeline: its fact must state both its years, in order, and its label must use
-// the scene's or the fact's words.
-function eraProblems(era: { start: number; end: number; label: string; factId: string }, facts: FactMap, source: string): string[] {
+// What is wrong with a period on a timeline: its fact must state it as one period, like "ruled from 1451 to 1481",
+// not as two years of different events. It must overlap the events' years (`span`), and its label must use the
+// scene's or the fact's words.
+function eraProblems(
+  era: { start: number; end: number; label: string; factId: string },
+  facts: FactMap,
+  source: string,
+  span: [number, number],
+): string[] {
   const problems: string[] = [];
   const fact = facts.get(era.factId);
   if (!fact) return [`The period "${era.label}" cites ${era.factId}, which is not a fact in this video.`];
-  const years = yearsIn(fact.text);
-  if (!(era.start < era.end)) problems.push(`The period "${era.label}" must start before it ends.`);
-  if (!years.includes(era.start) || !years.includes(era.end)) {
-    problems.push(`The period "${era.label}" runs ${era.start} to ${era.end}, but fact ${era.factId} gives ${years.length > 0 ? years.join(", ") : "no year"}. Use a period its fact states, or leave eras empty.`);
+  const periods = yearRangesIn(fact.text);
+  if (!periods.some(([start, end]) => start === era.start && end === era.end)) {
+    const given = periods.map(([start, end]) => `${start} to ${end}`).join(", ");
+    problems.push(
+      `Fact ${era.factId} does not give ${era.start} to ${era.end} as one period${given ? `; it gives ${given}` : ""}. Use a period its fact states, or leave eras empty.`,
+    );
   }
+  if (era.end < span[0] || era.start > span[1]) problems.push(`The period "${era.label}" lies outside the events' years. Leave it out.`);
   if (countWords(era.label) > MAX_LABEL_WORDS) problems.push(`The period label "${era.label}" is too long. Use at most 4 words.`);
   if (!isGrounded(era.label, `${source} ${fact.text}`)) problems.push(`"${era.label}" says something the narration does not. Use the narration's own words.`);
   return problems;
@@ -203,32 +291,48 @@ const eventIsBacked = (event: { year: number; factId: string }, facts: FactMap) 
   yearsIn(facts.get(event.factId)?.text ?? "").includes(event.year);
 
 // Words for places a world map cannot show.
-const SPACE_WORDS = /\b(moon|lunar|mars|orbit|orbital|spacecraft|planet|planets|galaxy|asteroid|comet|crater)\b/i;
+const SPACE_WORDS =
+  /\b(moon|lunar|mars|orbit|orbital|spacecraft|spaceflight|spacewalk|astronauts?|rockets?|planet|planets|galaxy|asteroid|comet|crater|tranquility)\b/i;
 
-// Whether a source quote holds a whole sentence of 5 to 30 words, which is what a quote scene shows.
-const hasWholeSentence = (quote: string) =>
-  (quote.match(/(^|[.!?]["”’)]?\s+)["'“‘(]?[A-Z0-9][^.!?]*[.!?]/g) ?? []).some((sentence) => {
+// The whole sentences of 5 to 30 words in a source quote, which is what a quote scene may show.
+const quotableSentences = (quote: string) =>
+  wholeSentencesOf(quote).filter((sentence) => {
     const words = countWords(sentence);
-    return words >= 5 && words <= 31;
+    return words >= 5 && words <= 30 && !/[|•·]/.test(sentence);
   });
+const hasWholeSentence = (quote: string) => quotableSentences(quote).length > 0;
 
-// Words that tell one thing leads to another. Steps are drawn with arrows between them, which say "this led to
-// that", so a narration without such a word is a list and gets no steps.
+// Words that tell one thing leads to another, in the past or the present tense, since a process like how vaccines
+// work is told in the present ("triggers", "becomes"). Steps are drawn with arrows between them, which say "this led
+// to that", so a narration without such a word is a list and gets no steps.
 const SEQUENCE_WORDS =
-  /\b(led|leads?|leading|caus(e|ed|es|ing)|so|then|after(wards)?|because|result(s|ed|ing)?|until|before|first|finally|eventually|began|made|making|turn(ed|ing)|forc(ed|ing)|push(ed|ing)|allow(ed|ing)|enabl(ed|ing)|weaken(ed|ing)|brought|bringing|trigger(ed|ing)|spark(ed|ing)|became|becoming|grew|growing|cut|cutting|end(ed|ing)|clos(ed|ing)|drove|driving|spurred|prompted|fuell?ed|therefore|thus)\b/i;
+  /\b(led|leads?|leading|caus(e|ed|es|ing)|so|then|next|after(wards)?|because|result(s|ed|ing)?|until|before|first|finally|eventually|began|begin(s|ning)?|start(s|ed|ing)?|made|mak(e|es|ing)|turn(s|ed|ing)?|forc(e|es|ed|ing)|push(es|ed|ing)?|allow(s|ed|ing)?|enabl(e|es|ed|ing)|weaken(s|ed|ing)?|brought|bring(s|ing)?|trigger(s|ed|ing)?|spark(s|ed|ing)?|became|become(s)?|becoming|grew|grow(s|ing|n)?|cut(s|ting)?|end(s|ed|ing)?|clos(e|es|ed|ing)|drove|driv(e|es|ing)|spur(s|red|ring)?|prompt(s|ed|ing)?|fuel(s|led|ed|ling|ing)?|activat(e|es|ed|ing)|produc(e|es|ed|ing)|releas(e|es|ed|ing)|therefore|thus)\b/i;
+
+// Words that set two things side by side. A scoreboard compares two sides, so a narration without such a word
+// gets none: "The Wall came down over days and weeks" has no two sides to score.
+const VERSUS_WORDS =
+  /\b(while|whereas|but|unlike|compared|comparison|than|versus|vs|both|instead|contrast|differ(s|ed|ent|ence|ences)?|same|similar|other|each|either|neither|rival(s|ry)?|against)\b/i;
+
+// Words that tell a name or a status changed into another. A change scene strikes out the old one, so a narration that
+// only says something ended gets no change scene.
+const CHANGE_WORDS =
+  /\b(renam(e|es|ed|ing)|became|become(s)?|becoming|chang(e|es|ed|ing)|turn(s|ed|ing)? into|replac(e|es|ed|ing)|succeed(s|ed|ing)?|known as|called|now|new name|transform(s|ed|ing)?|convert(s|ed|ing)?)\b/i;
 
 // The kinds a scene cannot use, because its facts lack the data: a timeline needs a year in the scene's own facts
-// and another year somewhere in the video, a stat one amount, a chart two, a quote a source quote, and steps a
-// narration where one thing leads to another.
+// and another year somewhere in the video, a stat one amount, a chart two, a quote a source quote, steps a narration
+// where one thing leads to another, a scoreboard a narration that compares two things, and a change a narration
+// where a name or status changes.
 function kindsWithoutData(scene: NarratedScene, facts: FactMap, videoYears: number): SceneKind[] {
   const factTexts = scene.factIds.map((id) => facts.get(id)?.text ?? "");
-  const amounts = amountsIn([scene.narration, ...factTexts].join(" ")).length;
+  const amounts = amountsFor([scene.narration, ...factTexts].join(" ")).length;
   const missing: SceneKind[] = [];
   if (factTexts.every((text) => yearsIn(text).length === 0) || videoYears < 2) missing.push("timeline");
   if (amounts < 1) missing.push("stat");
   if (amounts < 2) missing.push("compare");
   if (!scene.factIds.some((id) => hasWholeSentence(facts.get(id)?.quote ?? ""))) missing.push("quote");
   if (!SEQUENCE_WORDS.test(scene.narration)) missing.push("steps");
+  if (!VERSUS_WORDS.test(scene.narration)) missing.push("versus");
+  if (!CHANGE_WORDS.test(scene.narration)) missing.push("change");
   return missing;
 }
 
@@ -240,29 +344,54 @@ function mapLabels(visual: Extract<SceneVisual, { kind: "map" }>): { text: strin
     ...visual.markers.map((m) => ({ text: m.label })),
   ];
 }
-const mapLabelIsGrounded = (label: { text: string; country?: string }, source: string) =>
+// A map label names a place the scene or another fact of the video names, like a city on the route, or is just the
+// name of the country it is on.
+const mapLabelIsGrounded = (label: { text: string; country?: string }, source: string, facts: FactMap) =>
   isGrounded(label.text, source) ||
-  (label.country !== undefined && label.text.trim().toLowerCase() === COUNTRIES[label.country]?.name.toLowerCase());
+  isGrounded(label.text, [...facts.values()].map((fact) => fact.text).join(" ")) ||
+  (label.country !== undefined && isCountryName(label.text, label.country));
+
+// The directions a text gives: "eastward", "to the west", "carried silk west". Names are not directions: "East Asia",
+// "West Berlin", "the Middle East", "eastern Europe", and "the West" or "the East" with a capital, the sides in the
+// Cold War.
+const PLACE_AFTER_DIRECTION =
+  /^\s+(?:asia|africa|indies|berlin|germany|europe|bank|coast|side|end|roman|timor|pakistan|bengal|virginia|india|indian|jerusalem|java|anglia|prussia|wing|point|front)\b/i;
+function directionsIn(text: string): Set<string> {
+  const found = new Set<string>();
+  for (const match of text.matchAll(/\b(east|west)(?:wards?)?\b/gi)) {
+    const before = text.slice(0, match.index);
+    const after = text.slice(match.index + match[0].length);
+    if (/\b(?:middle|near|far)\s+$/i.test(before) || PLACE_AFTER_DIRECTION.test(after)) continue;
+    if (/^(?:East|West)$/.test(match[0]) && /\bthe\s+$/i.test(before)) continue;
+    found.add(match[1].toLowerCase());
+  }
+  return found;
+}
+
+// Whether every direction an arrow's label gives is one the narration or facts give too. A made-up "Eastward" must
+// not decide which way an arrow points.
+const directionIsBacked = (label: string | undefined, source: string) => {
+  const backed = directionsIn(source);
+  return [...directionsIn(label ?? "")].every((direction) => backed.has(direction));
+};
 
 // An arrow labeled "eastward" that goes west, or the other way round: the model mixed up from and to.
-function pointsTheOtherWay(visual: Extract<SceneVisual, { kind: "map" }>, arrow: { from: string; to: string; label?: string }) {
-  const label = (arrow.label ?? "").toLowerCase().replace(/\b(middle|near|far) east\b/g, "");
-  const saysEast = /\beast(ward)?s?\b/.test(label);
-  const saysWest = /\bwest(ward)?s?\b/.test(label);
+function pointsTheOtherWay(visual: MapVisual, arrow: { from: string; to: string; label?: string }) {
+  const directions = directionsIn(arrow.label ?? "");
   const from = resolvePlace(visual, arrow.from);
   const to = resolvePlace(visual, arrow.to);
   const [start, end] = [from && countryCenter(from), to && countryCenter(to)];
-  if (saysEast === saysWest || !start || !end) return false;
+  if (directions.size !== 1 || !start || !end) return false;
   const eastward = ((end[0] - start[0] + 540) % 360) - 180 > 0;
-  return saysEast !== eastward;
+  return directions.has("east") !== eastward;
 }
 
 // The model sometimes writes a city where a country code belongs, in an arrow or the frame. When that city is one
 // of the scene's markers, it means the marker's country.
 function resolvePlace(visual: Extract<SceneVisual, { kind: "map" }>, value: string): string | null {
-  if (isKnownCountry(value)) return value;
+  if (isMapCountry(value)) return value;
   const marker = visual.markers.find((m) => m.label.trim().toLowerCase() === value.trim().toLowerCase());
-  return marker && isKnownCountry(marker.country) ? marker.country : null;
+  return marker && isMapCountry(marker.country) ? marker.country : null;
 }
 
 // Text on screen, so its numbers and length can be checked. Timeline years are checked against their facts,
@@ -302,19 +431,20 @@ function shownText(visual: SceneVisual): string[] {
   }
 }
 
-// How much of a label is backed by the narration and facts: the share of its longer words that also appear there.
-// Words match on their first 5 letters, so "summons" matches "summoned". This keeps the director from adding
-// claims on screen that the fact-checked narration does not make.
-function groundedWords(text: string, source: string): { matched: number; total: number } {
-  const words = contentWords(text);
-  const stems = new Set(contentWords(source).map((word) => word.slice(0, 5)));
-  return { matched: words.filter((word) => stems.has(word.slice(0, 5))).length, total: words.length };
-}
-// Labels that state something (steps, stats, charts, timeline events) need more than half their words backed.
-// A short label may have one other word, like "occurred" in "94 deaths occurred".
+// Labels that state something (steps, stats, charts, timeline events) need more than half their words backed by the
+// narration and facts. A short label may have one other word, like "occurred" in "94 deaths occurred", but never
+// only other words. This keeps the director from adding claims on screen that the narration does not make.
 function isGrounded(text: string, source: string): boolean {
-  const { matched, total } = groundedWords(text, source);
-  return total <= 3 ? total - matched <= 1 : matched / total > 0.5;
+  const loose = groundedWords(text, source);
+  // A label of small words only, like "Before" or "After", must use the narration's own small words.
+  const { matched, total } = loose.total > 0 ? loose : groundedWords(text, source, { strict: true });
+  return total <= 3 ? matched >= Math.max(1, total - 1) : matched / total > 0.5;
+}
+// A scoreboard answer or a struck-out name is a claim in a word or two, so every word of it must be backed, small
+// words like "more" or "only" too: no "No", no "More soldiers" and no "Louis XV" that the narration does not say.
+function isFullyGrounded(text: string, source: string): boolean {
+  const { matched, total } = groundedWords(text, source, { strict: true });
+  return total > 0 && matched === total;
 }
 // Summary lines may say things in other words, so a third is enough for them.
 function lineIsGrounded(text: string, source: string): boolean {
@@ -359,10 +489,12 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
       }
       // Labels name what the narration and facts name. A country may always carry its own name.
       for (const label of mapLabels(visual)) {
-        if (!mapLabelIsGrounded(label, source)) problems.push(ungrounded(label.text));
+        if (!mapLabelIsGrounded(label, source, facts)) problems.push(ungrounded(label.text));
       }
       for (const arrow of visual.arrows) {
-        if (pointsTheOtherWay(visual, arrow)) {
+        if (!directionIsBacked(arrow.label, source)) {
+          problems.push(`The arrow label "${arrow.label}" gives a direction the narration does not. Leave the direction out.`);
+        } else if (pointsTheOtherWay(visual, arrow)) {
           problems.push(`The arrow "${arrow.label}" from ${arrow.from} to ${arrow.to} points the other way. Swap from and to.`);
         }
       }
@@ -373,7 +505,13 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
         }
         // Coloring all of a big country to point at one port in it misleads, so cities go in markers. A city in
         // brackets, like "Crimea (Kaffa)", is one too.
-        if (highlight.label && (CITY_WORDS.test(highlight.label) || /[()]/.test(highlight.label) || visual.markers.some((m) => m.label === highlight.label))) {
+        if (
+          highlight.label &&
+          (CITY_WORDS.test(highlight.label) ||
+            /[()]/.test(highlight.label) ||
+            namesCity(highlight.label, highlight.country) ||
+            visual.markers.some((m) => m.label === highlight.label))
+        ) {
           problems.push(`"${highlight.label}" names a city. Put cities in markers, and highlight only countries or regions.`);
         }
       }
@@ -381,11 +519,12 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
       const unknown = [
         ...new Set([
           ...places.filter((place) => resolvePlace(visual, place) === null),
-          ...visual.highlights.map((highlight) => highlight.country).filter((code) => !isKnownCountry(code)),
+          ...visual.highlights.map((highlight) => highlight.country).filter((code) => !isMapCountry(code)),
         ]),
       ];
       if (unknown.length > 0) {
-        problems.push(`Unknown country codes: ${unknown.join(", ")}. Use ISO 3166-1 alpha-3 codes of today's countries.`);
+        const antarctica = unknown.includes("ATA") ? " The map cannot show Antarctica." : "";
+        problems.push(`Unknown country codes: ${unknown.join(", ")}. Use ISO 3166-1 alpha-3 codes of today's countries.${antarctica}`);
       }
       for (const marker of visual.markers) {
         if (!isPlaceLabel(marker.label)) {
@@ -401,17 +540,23 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
     }
     case "timeline": {
       for (const event of visual.events) {
-        if (tooLong(event.label, MAX_LABEL_WORDS)) problems.push(`The label "${event.label}" is too long. Use at most 4 words.`);
-        if (!isGrounded(event.label, `${source} ${facts.get(event.factId)?.text ?? ""}`)) problems.push(ungrounded(event.label));
+        const factText = facts.get(event.factId)?.text ?? "";
+        const maxChars = maxEventLabelChars(visual.events.length);
+        if (tooLong(event.label, MAX_LABEL_WORDS) || event.label.length > maxChars) {
+          problems.push(`The label "${event.label}" is too long. Use at most 4 short words, ${maxChars} letters in all.`);
+        }
+        if (!isGrounded(event.label, `${source} ${factText}`)) problems.push(ungrounded(event.label));
         if (!facts.has(event.factId)) {
           problems.push(`"${event.label}" cites ${event.factId}, which is not a fact in this video.`);
         } else if (!eventIsBacked(event, facts)) {
-          const given = yearsIn(facts.get(event.factId)?.text ?? "");
+          const given = yearsIn(factText);
           problems.push(
             `The year ${event.year} for "${event.label}" is not in fact ${event.factId}, which gives ${given.length > 0 ? `only ${given.join(", ")}` : "no year"}. Only use years listed under "Years in the facts".`,
           );
-        } else if (event.date && !statesDate(event.date, facts.get(event.factId)?.text ?? "")) {
-          problems.push(`The date "${event.date}" for "${event.label}" is not in fact ${event.factId}. Only use dates its fact states.`);
+        } else if (event.date && !isDayAndMonth(event.date)) {
+          problems.push(`Write the date "${event.date}" as a day and a month only, like "20 July". The year is shown on its own.`);
+        } else if (event.date && !statesDate(event.date, factText, event.year)) {
+          problems.push(`Fact ${event.factId} does not give "${event.date}" as a date in ${event.year}. Only use dates its fact states, with their year.`);
         }
       }
       const keys = visual.events.map((event) => timeKey(event.year, event.date));
@@ -421,6 +566,7 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
       }
       // Events may share a year only when each has its own date, like the days of the Moon landing.
       const years = visual.events.map((event) => event.year);
+      const span: [number, number] = [Math.min(...years), Math.max(...years)];
       const sharesYear = (event: { year: number }) => years.filter((year) => year === event.year).length > 1;
       if (new Set(keys).size < 2) problems.push("A timeline needs at least two different years or dates. Use another kind.");
       else if (new Set(keys).size < keys.length || visual.events.some((event) => sharesYear(event) && !event.date)) {
@@ -429,26 +575,34 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
       if (visual.focusIndex < 0 || visual.focusIndex >= visual.events.length) {
         problems.push(`focusIndex is ${visual.focusIndex}, but there are only ${visual.events.length} events.`);
       }
-      for (const era of visual.eras) problems.push(...eraProblems(era, facts, source));
+      for (const era of visual.eras) problems.push(...eraProblems(era, facts, source, span));
       break;
     }
-    case "stat":
+    case "stat": {
       if (tooLong(visual.label, MAX_LINE_WORDS)) problems.push("The stat label is too long. Use at most 8 words.");
       if (visual.unit && tooLong(visual.unit, 2)) problems.push("The unit is too long. Use one or two words, like million or km.");
-      if (visual.total !== undefined && !(visual.total > (visual.valueMax ?? visual.value))) problems.push("total must be bigger than value, or left out.");
-      // A range must be shown whole, so the viewer sees how uncertain the number is.
-      {
-        const ranges = rangesIn(source);
-        const range = ranges.find(([low, high]) => low === visual.value || high === visual.value || high === visual.valueMax);
-        if (visual.valueMax !== undefined && !ranges.some(([low, high]) => low === visual.value && high === visual.valueMax)) {
-          problems.push(`The narration and facts do not give ${visual.value} to ${visual.valueMax} as a range. Leave out valueMax.`);
-        } else if (visual.valueMax === undefined && range) {
-          problems.push(`The narration gives the range ${range[0]} to ${range[1]}. Show all of it: value ${range[0]}, valueMax ${range[1]}.`);
-        }
-      }
-      // The dots say "value out of total", so the narration must say exactly that.
-      if (visual.total !== undefined && !(isPercent(visual.unit) && visual.total === 100) && !isPartOf(visual.value, visual.total, source)) {
+      // A percentage is already out of 100. Other totals draw value out of total as dots, so the narration must say
+      // exactly that.
+      if (visual.total !== undefined && isPercent(visual.unit) && visual.total !== 100) {
+        problems.push("A percentage is already out of 100. Leave out total.");
+      } else if (visual.total !== undefined && !(visual.total > (visual.valueMax ?? visual.value))) {
+        problems.push("total must be bigger than value, or left out.");
+      } else if (visual.total !== undefined && !isPercent(visual.unit) && !isPartOf(visual.value, visual.total, source)) {
         problems.push(`Leave out total: the narration and facts do not say ${visual.value} is part of ${visual.total}, like "25 of 75 million".`);
+      }
+      // A range the narration or facts give may be shown whole, whatever word follows it.
+      if (visual.valueMax !== undefined && !rangesIn(source).some((range) => range.low === visual.value && range.high === visual.valueMax)) {
+        problems.push(`The narration and facts do not give ${visual.value} to ${visual.valueMax} as a range. Leave out valueMax.`);
+      }
+      // A number that is one end of a range of the same thing must be shown as the whole range, so the viewer sees how
+      // uncertain it is. "4 to 5 years" says nothing about "5 million people", and neither does a range in a sentence
+      // about something else.
+      const range = sentencesOf(source)
+        .filter((sentence) => groundedWords(visual.label, sentence).matched > 0)
+        .flatMap((sentence) => rangesIn(sentence))
+        .find((other) => unitFits(other.unit, visual) && (other.low === visual.value || other.high === visual.value));
+      if (visual.valueMax === undefined && range) {
+        problems.push(`The narration gives the range ${range.low} to ${range.high}. Show all of it: value ${range.low}, valueMax ${range.high}.`);
       }
       if (
         isDateIn(visual.value, source) ||
@@ -464,6 +618,7 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
         problems.push(`${visual.value} is not in this scene's narration or facts. Show a number this scene gives, or another kind.`);
       }
       break;
+    }
     case "compare":
       if (tooLong(visual.title, MAX_LINE_WORDS)) problems.push("The chart title is too long. Use at most 8 words.");
       if (!isGrounded(visual.title, source)) problems.push(ungrounded(visual.title));
@@ -484,14 +639,26 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
       if (visual.bars.filter((bar) => UNIT_LABEL.test(bar.label.trim())).length >= 2) {
         problems.push("The bars are one amount in different units. A chart compares different things in one unit.");
       }
+      // "Europe population killed: 50, European population killed: 60" is two estimates of one number, which is a range.
+      if (visual.bars.some((bar, index) => visual.bars.slice(0, index).some((other) => sameWords(other.label, bar.label)))) {
+        problems.push("Two bars are the same thing. A chart compares different things; two estimates of one number are a range, shown as a stat.");
+      }
+      if (/^\p{Ll}/u.test(visual.title.trim())) problems.push('Write the chart title as a short title, like "Plague deaths in Europe".');
       for (const bar of visual.bars) {
         if (tooLong(bar.label, MAX_LABEL_WORDS)) problems.push(`The bar label "${bar.label}" is too long. Use at most 4 words.`);
         if (bar.value < 0) problems.push("Bar values cannot be negative.");
+        // Each bar is a claim: its label and its number come from one sentence of this scene, so a chart cannot pair
+        // a place with a number said about something else.
+        if (!isGrounded(bar.label, source)) problems.push(ungrounded(bar.label));
+        else if (!barIsStated(bar, visual.unit, source)) {
+          problems.push(`No sentence of this scene gives ${bar.value} for "${bar.label}". Each bar shows a number the narration or facts give for that thing.`);
+        }
       }
       break;
     case "list": {
-      const titles = visual.items.map((item) => item.title.trim().toLowerCase());
-      if (new Set(titles).size < titles.length) problems.push("Two items have the same title. Each item is a different thing.");
+      if (visual.items.some((item, index) => visual.items.slice(0, index).some((other) => sameWords(other.title, item.title)))) {
+        problems.push("Two items have the same title. Each item is a different thing.");
+      }
       if (visual.items.some((item) => yearsIn(item.title).length > 0 || datesIn(item.title).length > 0)) {
         problems.push("A list item is a date. Dates belong on a timeline; a list shows things of one kind.");
       }
@@ -514,9 +681,8 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
         for (const cell of [row.label, row.left, row.right]) {
           if (tooLong(cell, 6)) problems.push(`"${cell}" is too long. Use at most 5 words.`);
           // Each side's answer is a claim, so every word of it must come from the narration or facts: a one-word
-          // cell like "Adequate" would otherwise slip through.
-          const { matched, total } = groundedWords(cell, source);
-          if (matched < total) problems.push(ungrounded(cell));
+          // cell like "Adequate", "Yes" or "No" would otherwise slip through.
+          if (!isFullyGrounded(cell, source)) problems.push(ungrounded(cell));
         }
       }
       break;
@@ -527,8 +693,7 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
         if (tooLong(side, 4)) problems.push(`"${side}" is too long: a change shows a name or a status, in at most 4 words.`);
         // Striking out a name says it was the name before, so the old one must be stated, word for word: no
         // "Prince Mehmed" when the narration only says Sultan Mehmed II.
-        const { matched, total } = groundedWords(side, source);
-        if (matched < total) problems.push(`"${side}" is not what the narration or facts call it. Use their exact words for both names.`);
+        if (!isFullyGrounded(side, source)) problems.push(`"${side}" is not what the narration or facts call it. Use their exact words for both names.`);
       }
       if (visual.year !== undefined && !yearsIn(source).includes(visual.year)) {
         problems.push(`The year ${visual.year} is not in this scene's narration or facts. Leave it out.`);
@@ -537,21 +702,20 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
     case "quote": {
       const fact = facts.get(visual.factId);
       const text = visual.text.trim();
+      // A quote is one whole sentence of its source, word for word: a scrap like "years. From the east" means nothing
+      // on its own, and a sentence cut short can drop a "but" or a "some say".
       if (!fact) problems.push(`Unknown fact ${visual.factId}.`);
-      else if (!quoteIsInSource(text, fact.quote)) {
-        problems.push(`The quote must be words copied exactly from the quote of fact ${visual.factId}.`);
+      else if (!isSentenceOf(text, fact.quote)) {
+        problems.push(`The quote must be one whole sentence copied exactly from the quote of fact ${visual.factId}, from its first word to its end.`);
       }
       if (tooLong(text, 30)) problems.push("The quote is too long. Use at most 30 words.");
       if (countWords(text) < 5) problems.push("The quote is too short. Use at least 5 words.");
-      // A scrap like "years. From the east" means nothing on its own, so a quote is one sentence, from its start.
-      if (!/^["'“‘(]?[A-Z0-9]/.test(text)) problems.push("The quote starts in the middle of a sentence. Start where the sentence starts.");
-      if (/[.!?]["”’)]?\s+\S/.test(text)) problems.push("The quote runs across two sentences. Copy one whole sentence.");
-      else if (!/[.!?]["”’)]?$/.test(text)) problems.push("The quote stops in the middle of a sentence. Copy the whole sentence, to its end.");
       if (/[|•·]/.test(text)) problems.push("The quote is a heading or a list, not a sentence. Copy a sentence someone wrote.");
       if (!lineIsGrounded(text, source)) problems.push("The quote is not about what this scene says. Pick words that say what the narration says.");
       break;
     }
     case "steps":
+      if (visual.steps.some(isOnlyADate)) problems.push("A step is only a date or a time. Steps say what happens; dates belong on a timeline.");
       for (const step of visual.steps) {
         if (tooLong(step, 6)) problems.push(`The step "${step}" is too long. Use at most 5 words.`);
         if (!isGrounded(step, source)) problems.push(ungrounded(step));
@@ -574,19 +738,24 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
   return problems;
 }
 
-// `avoid` names the kinds this scene should not switch to.
+// `avoid` names the kinds this scene should not switch to, and `blocked` the kinds it may not use at all.
 function sceneProblems(
   { visual, lines }: SceneReply,
   allowed: Set<string>,
   facts: FactMap,
   source: string,
-  avoid: string[],
+  avoid: SceneKind[],
+  blocked: SceneKind[],
 ): string[] {
   // The lines are only shown if the visual cannot be used, so they are worth a retry only when none of them works.
   const lineProblems = lines.some((line) => lineIsSafe(line, allowed, source)) ? [] : linesProblems(lines, allowed, source);
-  const problems = visualProblems(visual, allowed, facts, source);
   // A model that keeps failing at one kind is better off switching to another than giving up to text.
   const others = SCENE_KINDS.filter((kind) => kind !== visual.kind && kind !== "text" && !avoid.includes(kind));
+  if (blocked.includes(visual.kind)) {
+    const why = visual.kind === "map" ? ": its narration names no place a map can show" : "";
+    return [`A ${visual.kind} does not fit this scene${why}. Use ${others.join(" or ") || "text"} instead.`, ...lineProblems];
+  }
+  const problems = visualProblems(visual, allowed, facts, source);
   const hint =
     problems.length > 0 && visual.kind !== "text" && others.length > 0
       ? [`Fix the problems below. If a ${visual.kind} cannot work with these facts, use ${others.join(" or ")} instead.`]
@@ -601,31 +770,34 @@ function textVisual(lines: string[], scene: NarratedScene, allowed: Set<string>)
 }
 
 // Last resort after the retries: drop whatever still breaks a rule, so one bad label does not sink the video.
-// Maps and timelines keep their good parts. The other kinds are shown as the scene's plain lines instead.
+// Maps, timelines, lists and scoreboards keep their good parts. The other kinds are shown as the scene's plain lines
+// instead, and so is a kind the scene may not use at all (`blocked`).
 function repairScene(
   { visual, lines }: SceneReply,
   scene: NarratedScene,
   allowed: Set<string>,
   facts: FactMap,
   source: string,
+  blocked: SceneKind[],
 ): SceneVisual {
   const safe = (text: string) => numbersIn(text).every((number) => allowed.has(number));
   const safeLabel = (label?: string) => (label && safe(label) && countWords(label) <= MAX_LABEL_WORDS ? label : undefined);
   const fallback = textVisual(lines, scene, allowed);
+  if (blocked.includes(visual.kind)) return fallback;
 
   switch (visual.kind) {
     case "text":
       return textVisual(visual.lines, scene, allowed);
     case "timeline": {
       // Kept only if every label is backed; a timeline with made-up labels is worse than plain lines.
-      // A date its fact does not state goes; the year stays.
-      const backed = visual.events.map((event) =>
-        event.date && !statesDate(event.date, facts.get(event.factId)?.text ?? "") ? { ...event, date: undefined } : event,
-      );
+      // A date its fact does not state for that year goes; the year stays.
+      const dateIsBacked = (event: (typeof visual.events)[number]) =>
+        event.date !== undefined && isDayAndMonth(event.date) && statesDate(event.date, facts.get(event.factId)?.text ?? "", event.year);
+      const backed = visual.events.map((event) => (event.date && !dateIsBacked(event) ? { ...event, date: undefined } : event));
       const focus = backed[visual.focusIndex];
       const key = (event: (typeof backed)[number]) => timeKey(event.year, event.date);
       const events = backed
-        .filter((event) => eventIsBacked(event, facts) && safeLabel(event.label))
+        .filter((event) => eventIsBacked(event, facts) && safeLabel(event.label) && event.label.length <= maxEventLabelChars(visual.events.length))
         .filter((event) => isGrounded(event.label, `${source} ${facts.get(event.factId)?.text ?? ""}`))
         .filter((event, index, all) => all.findIndex((other) => other.label.toLowerCase() === event.label.toLowerCase()) === index)
         .filter((event, index, all) => event === focus || !all.some((other, at) => key(other) === key(event) && (other === focus || at < index)))
@@ -638,26 +810,29 @@ function repairScene(
         return event === (focus && sameYear.includes(focus) ? focus : sameYear[0]);
       });
       const focusIndex = Math.max(0, focus ? dated.indexOf(focus) : dated.length - 1);
-      const eras = visual.eras.filter((era) => eraProblems(era, facts, source).length === 0);
+      const years = dated.map((event) => event.year);
+      const span: [number, number] = [Math.min(...years), Math.max(...years)];
+      const eras = visual.eras.filter((era) => eraProblems(era, facts, source, span).length === 0);
       return new Set(dated.map(key)).size >= 2 ? { kind: "timeline", events: dated, focusIndex, eras } : fallback;
     }
     case "map": {
       const mapLabel = (text: string | undefined, country?: string) =>
         text &&
         countWords(text) <= MAX_MAP_LABEL_WORDS &&
-        mapLabelIsGrounded({ text, country }, source) &&
-        !(country && (labelMismatch(text, country) || CITY_WORDS.test(text) || /[()]/.test(text)))
+        mapLabelIsGrounded({ text, country }, source, facts) &&
+        !(country && (labelMismatch(text, country) || CITY_WORDS.test(text) || /[()]/.test(text) || namesCity(text, country)))
           ? safeLabel(text)
           : undefined;
       const highlights = visual.highlights
-        .filter((highlight) => isKnownCountry(highlight.country))
+        .filter((highlight) => isMapCountry(highlight.country))
         .map((highlight) => ({ ...highlight, label: mapLabel(highlight.label, highlight.country) }));
-      // The label comes from the fact-checked facts, so an arrow that goes against it has from and to swapped.
+      // A kept label's direction comes from the narration, so an arrow that goes against it has from and to swapped.
+      // A label with a direction the narration does not give goes, and the arrow stays as it was.
       const arrows = visual.arrows.flatMap((arrow) => {
         const [from, to] = [resolvePlace(visual, arrow.from), resolvePlace(visual, arrow.to)];
-        const label = mapLabel(arrow.label);
+        const label = directionIsBacked(arrow.label, source) ? mapLabel(arrow.label) : undefined;
         if (!from || !to) return [];
-        return [pointsTheOtherWay(visual, arrow) ? { from: to, to: from, label } : { from, to, label }];
+        return [label && pointsTheOtherWay(visual, { ...arrow, label }) ? { from: to, to: from, label } : { from, to, label }];
       });
       const markers = visual.markers
         .filter((marker) => isPlaceLabel(marker.label))
@@ -668,29 +843,32 @@ function repairScene(
       return { kind: "map", frame: frame.length > 0 ? frame : highlights.map((h) => h.country), highlights, arrows, markers };
     }
     case "versus": {
-      // Points the narration does not back go; two or more good ones still make a scoreboard.
-      const fullyGrounded = (text: string) => {
-        const { matched, total } = groundedWords(text, source);
-        return matched === total;
-      };
-      const cellOk = (cell: string) => countWords(cell) <= 6 && fullyGrounded(cell) && safe(cell);
-      const rows = visual.rows.filter((row) => [row.label, row.left, row.right].every(cellOk));
-      const sidesOk = [visual.left, visual.right].every((side) => countWords(side) <= 4 && isGrounded(side, source) && safe(side));
+      // Points the narration does not back go; two or more good ones still make a scoreboard of two different sides.
+      const cellOk = (cell: string) => countWords(cell) <= 6 && isFullyGrounded(cell, source) && safe(cell);
+      const rows = visual.rows.filter((row) => countWords(row.label) <= 4 && [row.label, row.left, row.right].every(cellOk));
+      const sidesDiffer = visual.left.trim().toLowerCase() !== visual.right.trim().toLowerCase();
+      const sidesOk = sidesDiffer && [visual.left, visual.right].every((side) => countWords(side) <= 4 && isGrounded(side, source) && safe(side));
       return sidesOk && rows.length >= 2 ? { ...visual, rows } : fallback;
     }
     case "list": {
-      // Items the narration does not back go; two or more good ones still make a list.
+      // Items the narration does not back go, and so do dates and repeats; two or more good ones still make a list.
+      const sameTitle = (a: { title: string }, b: { title: string }) => sameWords(a.title, b.title);
       const items = visual.items
         .filter((item) => countWords(item.title) <= 4 && isGrounded(item.title, source) && safe(item.title))
+        .filter((item) => yearsIn(item.title).length === 0 && datesIn(item.title).length === 0)
+        .filter((item, index, all) => all.findIndex((other) => other === item || sameTitle(other, item)) === index)
         .map((item) => (item.detail && countWords(item.detail) <= 7 && isGrounded(item.detail, source) && safe(item.detail) ? item : { title: item.title }));
       return items.length >= 2 ? { kind: "list", items } : fallback;
     }
+    case "compare": {
+      // A title that starts in lower case is the one problem a chart can lose without losing a claim.
+      const titled = { ...visual, title: visual.title.charAt(0).toUpperCase() + visual.title.slice(1) };
+      return visualProblems(titled, allowed, facts, source).length === 0 ? titled : fallback;
+    }
     case "stat": {
-      // Most often only the total is wrong, or the number is one end of a range. Fixed, the number still stands.
-      if (visualProblems(visual, allowed, facts, source).length === 0) return visual;
-      const range = rangesIn(source).find(([low, high]) => low === visual.value || high === visual.value);
-      const ranged = range ? { ...visual, value: range[0], valueMax: range[1] } : { ...visual, valueMax: undefined };
-      const tries = [ranged, { ...ranged, total: undefined }];
+      // Most often only the total or the end of the range is wrong. Without them the number may still stand. A range
+      // is never made up here: a number the narration gives as a range shows as lines instead.
+      const tries = [visual, { ...visual, total: undefined }, { ...visual, valueMax: undefined }, { ...visual, total: undefined, valueMax: undefined }];
       return tries.find((attempt) => visualProblems(attempt, allowed, facts, source).length === 0) ?? fallback;
     }
     default:
@@ -710,29 +888,29 @@ function sameAs(a: SceneVisual, b: SceneVisual): boolean {
   return a.kind !== "text" && a.kind === b.kind && JSON.stringify(a) === JSON.stringify(b);
 }
 
-// Whether a scene names a highlighted country: by its name, another name for it, a label in the scene's own words,
-// a named city in it, or an arrow that starts or ends there.
+// Whether a scene names a highlighted country: by its name, another name for it or for its people ("Chinese"), a
+// label in the scene's own words, or a named city in it. An arrow to a country does not name it.
 function countryIsNamed(visual: MapVisual, highlight: MapVisual["highlights"][number], source: string): boolean {
-  const text = source.toLowerCase();
-  const words = text.split(/[^\p{L}]+/u);
-  // The first four letters, so "China" matches "Chinese" and "Italy" matches "Italian".
-  const longest = (COUNTRIES[highlight.country]?.name.toLowerCase().split(/[^\p{L}]+/u) ?? []).sort((a, b) => b.length - a.length)[0] ?? "";
   return (
     (highlight.label !== undefined && isGrounded(highlight.label, source)) ||
-    (longest.length >= 4 && words.some((word) => word.startsWith(longest.slice(0, 4)))) ||
-    (COUNTRY_ALIASES[highlight.country] ?? []).some((alias) => text.includes(alias)) ||
-    visual.markers.some((marker) => countryContains(highlight.country, marker.lon, marker.lat) && isGrounded(marker.label, source)) ||
-    visual.arrows.some((arrow) => [resolvePlace(visual, arrow.from), resolvePlace(visual, arrow.to)].includes(highlight.country))
+    namesCountry(source, highlight.country) ||
+    visual.markers.some((marker) => countryContains(highlight.country, marker.lon, marker.lat) && isGrounded(marker.label, source))
   );
 }
 
 // Countries the scene does not name stay on the map, but muted, so each map points at its own part of the story
-// and does not color a country the narration says nothing about. An arrow that repeats another, from the same
-// place to the same place, would be drawn right on top of it, so it goes.
+// and does not color a country the narration says nothing about. An arrow joins two places the scene names: an
+// arrow to a country it does not name, or to a city whose marker was dropped, goes. So does an arrow that repeats
+// another, from the same place to the same place, which would be drawn right on top of it.
 function tidyMap(visual: SceneVisual, source: string): SceneVisual {
   if (visual.kind !== "map") return visual;
+  const named = (code: string | null) =>
+    code !== null &&
+    countryIsNamed(visual, { country: code, tone: "secondary", label: visual.highlights.find((h) => h.country === code)?.label }, source);
   const route = (arrow: { from: string; to: string }) => `${resolvePlace(visual, arrow.from)}>${resolvePlace(visual, arrow.to)}`;
-  const arrows = visual.arrows.filter((arrow, index, all) => all.findIndex((other) => route(other) === route(arrow)) === index);
+  const arrows = visual.arrows
+    .filter((arrow) => named(resolvePlace(visual, arrow.from)) && named(resolvePlace(visual, arrow.to)))
+    .filter((arrow, index, all) => all.findIndex((other) => route(other) === route(arrow)) === index);
   const highlights = visual.highlights.map((highlight) =>
     highlight.tone === "muted" || countryIsNamed(visual, highlight, source) ? highlight : { ...highlight, tone: "muted" as const },
   );
@@ -778,6 +956,7 @@ async function verifyMarkers(
   title: string,
   visuals: SceneVisual[],
   narrations: string[], // the narration of the scene each visual belongs to
+  deadline: number,
 ): Promise<{ visuals: SceneVisual[]; usage: Usage }> {
   // Each place once, with the narration of the first scene that shows it, to tell apart similar names.
   const contextOf = new Map<string, string>();
@@ -801,12 +980,14 @@ async function verifyMarkers(
       messages: placesPrompt(title, places.map((name) => ({ name, context: contextOf.get(name) ?? "" }))),
       maxTokens: 800,
       timeoutMs: SCENE_CALL_TIMEOUT_MS,
+      deadline,
     });
     secondOpinion = new Map(places.map((place, index) => [place, reply.data.places[index]]));
     usage = reply.usage;
   } catch (error) {
     // Without the second opinion the markers cannot be trusted, so they are left out.
     console.warn(`[direct/places] Leaving out the map markers: ${error}`);
+    usage = usageOf(error);
   }
   return {
     usage,
@@ -828,6 +1009,10 @@ async function verifyMarkers(
 // The storyboard contract has no fact IDs on timeline events and no countries on markers, and a quote points to
 // its source instead of its fact.
 function forStoryboard(visual: SceneVisual, facts: FactMap) {
+  // An empty detail would draw an empty line under a card's title.
+  if (visual.kind === "list") {
+    return { kind: "list" as const, items: visual.items.map(({ title, detail }) => (detail?.trim() ? { title, detail } : { title })) };
+  }
   if (visual.kind === "timeline") {
     const eras = visual.eras.map(({ start, end, label }) => ({ start, end, label }));
     return {
@@ -854,6 +1039,7 @@ function forStoryboard(visual: SceneVisual, facts: FactMap) {
 }
 
 export async function direct({ request, script, facts, sources }: z.infer<typeof DirectInputSchema>): Promise<DirectResult> {
+  const deadline = Date.now() + DIRECT_DEADLINE_MS;
   // The narration is the fact-checked text, word for word. The model only chooses what is shown.
   const factMap: FactMap = new Map(facts.map((fact) => [fact.id, fact]));
   const narrated: NarratedScene[] = script.scenes.map((scene) => ({
@@ -893,7 +1079,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
   const orFallback = <T>(call: Promise<{ data: T; usage: Usage }>, fallback: T) =>
     call.catch((error) => {
       console.warn(`[direct] A scene call failed, using a fallback: ${error}`);
-      return { data: fallback, usage: emptyUsage() };
+      return { data: fallback, usage: usageOf(error) };
     });
   const titleCall = orFallback<TitleVisual>(
     chatJson({
@@ -903,14 +1089,33 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
       messages: directTitlePrompt(script.title, opening.narration),
       maxTokens: 300,
       timeoutMs: SCENE_CALL_TIMEOUT_MS,
+      deadline: deadline - MARKER_CHECK_MS,
       check: (visual) => titleProblems(visual, allowedFor(opening)),
       repair: () => ({ heading: script.title }),
     }),
     { heading: script.title },
   );
+  // A map needs places: a scene has them when it names a country, region, continent or sea. A video with fewer than
+  // two such scenes is not about places, and maps would be guesses: the model once planned maps for how the immune
+  // system works, and for the Moon landing. Asking the model which scenes name places let the Moon through.
+  const hasPlaces = rest.map((scene) => namesAPlace(sourceFor(scene)));
+  const geographic = hasPlaces.filter(Boolean).length >= 2;
+  // A scene's narration or facts must name the place, and the scene must not be about space: facts about "the
+  // American spaceflight" once gave a scene about the Moon landing a map of the United States labeled "Tranquility
+  // Base". A place only the facts name counts only when the facts are not about space either.
+  const mapFits = rest.map((scene) => {
+    const factText = scene.factIds.map((id) => factMap.get(id)?.text ?? "").join(" ");
+    const placeInFacts = namesAPlace(factText) && !SPACE_WORDS.test(factText);
+    return !SPACE_WORDS.test(scene.narration) && (namesAPlace(scene.narration) || placeInFacts);
+  });
+  const limits = kindLimits(rest.length, geographic);
+  // The kinds each scene cannot use: those its facts have no data for, and a map where it names no place.
+  const missing = rest.map((scene, index): SceneKind[] => [
+    ...kindsWithoutData(scene, factMap, videoYears),
+    ...(geographic && mapFits[index] ? [] : ["map" as const]),
+  ]);
   // One call ranks the kinds that fit each scene, and the code picks from them so the video gets a rhythm.
   // If the call fails, each scene picks on its own.
-  const missing = rest.map((scene) => kindsWithoutData(scene, factMap, videoYears));
   const plan = await chatJson({
     step: "direct/plan",
     schemaName: "plan",
@@ -928,105 +1133,121 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     ),
     maxTokens: 600,
     timeoutMs: SCENE_CALL_TIMEOUT_MS,
+    deadline: Math.min(deadline - MARKER_CHECK_MS, Date.now() + PLAN_DEADLINE_MS),
   }).catch((error) => {
     console.warn(`[direct/plan] No plan, scenes pick their own kind: ${error}`);
-    return null;
+    return { data: null, usage: usageOf(error) };
   });
-  // A map needs places: a scene has them when it names a country, region, continent or sea. A video with fewer than
-  // two such scenes is not about places, and maps would be guesses: the model once planned maps for how the immune
-  // system works, and for the Moon landing. Asking the model which scenes name places let the Moon through.
-  const hasPlaces = rest.map((scene) => namesAPlace(sourceFor(scene)));
-  const geographic = hasPlaces.filter(Boolean).length >= 2;
-  // A scene's own narration must name the place, and never space: facts about "the American spaceflight" once
-  // gave a scene about the Moon landing a map of the United States labeled "Tranquility Base".
-  const mapFits = rest.map((scene) => namesAPlace(scene.narration) && !SPACE_WORDS.test(scene.narration));
-  const limits = kindLimits(rest.length, geographic);
-  missing.forEach((kinds, index) => {
-    if (!geographic || !mapFits[index]) kinds.push("map");
-  });
-  const plannedKinds = plan ? pickKinds(plan.data.scenes.map((scene) => scene.kinds), missing, limits) : rest.map(() => undefined);
-  if (plan) console.log(`[direct/plan] ${plannedKinds.map((kind) => kind ?? "free").join(", ")}`);
-  // The kinds a scene should not switch to: those without data, those of the scenes next to it (maps may repeat),
-  // and those the other scenes already use as often as `limits` allows.
-  const avoidFor = (index: number): SceneKind[] => {
+  const plannedKinds = plan.data ? pickKinds(plan.data.scenes.map((scene) => scene.kinds), missing, limits) : rest.map(() => undefined);
+  if (plan.data) console.log(`[direct/plan] ${plannedKinds.map((kind) => kind ?? "free").join(", ")}`);
+  // The kinds a scene may not use at all: those it has no data for, and those the other scenes already use as often
+  // as `limits` allows.
+  const blockedFor = (index: number): SceneKind[] => {
     const others = plannedKinds.filter((_, other) => other !== index);
-    const used = SCENE_KINDS.filter((kind) => others.filter((other) => other === kind).length >= limits[kind]);
-    const neighbors = [plannedKinds[index - 1], plannedKinds[index + 1]].filter((kind) => kind !== undefined && kind !== "map");
-    return [...new Set([...missing[index], ...neighbors, ...used])].filter(
-      (kind): kind is SceneKind => kind !== undefined && kind !== "text" && kind !== plannedKinds[index],
+    const usedUp = SCENE_KINDS.filter((kind) => others.filter((other) => other === kind).length >= limits[kind]);
+    return [...new Set([...missing[index], ...usedUp])].filter((kind) => kind !== "text" && kind !== plannedKinds[index]);
+  };
+  // The kinds a scene should not switch to: the blocked ones, and those of the scenes next to it (maps may repeat).
+  const avoidFor = (index: number): SceneKind[] => {
+    const neighbors = [plannedKinds[index - 1], plannedKinds[index + 1]].filter(
+      (kind): kind is SceneKind => kind !== undefined && kind !== "map" && kind !== "text" && kind !== plannedKinds[index],
     );
+    return [...new Set([...blockedFor(index), ...neighbors])];
   };
 
   const sceneCalls = rest.map((scene, index) =>
     orFallback(
       chatJson({
-      step: `direct/${scene.id}`,
-      schemaName: "scene",
-      schema: SceneReplySchema,
-      messages: directScenePrompt({
-        title: script.title,
-        position: `scene ${index + 2} of ${narrated.length}`,
-        narration: scene.narration,
-        sceneFacts: factList(scene.factIds),
-        otherFacts: factList(videoFactIds.filter((id) => !scene.factIds.includes(id))),
-        plannedKind: plannedKinds[index],
-        avoidKinds: avoidFor(index),
-        years: yearList,
-        amounts: amountsIn(sourceFor(scene)),
-      }),
-      maxTokens: 1000,
-      timeoutMs: SCENE_CALL_TIMEOUT_MS,
-      check: (reply) => [
-        ...(reply.visual.kind === "text" && plannedKinds[index] && plannedKinds[index] !== "text"
-          ? [`Show a ${plannedKinds[index]} or another picture, not text.`]
-          : []),
-        ...sceneProblems(reply, allowedFor(scene), videoFacts, sourceFor(scene), avoidFor(index)),
-      ],
-      repair: (reply) => ({
-        visual: repairScene(reply, scene, allowedFor(scene), videoFacts, sourceFor(scene)),
-        lines: reply.lines,
-      }),
+        step: `direct/${scene.id}`,
+        schemaName: "scene",
+        schema: SceneReplySchema,
+        messages: directScenePrompt({
+          title: script.title,
+          position: `scene ${index + 2} of ${narrated.length}`,
+          narration: scene.narration,
+          sceneFacts: factList(scene.factIds),
+          quotable: scene.factIds.flatMap((id) => quotableSentences(factMap.get(id)?.quote ?? "").map((sentence) => ({ factId: id, sentence }))),
+          otherFacts: factList(videoFactIds.filter((id) => !scene.factIds.includes(id))),
+          plannedKind: plannedKinds[index],
+          avoidKinds: avoidFor(index),
+          years: yearList,
+          amounts: amountsFor(sourceFor(scene)),
+        }),
+        maxTokens: 1000,
+        timeoutMs: SCENE_CALL_TIMEOUT_MS,
+        deadline: deadline - MARKER_CHECK_MS,
+        check: (reply) => [
+          ...(reply.visual.kind === "text" && plannedKinds[index] && plannedKinds[index] !== "text"
+            ? [`Show a ${plannedKinds[index]} or another picture, not text.`]
+            : []),
+          ...sceneProblems(reply, allowedFor(scene), videoFacts, sourceFor(scene), avoidFor(index), blockedFor(index)),
+        ],
+        repair: (reply) => ({
+          visual: repairScene(reply, scene, allowedFor(scene), videoFacts, sourceFor(scene), blockedFor(index)),
+          lines: reply.lines,
+        }),
       }),
       { visual: textVisual([], scene, allowedFor(scene)), lines: [] },
     ),
   );
   const [title, ...scenes] = await Promise.all([titleCall, ...sceneCalls]);
+  // Markers are checked before the maps are tidied, so a country kept bright only by a wrong marker is muted too.
   const checked = await verifyMarkers(
     script.title,
-    scenes.map(({ data }, index) => tidyMap(data.visual, sourceFor(rest[index]))),
+    scenes.map(({ data }) => data.visual),
     rest.map((scene) => scene.narration),
+    deadline,
   );
-  const usage = [title, ...scenes, checked, ...(plan ? [plan] : [])].reduce(
-    (total, call) => addUsage(total, call.usage),
-    emptyUsage(),
-  );
+  const tidied = checked.visuals.map((visual, index) => tidyMap(visual, sourceFor(rest[index])));
+  const usage = [title, ...scenes, checked, plan].reduce((total, call) => addUsage(total, call.usage), emptyUsage());
 
-  // The calls ran apart, so a map or timeline can repeat the one before, or the same kind can come too often in a
-  // row. Then the later scene shows its lines instead, to keep some rhythm.
+  // The calls ran apart, so a map or timeline can repeat the one before, the same kind can come too often in a row,
+  // or a kind can come more often than `limits` allows. Then the later scene shows its lines instead, to keep some
+  // rhythm.
   const visuals: SceneVisual[] = [];
+  const noRecap: boolean[] = []; // scenes whose own map was just turned down, so no map may take their place
   scenes.forEach(({ data }, index) => {
-    const visual = checked.visuals[index];
-    const lastThree = [visuals[index - 3], visuals[index - 2], visuals[index - 1]];
+    const visual = tidied[index];
     const previous = visuals[index - 1];
-    const repeats = previous && sameAs(previous, visual);
+    const repeats = previous !== undefined && sameAs(previous, visual);
     // Three maps in a row play as one journey; a fourth is too many.
-    const fourthMap = visual.kind === "map" && lastThree.every((other) => other?.kind === "map");
+    const fourthMap = visual.kind === "map" && [visuals[index - 3], visuals[index - 2], previous].every((other) => other?.kind === "map");
     // Two steps, stats, quotes, charts or timelines in a row look the same; two maps of different places do not.
-    const sameKind = previous && !["map", "text"].includes(visual.kind) && previous.kind === visual.kind;
+    const sameKind = previous !== undefined && !["map", "text"].includes(visual.kind) && previous.kind === visual.kind;
+    const overLimit = visual.kind !== "text" && visuals.filter((other) => other.kind === visual.kind).length >= limits[visual.kind];
     // A map with nothing colored, marked or moving shows nothing.
     const emptyMap = visual.kind === "map" && visual.markers.length === 0 && visual.arrows.length === 0 && visual.highlights.every((h) => h.tone === "muted");
-    if (repeats || fourthMap || sameKind || emptyMap) {
-      const why = repeats ? "repeats the scene before" : emptyMap ? "shows nothing" : "comes too often in a row";
-      console.log(`[direct] ${rest[index].id} shows its lines instead of a ${visual.kind} that ${why}`);
-    }
-    visuals.push(repeats || fourthMap || sameKind || emptyMap ? textVisual(data.lines, rest[index], allowedFor(rest[index])) : visual);
+    const why = repeats
+      ? "repeats the scene before"
+      : fourthMap
+        ? "would be a fourth map in a row"
+        : sameKind
+          ? "comes twice in a row"
+          : overLimit
+            ? "comes too often in this video"
+            : emptyMap
+              ? "shows nothing"
+              : null;
+    if (why) console.log(`[direct] ${rest[index].id} shows its lines instead of a ${visual.kind} that ${why}`);
+    noRecap.push(visual.kind === "map" && why !== null);
+    visuals.push(why ? textVisual(data.lines, rest[index], allowedFor(rest[index])) : visual);
   });
+  // A video about places ends on a map of every place it showed, instead of lines, unless the last scene may not
+  // have a map, it would be one map too many or a fourth in a row, or it would bring back a map just turned down.
   const maps = visuals.filter((visual): visual is MapVisual => visual.kind === "map");
-  if (visuals.at(-1)?.kind === "text" && maps.length >= 2) {
-    console.log(`[direct] ${rest.at(-1)?.id} ends on a map of every place in the video instead of lines`);
-    visuals[visuals.length - 1] = recapMap(maps);
+  const last = visuals.length - 1;
+  const mapsBefore = visuals.slice(Math.max(0, last - 3), last).filter((visual) => visual.kind === "map").length;
+  const recapFits = maps.length >= 2 && maps.length < limits.map && mapsBefore < 3 && !missing[last]?.includes("map");
+  if (geographic && recapFits && visuals[last]?.kind === "text" && !noRecap[last]) {
+    console.log(`[direct] ${rest[last]?.id} ends on a map of every place in the video instead of lines`);
+    visuals[last] = recapMap(maps);
   }
   console.log(`[direct] kinds: ${visuals.map((visual, index) => (visual.kind === plannedKinds[index] ? visual.kind : `${visual.kind} (planned ${plannedKinds[index] ?? "free"})`)).join(", ")}`);
+
+  // The title card asks the question the video answers, when the fact-checked narration still backs it.
+  const narration = narrated.map((scene) => scene.narration).join(" ");
+  const question = script.question && questionProblems(script.question, narration).length === 0 ? script.question : undefined;
+  if (script.question && !question) console.warn(`[direct] Leaving out the question "${script.question}": the narration does not back it`);
 
   const usedSourceIds = new Set(
     facts.filter((fact) => videoFactIds.includes(fact.id)).map((fact) => fact.sourceId),
@@ -1038,9 +1259,8 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     width: 1920,
     height: 1080,
     scenes: narrated.map((scene, index) => ({
-      // The title card asks the question the video answers, when the script has one.
       ...(index === 0
-        ? { kind: "title", heading: title.data.heading, subheading: script.question || title.data.subheading }
+        ? { kind: "title", heading: title.data.heading, subheading: question || title.data.subheading }
         : forStoryboard(visuals[index - 1], videoFacts)),
       id: scene.id,
       narration: scene.narration,

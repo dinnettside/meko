@@ -114,6 +114,8 @@ async function postJson<T>(url: string, body: unknown, timeoutMs: number, demoCo
   const json = await response.json().catch(() => null);
   const message: string = json?.error ?? "";
   if (response.status === 401) throw new Error("That demo code is not right. Check it and try again.");
+  // The site has no demo code set up, so no code can work. Its message says so, rather than blaming the code typed.
+  if (response.status === 503 && message) throw new Error(message);
   if (response.status === 429 || /\b429\b/.test(message)) {
     throw new Error("Too many requests right now. Wait a minute, then try again.");
   }
@@ -128,8 +130,8 @@ const DEMO_CODE_KEY = "meko-demo-code";
 // `codeRequired` is true on the hosted demo, where making a video needs a demo code.
 export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
   const [topic, setTopic] = useState("");
-  // Remembered from the last video made in this browser. The page is prerendered without it, so the field
-  // fills in on the client; storage can be blocked, and then it starts empty.
+  // Remembered from the last code the server accepted in this browser. The page is prerendered without it, so the
+  // field fills in on the client; storage can be blocked, and then it starts empty.
   const [demoCode, setDemoCode] = useState(() => {
     if (typeof window === "undefined") return "";
     try {
@@ -182,11 +184,21 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
 
   const setStep = (id: StepId, state: StepState) => setSteps((current) => ({ ...current, [id]: state }));
 
+  // Remembered in this browser once a step has accepted it, so the code is only typed once and a mistyped one is
+  // never kept, also when it is fixed before "Try again". Storage can be blocked, and that is fine.
+  function rememberCode(code: string) {
+    try {
+      if (codeRequired) localStorage.setItem(DEMO_CODE_KEY, code);
+    } catch {}
+  }
+
   async function runStep<T>(id: StepId, url: string, body: unknown, describe: (result: Timed<T>) => string) {
     const timeoutMs = STEPS.find((candidate) => candidate.id === id)?.timeoutMs ?? 130_000;
+    const code = demoCode.trim();
     setStep(id, { status: "running", startedAt: Date.now() });
     try {
-      const result = await postJson<T>(url, body, timeoutMs, demoCode.trim());
+      const result = await postJson<T>(url, body, timeoutMs, code);
+      rememberCode(code);
       setStep(id, { status: "done", ms: result.ms, detail: describe(result) });
       return result;
     } catch (error) {
@@ -280,10 +292,6 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
   function makeVideo(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (running) return;
-    // Remembered in this browser, so the code is only typed once. Storage can be blocked, and that is fine.
-    try {
-      if (codeRequired) localStorage.setItem(DEMO_CODE_KEY, demoCode.trim());
-    } catch {}
     setStarted(true);
     setFinished(null);
     setActiveSentence(null);

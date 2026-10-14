@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { addUsage, chatJson, emptyUsage } from "./nebius.ts";
+import { ErrorWithUsage, addUsage, chatJson, emptyUsage, usageOf } from "./nebius.ts";
+import { ResearchFactSchema } from "./pipeline.ts";
 import type { ResearchFact, ResearchSource, Usage, VideoRequest } from "./pipeline.ts";
 import { extractFactsPrompt } from "./prompts/extract-facts.ts";
 import { findGapsPrompt } from "./prompts/find-gaps.ts";
@@ -14,6 +15,9 @@ const MAX_FACTS_PER_SOURCE = 6;
 const MIN_SOURCE_CHARS = 300;
 // The gap round only starts if research has taken less than this, so the route stays well within its time limit.
 const GAP_ROUND_BEFORE_MS = 40_000;
+// The route may run 180 s. No model call starts or runs past this, counted from the start of research, so a run of
+// slow calls in a row still ends in time.
+const DEADLINE_MS = 160_000;
 
 // The max lengths end up in the JSON Schema, and Token Factory enforces them, so lists cannot run away.
 const QueriesSchema = z.object({ queries: z.array(z.string()).max(6) });
@@ -106,16 +110,24 @@ function pickSources(resultsPerQuery: SearchResult[][], alreadyRead: Set<string>
   return picked;
 }
 
-async function readSource(request: VideoRequest, result: SearchResult): Promise<{ source: ReadSource; usage: Usage }> {
+async function readSource(
+  request: VideoRequest,
+  result: SearchResult,
+  deadline: number,
+): Promise<{ source: ReadSource; usage: Usage }> {
   const { data, usage } = await chatJson({
     step: "research/extract",
     schemaName: "facts",
     schema: ExtractedSchema,
     messages: extractFactsPrompt(request, { title: result.title, text: result.content }),
     maxTokens: 2000,
+    deadline,
   });
   const extracted = data.facts.slice(0, MAX_FACTS_PER_SOURCE);
-  const facts = extracted.filter((fact) => quoteIsInSource(fact.quote, result.content));
+  // Over-long facts would be refused by the next steps, so they go here, like facts whose quote is not in the source.
+  const facts = extracted.filter(
+    (fact) => quoteIsInSource(fact.quote, result.content) && ResearchFactSchema.shape.text.safeParse(fact.text).success && ResearchFactSchema.shape.quote.safeParse(fact.quote).success,
+  );
   return {
     source: { title: result.title, url: result.url, text: result.content, facts, dropped: extracted.length - facts.length },
     usage,
@@ -124,6 +136,7 @@ async function readSource(request: VideoRequest, result: SearchResult): Promise<
 
 export async function research(request: VideoRequest): Promise<ResearchResult> {
   const started = performance.now();
+  const deadline = Date.now() + DEADLINE_MS;
   let usage = emptyUsage();
   const plan = await chatJson({
     step: "research/plan",
@@ -133,6 +146,7 @@ export async function research(request: VideoRequest): Promise<ResearchResult> {
     maxTokens: 500,
     check: ({ queries }) =>
       queries.length >= 3 && queries.length <= 6 ? [] : [`Write 3 to 6 queries, not ${queries.length}.`],
+    deadline,
   });
   usage = addUsage(usage, plan.usage);
 
@@ -141,15 +155,26 @@ export async function research(request: VideoRequest): Promise<ResearchResult> {
   let queries = plan.data.queries;
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
+    let results: SearchResult[][];
+    try {
+      results = await searchAll(queries);
+    } catch (error) {
+      // Round 1 needs its search. The gap round is a bonus, so when its search fails, research goes on with what
+      // round 1 found instead of throwing it away.
+      if (round === 0) throw error;
+      console.warn(`[research] The gap search failed, going on with the facts we have: ${error}`);
+      break;
+    }
     allQueries.push(...queries);
-    const results = await searchAll(queries);
     const picked = pickSources(results, new Set(read.map((source) => source.url)), SOURCES_PER_ROUND[round]);
-    const settled = await Promise.allSettled(picked.map((result) => readSource(request, result)));
+    const settled = await Promise.allSettled(picked.map((result) => readSource(request, result, deadline)));
     for (const outcome of settled) {
       if (outcome.status === "fulfilled") {
         read.push(outcome.value.source);
         usage = addUsage(usage, outcome.value.usage);
       } else {
+        // A failed read still cost tokens.
+        usage = addUsage(usage, usageOf(outcome.reason));
         console.warn(`[research] Could not read a source: ${outcome.reason}`);
       }
     }
@@ -168,10 +193,12 @@ export async function research(request: VideoRequest): Promise<ResearchResult> {
         schema: GapsSchema,
         messages: findGapsPrompt(request, read.flatMap((source) => source.facts.map((fact) => fact.text))),
         maxTokens: 800,
+        deadline,
       });
       usage = addUsage(usage, gaps.usage);
       gapQueries = gaps.data.queries;
     } catch (error) {
+      usage = addUsage(usage, usageOf(error));
       console.warn(`[research] Skipping the gap round: ${error}`);
     }
     if (gapQueries.length === 0) break;
@@ -190,6 +217,8 @@ export async function research(request: VideoRequest): Promise<ResearchResult> {
   }
   const droppedFacts = read.reduce((total, source) => total + source.dropped, 0);
   console.log(`[research] ${sources.length} sources, ${facts.length} facts, ${droppedFacts} dropped`);
-  if (facts.length < 5) throw new Error("Found too few facts about this topic. Try wording it differently.");
+  if (facts.length < 5) {
+    throw new ErrorWithUsage("Found too few facts about this topic. Try wording it differently.", usage);
+  }
   return { sources, facts, queries: allQueries, droppedFacts, usage };
 }

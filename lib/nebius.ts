@@ -12,8 +12,16 @@ const BASE_URL = "https://api.tokenfactory.nebius.com/v1/";
 const CALL_TIMEOUT_MS = 45_000;
 // After invalid JSON we send the problems back and ask again, at most this many times.
 const MAX_FIX_ATTEMPTS = 2;
-// No new attempt starts after this, so a step always ends well within its route's time limit.
+// No retry of any kind starts after this, counted from the start of a call: no fix attempt, no second try after an
+// error and no wait after a 429. The last request may still run its full timeout, so a call ends within about
+// 60 + 45 s. A step that makes several calls in a row passes a deadline as well.
 const RETRY_WINDOW_MS = 60_000;
+// A request with less time than this left before the deadline would only be cut off, so it does not start.
+const MIN_REQUEST_MS = 2_000;
+// No call sends a longer prompt, counted in characters. The longest real prompt is about 20,000 (a fact-check of a
+// 90-second video, measured on 109 saved runs), so only a request built to repeat huge facts gets near it. One prompt
+// just under it is about 100,000 tokens.
+const MAX_PROMPT_CHARS = 400_000;
 
 // USD per 1M tokens, from docs/model-check.md (Oct 13, 2026).
 const PRICES: Record<string, { input: number; output: number }> = {
@@ -53,32 +61,50 @@ export function addUsage(a: Usage, b: Usage): Usage {
   };
 }
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Runs one request. On a 429 it waits for Retry-After and tries once more.
-async function withRateLimitRetry<T>(request: () => Promise<T>): Promise<T> {
-  try {
-    return await request();
-  } catch (error) {
-    if (!(error instanceof OpenAI.RateLimitError)) throw error;
-    const waitSec = Math.min(Number(error.headers.get("retry-after")) || 5, 20);
-    console.warn(`[nebius] Rate limited. Waiting ${waitSec} s, then one retry.`);
-    await wait(waitSec * 1000);
-    return await request();
+// An error from chatJson. It carries the tokens and cost of the tries before it, so a step that goes on without
+// the answer can still count them in the cost of the video.
+export class ErrorWithUsage extends Error {
+  usage: Usage;
+  constructor(message: string, usage: Usage, options?: ErrorOptions) {
+    super(message, options);
+    this.usage = usage;
   }
 }
 
-// Timeouts, dropped connections and server errors are worth one more try. Bad requests are not.
-const isTransient = (error: unknown) =>
-  error instanceof OpenAI.APIUserAbortError ||
-  error instanceof OpenAI.APIConnectionError ||
-  error instanceof OpenAI.InternalServerError;
+// The tokens and cost a failed call spent, or none when the error does not say.
+export function usageOf(error: unknown): Usage {
+  return error instanceof ErrorWithUsage ? error.usage : emptyUsage();
+}
 
-// One model call, tried at most twice. Logs tokens, latency and cost.
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// When the requests of one chatJson call may start. See RETRY_WINDOW_MS and JsonRequest.deadline.
+type Timing = { timeoutMs: number; retryUntil: number; deadline?: number };
+
+// How long a new request may run, or 0 when it may not start. A retry does not start after the retry window, and
+// no request starts so close to the deadline that it would only be cut off. `at` is when the request would start.
+function requestTimeout(timing: Timing, retry: boolean, at = Date.now()): number {
+  if (retry && at >= timing.retryUntil) return 0;
+  const left = timing.deadline === undefined ? Infinity : timing.deadline - at;
+  return left < MIN_REQUEST_MS ? 0 : Math.min(timing.timeoutMs, left);
+}
+
+// A request that ran out of time, on our timeout or the client's.
+const isTimeout = (error: unknown) =>
+  error instanceof OpenAI.APIUserAbortError || error instanceof OpenAI.APIConnectionTimeoutError;
+
+// Dropped connections and server errors are worth one more try. Bad requests are not, and chatJson handles timeouts.
+const isTransient = (error: unknown) =>
+  (error instanceof OpenAI.APIConnectionError && !isTimeout(error)) || error instanceof OpenAI.InternalServerError;
+
+// One model call. A transient error gets one more try, and a 429 gets one more try after waiting for Retry-After,
+// while the timing allows. Each happens at most once, so a call makes at most three requests. Logs tokens, latency
+// and cost.
 async function callModel(
   step: string,
   params: Omit<ChatCompletionCreateParamsNonStreaming, "model">,
-  timeoutMs: number,
+  timing: Timing,
+  firstTry: boolean, // the first request of a chatJson call, which the retry window does not hold back
   thinking = false,
 ): Promise<{ content: string; cutOff: boolean; usage: Usage }> {
   const model = getModel();
@@ -88,18 +114,33 @@ async function callModel(
   // in docs/model-check.md.
   Object.assign(body, { chat_template_kwargs: { enable_thinking: thinking } });
 
-  let started = performance.now();
+  let started = 0;
   let completion;
-  for (let attempt = 0; ; attempt++) {
+  let retriedTransient = false;
+  let retriedRateLimit = false;
+  for (;;) {
+    const timeoutMs = requestTimeout(timing, !firstTry || retriedTransient || retriedRateLimit);
+    if (timeoutMs === 0) throw new Error(`${step}: ran out of time before a request could start.`);
+    started = performance.now();
     try {
-      completion = await withRateLimitRetry(() =>
-        getClient().chat.completions.create(body, { signal: AbortSignal.timeout(timeoutMs) }),
-      );
+      completion = await getClient().chat.completions.create(body, { signal: AbortSignal.timeout(timeoutMs) });
       break;
     } catch (error) {
-      if (attempt >= 1 || !isTransient(error)) throw error;
-      console.warn(`[${step}] ${error instanceof Error ? error.message : error}. Trying once more.`);
-      started = performance.now();
+      if (error instanceof OpenAI.RateLimitError && !retriedRateLimit) {
+        const waitMs = Math.min(Number(error.headers.get("retry-after")) || 5, 20) * 1000;
+        // A wait that ends after the retry window or too close to the deadline would be for nothing.
+        if (requestTimeout(timing, true, Date.now() + waitMs) === 0) throw error;
+        console.warn(`[nebius] Rate limited. Waiting ${waitMs / 1000} s, then one retry.`);
+        await wait(waitMs);
+        retriedRateLimit = true;
+        continue;
+      }
+      if (isTransient(error) && !retriedTransient && requestTimeout(timing, true) > 0) {
+        console.warn(`[${step}] ${error instanceof Error ? error.message : error}. Trying once more.`);
+        retriedTransient = true;
+        continue;
+      }
+      throw error;
     }
   }
   const ms = Math.round(performance.now() - started);
@@ -138,6 +179,15 @@ function parseJson<T>(content: string, schema: z.ZodType<T>, check?: (data: T) =
   return { data: parsed.data, problems: check ? check(parsed.data).slice(0, 10) : [] };
 }
 
+// The characters of a conversation. The pipeline only sends text, but other content is counted too.
+function promptChars(messages: ChatCompletionMessageParam[]): number {
+  return messages.reduce(
+    (total, message) =>
+      total + (typeof message.content === "string" ? message.content.length : JSON.stringify(message.content ?? "").length),
+    0,
+  );
+}
+
 // The prompt gets the JSON Schema too. Token Factory's docs say that works better than the schema alone.
 function withSchema(messages: ChatCompletionMessageParam[], jsonSchema: object): ChatCompletionMessageParam[] {
   const schemaText = `Reply with JSON only. It must match this JSON Schema: ${JSON.stringify(jsonSchema)}`;
@@ -157,9 +207,15 @@ type JsonRequest<T> = {
   check?: (data: T) => string[]; // rules zod cannot check, one line per problem
   timeoutMs?: number; // per model call, 45 s unless set
   thinking?: boolean; // lets the model reason before it answers: slower, but better at careful checks
-  // Called with the last answer if it still breaks a rule after every retry. Returns a fixed version to use.
-  // Without it, the call fails.
+  // A Date.now() time for steps that must end in time. No request starts after it, and none runs past it; the retry
+  // window still holds. A call stopped by it ends as if its tries had run out.
+  deadline?: number;
+  // Called with the best answer when no answer passes every rule: after the last retry, when time runs out, or when
+  // a later try fails. Returns a fixed version to use. Without it, or without any answer to fix, the call fails.
   repair?: (data: T) => T;
+  // How far an answer that breaks a rule is from right, lower is better. It picks the answer for `repair`. Without
+  // it, the answer with the fewest problems is picked.
+  distance?: (data: T) => number;
 };
 
 // Asks the model for JSON that matches the schema, using strict json_schema output.
@@ -167,28 +223,56 @@ type JsonRequest<T> = {
 export async function chatJson<T>(request: JsonRequest<T>): Promise<{ data: T; usage: Usage }> {
   const jsonSchema = z.toJSONSchema(request.schema);
   const baseMessages = withSchema(request.messages, jsonSchema);
+  // One request can make a step repeat the same facts in prompt after prompt, so a prompt far longer than any real one
+  // stops here, before it costs anything. A fix attempt only adds the model's own answer and a few lines to it.
+  const chars = promptChars(baseMessages);
+  if (chars > MAX_PROMPT_CHARS) {
+    return giveUp(request, null, emptyUsage(), `${request.step}: the prompt has ${chars} characters, more than the ${MAX_PROMPT_CHARS} a call may send.`);
+  }
+  const timing: Timing = {
+    timeoutMs: request.timeoutMs ?? CALL_TIMEOUT_MS,
+    retryUntil: Date.now() + RETRY_WINDOW_MS,
+    deadline: request.deadline,
+  };
   let messages = baseMessages;
   let usage = emptyUsage();
   let problems: string[] = [];
-  const started = performance.now();
+  // The best answer that parsed but broke a rule, kept for `repair`. On a tie the later answer wins, since it had
+  // the most feedback.
+  let best: { data: T; distance: number } | null = null;
 
   for (let attempt = 0; attempt <= MAX_FIX_ATTEMPTS; attempt++) {
-    if (attempt > 0 && performance.now() - started > RETRY_WINDOW_MS) {
-      throw new Error(`${request.step}: ran out of time after ${attempt} tries (${problems.join("; ")})`);
+    if (requestTimeout(timing, attempt > 0) === 0) {
+      const when = attempt === 0 ? "before the first try" : `after ${attempt} tries (${problems.join("; ")})`;
+      return giveUp(request, best, usage, `${request.step}: ran out of time ${when}`);
     }
-    const reply = await callModel(
-      request.step,
-      {
-        messages,
-        max_tokens: request.maxTokens,
-        response_format: {
-          type: "json_schema",
-          json_schema: { name: request.schemaName, schema: jsonSchema, strict: true },
+    let reply;
+    try {
+      reply = await callModel(
+        request.step,
+        {
+          messages,
+          max_tokens: request.maxTokens,
+          response_format: {
+            type: "json_schema",
+            json_schema: { name: request.schemaName, schema: jsonSchema, strict: true },
+          },
         },
-      },
-      request.timeoutMs ?? CALL_TIMEOUT_MS,
-      request.thinking,
-    );
+        timing,
+        attempt === 0,
+        request.thinking,
+      );
+    } catch (error) {
+      // A request that times out may be the model repeating itself, like an answer cut off at max_tokens, so the next
+      // try starts over instead of sending the same conversation again.
+      if (isTimeout(error)) {
+        problems = ["The answer took too long."];
+        console.warn(`[${request.step}] Timed out on try ${attempt + 1}. Starting over.`);
+        messages = baseMessages;
+        continue;
+      }
+      return giveUp(request, best, usage, error instanceof Error ? error.message : String(error), error);
+    }
     usage = addUsage(usage, reply.usage);
     // An answer cut off at max_tokens is usually the model repeating itself. It cannot be fixed, so it starts over.
     if (reply.cutOff) {
@@ -202,9 +286,9 @@ export async function chatJson<T>(request: JsonRequest<T>): Promise<{ data: T; u
 
     problems = result.problems;
     console.warn(`[${request.step}] Invalid JSON on try ${attempt + 1}: ${problems.join("; ")}`);
-    if (attempt === MAX_FIX_ATTEMPTS && result.data && request.repair) {
-      console.warn(`[${request.step}] Repairing the last answer instead of failing.`);
-      return { data: request.repair(result.data), usage };
+    if (result.data) {
+      const distance = request.distance ? request.distance(result.data) : problems.length;
+      if (!best || distance <= best.distance) best = { data: result.data, distance };
     }
     messages = [
       ...baseMessages,
@@ -215,5 +299,25 @@ export async function chatJson<T>(request: JsonRequest<T>): Promise<{ data: T; u
       },
     ];
   }
-  throw new Error(`${request.step}: no valid JSON after ${MAX_FIX_ATTEMPTS + 1} tries (${problems.join("; ")})`);
+  return giveUp(request, best, usage, `${request.step}: no valid JSON after ${MAX_FIX_ATTEMPTS + 1} tries (${problems.join("; ")})`);
+}
+
+// Every way out of chatJson without a valid answer ends here. The best answer is repaired when the step allows it.
+// Otherwise the call fails, and the error carries the tokens the tries used.
+function giveUp<T>(
+  request: JsonRequest<T>,
+  best: { data: T } | null,
+  usage: Usage,
+  reason: string,
+  cause?: unknown,
+): { data: T; usage: Usage } {
+  if (best && request.repair) {
+    console.warn(`[${request.step}] Repairing the best answer instead of failing (${reason}).`);
+    try {
+      return { data: request.repair(best.data), usage };
+    } catch (error) {
+      throw new ErrorWithUsage(error instanceof Error ? error.message : String(error), usage, { cause: error });
+    }
+  }
+  throw new ErrorWithUsage(reason, usage, cause === undefined ? undefined : { cause });
 }

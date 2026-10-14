@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import { AbsoluteFill, interpolateColors, useCurrentFrame, useVideoConfig } from "remotion";
 import { COUNTRIES } from "@/lib/countries";
 import type { TimedWord } from "@/lib/elevenlabs";
+import { partPoint } from "@/lib/regions";
 import type { Scene } from "@/lib/storyboard";
-import { countryContains } from "@/lib/world";
-import { cameraFrom, fitProjection, layoutMap, mapCodes } from "../geo";
+import { cameraFrom, countryOf, fitProjection, layoutMap, mapCodes, mapPoints } from "../geo";
 import { ease } from "../motion";
 import { revealAt } from "../spoken";
 import { COLORS, FONTS, MOTION, VIDEO } from "@/lib/theme";
@@ -21,6 +21,11 @@ const BOX: [[number, number], [number, number]] = [
   [WIDTH - VIDEO.mapPadding, HEIGHT - CAPTION_SPACE - 30],
 ];
 const TONES = { primary: COLORS.signal, secondary: COLORS.teal, muted: COLORS.muted };
+// An arrow draws in a second, or faster when it starts late. It and its label must be done this long before the next
+// scene starts to dissolve in over this one, so there is time to read them.
+const ARROW_SEC = 1.0;
+const FAST_ARROW_SEC = 0.6;
+const READ_SEC = 0.8;
 // Where an arrow meets a country whose middle is far from where its history mostly happened: Russia's is deep in
 // Siberia, so arrows go to the European part instead.
 const ANCHORS: Record<string, [number, number]> = { RUS: [40, 55] };
@@ -58,42 +63,66 @@ function placeLabels(specs: LabelSpec[], dots: Point[]): PlacedLabel[] {
 function planMap(scene: MapSceneData, words: TimedWord[], durationSec: number) {
   const arrows = scene.arrows ?? [];
   const markers = scene.markers ?? [];
-  const layout = layoutMap(mapCodes(scene), BOX);
+  const codes = mapCodes(scene);
+  const layout = layoutMap(codes, BOX, mapPoints(scene));
   const markerStart = 0.6 + scene.highlights.length * 0.35;
   const arrowStart = markerStart + markers.length * 0.25 + 0.2;
   const reveal = (text: string, fallbackSec: number) => revealAt(words, text, fallbackSec, 0.4, durationSec);
   const fillStarts = scene.highlights.map((highlight, index) =>
     reveal(`${highlight.label ?? ""} ${COUNTRIES[highlight.country]?.name ?? ""}`, 0.5 + index * 0.35),
   );
-  // A city the narration does not name comes in with its country.
-  const countryStart = (marker: { lon: number; lat: number }) =>
-    fillStarts.find((_, index) => countryContains(scene.highlights[index].country, marker.lon, marker.lat));
 
+  // A city the narration does not name comes in with its country.
+  const countryStart = (country: string | null) =>
+    fillStarts.find((_, index) => scene.highlights[index].country === country);
+
+  // Each city belongs to the one country it lies in.
   const dots = markers.flatMap((marker, index) => {
     const point = layout.project(marker.lon, marker.lat);
-    const startSec = reveal(marker.label, countryStart(marker) ?? markerStart + index * 0.25);
-    return point ? [{ marker, point, startSec }] : [];
+    const country = countryOf(codes, marker.lon, marker.lat);
+    const startSec = reveal(marker.label, countryStart(country) ?? markerStart + index * 0.25);
+    return point ? [{ marker, point, country, startSec }] : [];
   });
-  // An arrow starts or ends at a city in that country when there is one, else in the middle of the country.
-  const anchor = (code: string): Point | null =>
-    dots.find(({ marker }) => countryContains(code, marker.lon, marker.lat))?.point ??
-    (ANCHORS[code] ? layout.project(...ANCHORS[code]) : null) ??
-    layout.pointOf(code);
+  // An arrow starts or ends at a city in that country when there is one, else on the part of the country a label
+  // names, like Crimea, else in the middle of the country. Its second end never takes the point its first end took,
+  // like a part that the labels of both countries name, such as Punjab.
+  const anchor = (code: string, taken: Point | null = null): Point | null => {
+    const parts = scene.highlights.flatMap((highlight) => {
+      const part = highlight.country === code ? partPoint(highlight.label ?? "", code) : null;
+      return part ? [layout.project(...part)] : [];
+    });
+    const choices = [
+      ...dots.filter((dot) => dot.country === code).map((dot) => dot.point),
+      ...parts,
+      ANCHORS[code] ? layout.project(...ANCHORS[code]) : null,
+      layout.pointOf(code),
+    ];
+    const isTaken = (point: Point) => taken !== null && point[0] === taken[0] && point[1] === taken[1];
+    return choices.find((point) => point && !isTaken(point)) ?? null;
+  };
   // An arrow draws once the places it joins are on the map: their countries colored and their cities marked.
   const placeStart = (code: string) =>
     Math.max(
       0,
       ...scene.highlights.flatMap((highlight, index) => (highlight.country === code ? [fillStarts[index] + 0.2] : [])),
-      ...dots.filter(({ marker }) => countryContains(code, marker.lon, marker.lat)).map((dot) => dot.startSec + 0.2),
+      ...dots.filter((dot) => dot.country === code).map((dot) => dot.startSec + 0.2),
     );
+  const arrowsDoneBy = durationSec - MOTION.sceneFade - READ_SEC;
   const curves = arrows.flatMap((arrow, index) => {
+    // An arrow within one country does not say which of its cities it leaves from, and a guess can point the wrong
+    // way, so it is left out.
+    if (arrow.from === arrow.to) return [];
     const from = anchor(arrow.from);
-    const to = anchor(arrow.to);
-    if (!from || !to || (from[0] === to[0] && from[1] === to[1])) return [];
+    const to = anchor(arrow.to, from);
+    if (!from || !to) return [];
     // Bend the line to one side by a fifth of its length.
     const control: Point = [(from[0] + to[0]) / 2 - (to[1] - from[1]) * 0.2, (from[1] + to[1]) / 2 + (to[0] - from[0]) * 0.2];
-    const startSec = Math.max(reveal(arrow.label ?? "", arrowStart + index * 0.6), placeStart(arrow.from), placeStart(arrow.to));
-    return [{ arrow, from, to, control, startSec }];
+    const wanted = Math.max(reveal(arrow.label ?? "", arrowStart + index * 0.6), placeStart(arrow.from), placeStart(arrow.to));
+    // A place named at the very end of the narration would leave the arrow drawing as the scene dissolves, so the
+    // arrow draws faster then, and starts a little before the place is colored if it must.
+    const drawSec = Math.min(ARROW_SEC, Math.max(FAST_ARROW_SEC, arrowsDoneBy - wanted));
+    const startSec = Math.max(0, Math.min(wanted, arrowsDoneBy - drawSec));
+    return [{ arrow, from, to, control, startSec, drawSec }];
   });
 
   const specs: LabelSpec[] = dots.map(({ marker, point, startSec }) => {
@@ -106,21 +135,25 @@ function planMap(scene: MapSceneData, words: TimedWord[], durationSec: number) {
       offsets: [[0, -40], [0, 44], [halfWidth, 0], [-halfWidth, 0]],
     };
   });
-  // Only the main country gets a name, and only if no city already labels it.
+  // Only the main country gets a name, and only if no city already labels it. A name for a far part of the country,
+  // like "Alaska", goes on that part.
   scene.highlights.forEach((highlight, index) => {
-    const point = layout.pointOf(highlight.country);
-    const hasCity = dots.some(({ marker }) => countryContains(highlight.country, marker.lon, marker.lat));
+    const part = partPoint(highlight.label ?? "", highlight.country);
+    const point = part ? layout.project(...part) : layout.pointOf(highlight.country);
+    const hasCity = dots.some((dot) => dot.country === highlight.country);
     if (highlight.tone !== "primary" || !highlight.label || !point || hasCity) return;
     specs.push({ text: highlight.label, strong: true, startSec: fillStarts[index] + 0.3, at: point, offsets: [[0, 0], [0, -56], [0, 56]] });
   });
-  // With several arrows, labels crowd the map, so only a single arrow gets one.
+  // With several arrows, labels crowd the map, so only a single arrow gets one. It comes in as the line passes the
+  // middle, where the label sits, so it is fully in place by the time the arrow is drawn.
   const [only] = curves;
   if (curves.length === 1 && only.arrow.label) {
     const middle: Point = [
       0.25 * only.from[0] + 0.5 * only.control[0] + 0.25 * only.to[0],
       0.25 * only.from[1] + 0.5 * only.control[1] + 0.25 * only.to[1],
     ];
-    specs.push({ text: only.arrow.label, strong: true, startSec: only.startSec + 0.9, at: middle, offsets: [[0, -36], [0, 36]] });
+    const startSec = only.startSec + 0.3 * only.drawSec;
+    specs.push({ text: only.arrow.label, strong: true, startSec, at: middle, offsets: [[0, -36], [0, 36]] });
   }
 
   return { layout, dots, curves, fillStarts, labels: placeLabels(specs, dots.map((dot) => dot.point)) };
@@ -144,7 +177,7 @@ export function MapScene({
   const { fps } = useVideoConfig();
   const plan = useMemo(() => planMap(scene, words, durationSec), [scene, words, durationSec]);
   const start = useMemo(
-    () => (previous ? cameraFrom(fitProjection(mapCodes(previous), BOX), plan.layout.projection) : null),
+    () => (previous ? cameraFrom(fitProjection(mapCodes(previous), BOX, mapPoints(previous)), plan.layout.projection) : null),
     [previous, plan],
   );
   const homePaths = useMemo(() => {
@@ -194,7 +227,7 @@ export function MapScene({
             />
           ))}
           {plan.curves.map((curve, index) => (
-            <Arrow key={index} {...curve} progress={ease(frame, fps, curve.startSec, 1.0)} />
+            <Arrow key={index} {...curve} progress={ease(frame, fps, curve.startSec, curve.drawSec)} />
           ))}
           {plan.dots.map(({ point, startSec }, index) => {
             const appear = ease(frame, fps, startSec, 0.4);

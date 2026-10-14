@@ -3,7 +3,7 @@ import { chatJson } from "./nebius.ts";
 import {
   CHARS_PER_SECOND,
   CHARS_PER_WORD,
-  ResearchFactSchema,
+  ResearchFactListSchema,
   ScriptSentenceSchema,
   VideoRequestSchema,
   countWords,
@@ -11,13 +11,49 @@ import {
 import { numbersIn } from "./numbers.ts";
 import type { Script, Usage } from "./pipeline.ts";
 import { writeScriptPrompt } from "./prompts/write-script.ts";
+import { groundedWords } from "./words.ts";
 
 export const ScriptInputSchema = z.object({
   request: VideoRequestSchema,
-  facts: z.array(ResearchFactSchema),
+  facts: ResearchFactListSchema,
 });
 
 export type ScriptResult = { script: Script; usage: Usage };
+
+// The route may run 120 s. The model call stops in time to return the best script it has.
+const DEADLINE_MS = 100_000;
+
+// All the sentences of a script as one text.
+const narrationOf = (scenes: Script["scenes"]) =>
+  scenes.flatMap((scene) => scene.sentences.map((sentence) => sentence.text)).join(" ");
+
+// What is wrong with the question on the title card, one line per problem. It must be one short question, and it
+// may only ask about what the narration says: no number the narration does not have, and at least a third of its
+// words backed by the narration. The fact-check and the direct step check it again, since the narration can change.
+// Numbers written as words, like "half" or "seventy-five". "One" is left out: "How did one plague..." counts nothing.
+const NUMBER_WORDS =
+  /\b(?:two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|half|third|quarter|dozen|twice|double)\b/g;
+
+export function questionProblems(question: string, narration: string): string[] {
+  const text = question.trim();
+  const problems: string[] = [];
+  if (!text.endsWith("?") || countWords(text) < 3 || countWords(text) > 12) {
+    problems.push(`The question must be one question of 3 to 10 words that ends with "?", not "${text}".`);
+  }
+  const narrationNumbers = new Set(numbersIn(narration));
+  const narrationWords = new Set(narration.toLowerCase().match(/\p{L}+/gu) ?? []);
+  const numberWords = text.toLowerCase().match(NUMBER_WORDS) ?? [];
+  if (numbersIn(text).some((number) => !narrationNumbers.has(number)) || numberWords.some((word) => !narrationWords.has(word))) {
+    problems.push("The question has a number the narration does not have.");
+  }
+  // At least half of what the question asks about must be in the narration, so it cannot rest on a claim the
+  // fact-check took out.
+  const { matched, total } = groundedWords(text, narration);
+  if (total > 0 && matched * 2 < total) {
+    problems.push("The question asks about things the narration does not say. Use the narration's own words.");
+  }
+  return problems;
+}
 
 // About one scene every 8 to 12 seconds, so the picture changes often, and a narration that fits the length.
 // The short pauses between scenes take about 6% of the video. The length is checked in characters, which predict
@@ -52,16 +88,9 @@ function scriptProblems(script: Script, factIds: Set<string>, targets: ReturnTyp
     problems.push(`Use ${targets.minScenes} to ${targets.maxScenes} scenes, not ${sceneCount}.`);
   }
   const sentences = script.scenes.flatMap((scene) => scene.sentences);
-  const text = sentences.map((sentence) => sentence.text).join(" ");
-  // The question frames the video on its title card, so it may not bring in numbers the narration does not have.
-  const question = script.question?.trim() ?? "";
-  if (!question.endsWith("?") || countWords(question) < 3 || countWords(question) > 12) {
-    problems.push(`The question must be one question of 3 to 10 words that ends with "?", not "${question}".`);
-  }
-  const narrationNumbers = new Set(numbersIn(text));
-  if (numbersIn(question).some((number) => !narrationNumbers.has(number))) {
-    problems.push("The question has a number the narration does not have.");
-  }
+  const text = narrationOf(script.scenes);
+  // The question frames the video on its title card.
+  problems.push(...questionProblems(script.question ?? "", text));
   if (text.length < targets.minChars || text.length > targets.maxChars) {
     const wordsNow = countWords(text);
     const change = Math.max(5, Math.round(Math.abs(wordsNow - targets.words) / 5) * 5);
@@ -88,6 +117,30 @@ function scriptProblems(script: Script, factIds: Set<string>, targets: ReturnTyp
   return problems;
 }
 
+// How many characters a script is outside the length it should have, 0 when it fits.
+function lengthDistance(script: Script, targets: ReturnType<typeof scriptTargets>): number {
+  const length = narrationOf(script.scenes).length;
+  return Math.max(0, targets.minChars - length, length - targets.maxChars);
+}
+
+// Makes a script that broke a rule usable. Sentences that cite no known fact go, since the fact-check could not back
+// them, and so does a question that breaks its rules: the title card then shows a subheading the direct step checks.
+// Throws when no sentence is left.
+function repairScript(script: Script, factIds: Set<string>): Script {
+  const scenes = script.scenes
+    .map((scene) => ({
+      ...scene,
+      sentences: scene.sentences
+        .map((sentence) => ({ ...sentence, factIds: sentence.factIds.filter((id) => factIds.has(id)) }))
+        .filter((sentence) => sentence.factIds.length > 0),
+    }))
+    .filter((scene) => scene.sentences.length > 0);
+  if (scenes.length === 0) throw new Error("script: no sentence cites a known fact.");
+  const question =
+    script.question && questionProblems(script.question, narrationOf(scenes)).length === 0 ? script.question : undefined;
+  return { ...script, question, scenes };
+}
+
 export async function writeScript({ request, facts }: z.infer<typeof ScriptInputSchema>): Promise<ScriptResult> {
   const targets = scriptTargets(request.lengthSec);
   const factIds = new Set(facts.map((fact) => fact.id));
@@ -98,20 +151,19 @@ export async function writeScript({ request, facts }: z.infer<typeof ScriptInput
     messages: writeScriptPrompt(request, facts, targets),
     maxTokens: 4000,
     check: (script) => scriptProblems(script, factIds, targets),
-    // After the retries, a script a little too long or too short is still better than no video. Sentences that
-    // cite no known fact go, since the fact-check could not back them.
-    repair: (script) => {
-      const scenes = script.scenes
-        .map((scene) => ({
-          ...scene,
-          sentences: scene.sentences
-            .map((sentence) => ({ ...sentence, factIds: sentence.factIds.filter((id) => factIds.has(id)) }))
-            .filter((sentence) => sentence.factIds.length > 0),
-        }))
-        .filter((scene) => scene.sentences.length > 0);
-      if (scenes.length === 0) throw new Error("script: no sentence cites a known fact.");
-      return { ...script, scenes };
+    // When no script passes, a script a little too long or too short is still better than no video, so the one
+    // closest to the length is repaired and kept.
+    repair: (script) => repairScript(script, factIds),
+    // The length that counts is the one after the repair, which can cut sentences. A script the repair cannot save
+    // comes last, so a later try that it can save is kept instead.
+    distance: (script) => {
+      try {
+        return lengthDistance(repairScript(script, factIds), targets);
+      } catch {
+        return Infinity;
+      }
     },
+    deadline: Date.now() + DEADLINE_MS,
   });
   // Our own scene IDs, so the fact-check can name sentences like "scene-2.1".
   const scenes = data.scenes.map((scene, index) => ({ ...scene, id: `scene-${index + 1}` }));

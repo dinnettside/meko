@@ -1,10 +1,20 @@
-import { geoBounds, geoCentroid, geoMercator, geoPath } from "d3-geo";
+import { geoBounds, geoCentroid, geoContains, geoMercator, geoPath } from "d3-geo";
 import type { GeoProjection } from "d3-geo";
+import type { Feature, Geometry } from "geojson";
 import { COUNTRIES } from "@/lib/countries";
+import { partPoint } from "@/lib/regions";
 import type { Scene } from "@/lib/storyboard";
-import { countries, countryFeature, homeland, mainland, mapIdOf } from "@/lib/world";
+import { countries, countryContains, countryFeature, homeland, mainland, mapIdOf } from "@/lib/world";
 
 type Box = [[number, number], [number, number]];
+type MapSceneData = Extract<Scene, { kind: "map" }>;
+type LonLat = [number, number];
+
+// How much room the camera leaves around a part of a country that a label names, in degrees, so the part and its
+// label are in view and not on the edge.
+const PART_MARGIN = 2;
+// Coastlines on this map are simplified, so a port can lie just off its country's coast. About 30 km still counts.
+const NEAR_OFFSETS = [-0.3, 0, 0.3];
 
 export type MapLayout = {
   projection: GeoProjection;
@@ -17,7 +27,7 @@ export type MapLayout = {
 const codeByMapId = new Map(Object.entries(COUNTRIES).map(([code, entry]) => [entry.mapId, code]));
 
 // Every country a map scene mentions. The camera fits all of them, not only the ones in `frame`.
-export function mapCodes(scene: Extract<Scene, { kind: "map" }>): string[] {
+export function mapCodes(scene: MapSceneData): string[] {
   return [
     ...new Set([
       ...scene.frame,
@@ -27,20 +37,52 @@ export function mapCodes(scene: Extract<Scene, { kind: "map" }>): string[] {
   ];
 }
 
-// A Mercator projection that fits the given countries inside the box.
-export function fitProjection(frameCodes: string[], box: Box): GeoProjection {
-  const focus = frameCodes
+// The parts of countries that a map scene's labels name, like Alaska for "Alaska" on the United States, as
+// [longitude, latitude]. Labels and arrows go there, so the camera shows them too, even a part the map does not
+// color, like Hawaii.
+export function mapPoints(scene: MapSceneData): LonLat[] {
+  return scene.highlights.flatMap((highlight) => {
+    const part = partPoint(highlight.label ?? "", highlight.country);
+    return part ? [part] : [];
+  });
+}
+
+// Which of the given countries a place lies in, as the map draws them, or null. A country the place lies inside wins
+// over one it only lies near, so a border city like Strasbourg is in France and not in Germany, and each place is in
+// one country only. Only when no country has it does a place in Crimea count for Russia, as in a map of the Crimean
+// War; with Ukraine on the map it is in Ukraine, where the map draws it.
+export function countryOf(codes: string[], lon: number, lat: number): string | null {
+  const isIn = (code: string, dLon: number, dLat: number) => {
+    const country = countryFeature(code);
+    return country !== undefined && geoContains(country, [lon + dLon, lat + dLat]);
+  };
+  const isNear = (code: string) => NEAR_OFFSETS.some((dLon) => NEAR_OFFSETS.some((dLat) => isIn(code, dLon, dLat)));
+  return (
+    codes.find((code) => isIn(code, 0, 0)) ??
+    codes.find(isNear) ??
+    codes.find((code) => countryContains(code, lon, lat)) ??
+    null
+  );
+}
+
+// A Mercator projection that fits the given countries inside the box, and the area around the given points.
+export function fitProjection(frameCodes: string[], box: Box, points: LonLat[] = []): GeoProjection {
+  const focus: Feature<Geometry>[] = frameCodes
     .map((code) => countryFeature(code))
     .flatMap((country) => (country ? [mainland(country)] : []))
     .filter((shape) => shape !== null);
+  // With no country it can draw, the map shows the whole world rather than a corner of it.
+  if (focus.length === 0) return geoMercator().fitExtent(box, { type: "FeatureCollection", features: countries });
+  for (const [lon, lat] of points) {
+    const corners: LonLat[] = [[lon - PART_MARGIN, lat - PART_MARGIN], [lon + PART_MARGIN, lat + PART_MARGIN]];
+    focus.push({ type: "Feature", properties: {}, geometry: { type: "MultiPoint", coordinates: corners } });
+  }
   const collection = { type: "FeatureCollection" as const, features: focus };
   // Turn the globe so the countries sit in the middle. Without this, a country that crosses the 180th
   // meridian, like Russia, is cut in two and the camera has to show the whole world.
   const [[west], [east]] = geoBounds(collection);
-  const middle = focus.length === 0 ? 0 : west <= east ? (west + east) / 2 : (west + east + 360) / 2;
-  const projection = geoMercator().rotate([-middle, 0]);
-  if (focus.length > 0) projection.fitExtent(box, collection);
-  return projection;
+  const middle = west <= east ? (west + east) / 2 : (west + east + 360) / 2;
+  return geoMercator().rotate([-middle, 0]).fitExtent(box, collection);
 }
 
 // Where the camera starts when a map follows another map: the zoom and shift that make this map show what the
@@ -58,9 +100,9 @@ export function cameraFrom(previous: GeoProjection, current: GeoProjection): { s
   };
 }
 
-// Fits a Mercator projection to the given countries inside the box, and projects every country.
-export function layoutMap(frameCodes: string[], box: Box): MapLayout {
-  const projection = fitProjection(frameCodes, box);
+// Fits a Mercator projection to the given countries and points inside the box, and projects every country.
+export function layoutMap(frameCodes: string[], box: Box, points: LonLat[] = []): MapLayout {
+  const projection = fitProjection(frameCodes, box, points);
   const path = geoPath(projection);
 
   return {

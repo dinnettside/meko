@@ -16,7 +16,7 @@ The language model writes and checks everything, but plain code checks the model
 - **Every sentence cites facts.** The script must name the facts behind each sentence. Unknown fact IDs send the script back for another try.
 - **Every claim is checked.** The fact-check splits each sentence into its separate claims (people, numbers, dates, places, causes) and judges each one only against the quotes of the cited facts. Links count as claims too: two true facts joined by a false "after" or "because" make a false sentence, so the code spells out each link for the model to judge. Two checks run side by side and the stricter verdict counts. A sentence with an unsupported claim is rewritten or removed, and the code makes sure it can never be marked as supported.
 - **The narration is not touched again.** The director only chooses what is shown on screen. The voice reads the fact-checked text word for word.
-- **What is on screen is checked too.** Numbers on screen must appear in the narration or the cited facts, and labels must use their words. A number the sources give as a range ("25 to 50 million") is shown as the whole range, with the uncertain part drawn as an outline. Each event on a timeline names the fact that states its year (and its date, for events in the same year), and the code checks that they are in it. A quote must be a whole sentence copied from a source. Each city on a map comes with its coordinates and the country it lies in, and the code checks that the point is inside that country's borders and asks the model a second time where the city is. A country cannot carry the name of a region it is not in, and an arrow labeled "eastward" must point east. Dots that show a number as part of a whole need the narration to say exactly that, a chart cannot compare dates or one amount in two units, and a number in a name (Apollo 11) is never shown as an amount.
+- **What is on screen is checked too.** Numbers on screen must appear in the narration or the cited facts, and labels must use their words; a one-word answer like "Yes" or "No" on a scoreboard must be one of them too. A number the sources give as a range ("25 to 50 million") is shown as the whole range, with the uncertain part drawn as an outline. Each bar on a chart needs a sentence in the scene that gives that number for that thing. Each event on a timeline names the fact that states its year (and its date, for events in the same year), and the code checks that they are in it; a period drawn under the events must be one a fact states, like "ruled from 1451 to 1481". A quote must be a whole sentence copied word for word from a source, never a shortened one. Each city on a map comes with its coordinates and the country it lies in, and the code checks that the point is inside that country's borders and asks the model a second time where the city is. A country cannot carry the name of a region it is not in, and an arrow labeled "eastward" must point east, which it may only say when the narration does. A video that is not about places, and a scene about space, gets no map. Dots that show a number as part of a whole need the narration to say exactly that, a chart cannot compare dates or one amount in two units, and a number in a name (Apollo 11) is never shown as an amount.
 - **You can see all of it.** Every scene names the sites its facts come from in a corner of the video, and the video ends with credits that list every source and the result of the fact-check. When a scene quotes a source, a marker sweeps over the source's words while the claim is spoken, and a stamp says it was checked against the source. Next to the video, the fact-check report lists every sentence as supported, revised or removed, with the reason, the quotes and links to the sources. The sentence being spoken is marked as the video plays, and clicking a sentence plays the video from there.
 
 ## How it works
@@ -63,7 +63,7 @@ You need Node.js 22.18 or newer and npm.
    | `TAVILY_API_KEY` | API key for Tavily web search. Without it, Meko uses Tavily's free keyless mode, which has a low hourly limit and is only meant for development |
    | `ELEVENLABS_API_KEY` | API key for ElevenLabs text-to-speech. Without it, videos play silently with captions |
    | `ELEVENLABS_VOICE_ID` | The ElevenLabs voice. Meko uses the default voice George, `JBFqnCBsd6RMkjVDRZzb` |
-   | `DEMO_CODE` | Only for a public deployment: making a video then needs this code, so strangers cannot spend your API credits. Leave it empty locally |
+   | `DEMO_CODE` | Needed on Vercel: making a video asks for this code, so strangers cannot spend your API credits. Without it, the deployed app makes no new videos. Use a long random code. Leave it empty locally |
 
 3. Start the dev server and open http://localhost:3000:
 
@@ -91,7 +91,7 @@ You need Node.js 22.18 or newer and npm.
 Meko runs on [Vercel](https://vercel.com) with no extra configuration:
 
 1. In Vercel, choose Add New, then Project, and import the GitHub repository.
-2. Add the environment variables from the table above, including `DEMO_CODE`. The example video plays for everyone; making a new video asks for the code.
+2. Add the environment variables from the table above, including `DEMO_CODE`. The example video plays for everyone; making a new video asks for the code. A long random code is what stops people from guessing it, and a rate-limit rule on `/api/*` in the Vercel Firewall adds more protection. If you add or change a variable later, deploy again, since Vercel only applies it to new deployments.
 3. Deploy. Every push to `main` deploys again.
 
 Each API route sets its own `maxDuration`, at most 180 seconds, which is within Vercel's 300-second limit on every plan.
@@ -112,7 +112,7 @@ All colors, fonts, sizes and timings are in `lib/theme.ts`.
 
 ## Known limitations
 
-- Maps use today's borders, from Natural Earth via world-atlas. Historical borders are out of scope, so a map about the Roman Empire shows modern countries.
+- Maps use today's borders, from Natural Earth via world-atlas. Historical borders are out of scope, so a map about the Roman Empire shows modern countries. Crimea is drawn as part of Ukraine, following the borders the UN recognizes. Antarctica is left off the maps.
 - Maps show countries and cities, not streets, so a story that happens inside one city (like the fall of the Berlin Wall) gets simple maps.
 - Topics without places, like how vaccines work, get no maps and more plain text scenes.
 - Meko trusts its sources. It checks that the narration matches what the sources say, not whether the sources are right. The source list is there so you can judge them.

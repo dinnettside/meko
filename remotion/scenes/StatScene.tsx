@@ -34,10 +34,13 @@ export function StatScene({
   const labelIn = ease(frame, fps, start + 0.7, 0.6);
   // A percentage is always out of 100, so it gets the dots too.
   const whole = total ?? (/^(%|percent|per cent)$/i.test(unit ?? "") ? 100 : undefined);
-  const share = whole && whole > 0 ? Math.min(1, value / whole) : null;
+  // The dots only show a part of the whole. A number bigger than the whole, like a 300 percent rise, or below zero
+  // would fill the grid with a picture of something else, so it stands alone.
+  const isPart = (amount: number) => whole !== undefined && whole > 0 && amount >= 0 && amount <= whole;
+  const share = whole !== undefined && isPart(value) && isPart(valueMax ?? value) ? value / whole : null;
   const filled = share === null ? 0 : Math.round(share * DOTS);
   // Dots between the low and the high end of a range are drawn as outlines.
-  const outlined = share === null || valueMax === undefined ? filled : Math.round(Math.min(1, valueMax / (whole ?? 1)) * DOTS);
+  const outlined = share === null || valueMax === undefined ? filled : Math.round((valueMax / (whole ?? 1)) * DOTS);
 
   return (
     <AbsoluteFill

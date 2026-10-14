@@ -1,7 +1,22 @@
 import { z } from "zod";
-import { demoCodeIsWrong } from "./demo-code.ts";
+import { checkDemoCode } from "./demo-code.ts";
 
-const MAX_BODY_CHARS = 300_000;
+// Real requests are at most about 20,000 characters (saved runs: script 16k, factcheck 18k, direct 19k, voice 7k).
+// A 180-second video with every fact as long as the longest seen stays under 50,000. A bigger body would only make
+// the prompts of the direct step, which repeat the facts, bigger and dearer.
+const MAX_BODY_CHARS = 60_000;
+// A missing or wrong demo code waits this long for its answer, the same for both, so guessing codes is slow and the
+// timing does not tell the two apart.
+const WRONG_CODE_DELAY_MS = 500;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Another website can send a plain-text or form POST without asking the browser first, but not a JSON one. Taking
+// only JSON keeps other pages from making videos through a visitor's browser.
+function isJson(request: Request): boolean {
+  const type = request.headers.get("content-type") ?? "";
+  return type.split(";")[0].trim().toLowerCase() === "application/json";
+}
 
 // Shared by the pipeline API routes: check the JSON body, run the step and return its result as JSON.
 export async function runStep<I, O extends object>(
@@ -10,8 +25,21 @@ export async function runStep<I, O extends object>(
   step: (input: I) => Promise<O>,
 ): Promise<Response> {
   // Checked before anything else, so a request without the code never reaches a paid API.
-  if (demoCodeIsWrong(request)) {
+  const code = checkDemoCode(request);
+  if (code === "unset") {
+    console.error("[demo-code] DEMO_CODE is not set and VERCEL is, so every request is refused. Set DEMO_CODE and deploy again.");
+    // 503, not 401: no code can be right until the server is set up, so visitors should not keep retyping theirs.
+    return Response.json(
+      { error: "Making new videos is switched off on this site until its demo code is set up." },
+      { status: 503 },
+    );
+  }
+  if (code === "wrong") {
+    await wait(WRONG_CODE_DELAY_MS);
     return Response.json({ error: "Making a video needs the right demo code." }, { status: 401 });
+  }
+  if (!isJson(request)) {
+    return Response.json({ error: "The request must be JSON, sent with Content-Type: application/json." }, { status: 415 });
   }
   const body = await request.text();
   if (body.length > MAX_BODY_CHARS) {

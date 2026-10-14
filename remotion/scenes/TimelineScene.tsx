@@ -1,7 +1,7 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
 import { timeKey } from "@/lib/numbers";
-import { formatYear } from "../format";
+import { formatYear, formatYears } from "../format";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
 import { COLORS, FONTS, VIDEO } from "@/lib/theme";
@@ -9,20 +9,31 @@ import { COLORS, FONTS, VIDEO } from "@/lib/theme";
 const { width: WIDTH, height: HEIGHT, captionSpace: CAPTION_SPACE } = VIDEO;
 const LEFT = 260;
 const RIGHT = WIDTH - 260;
+// The axis runs on a little past the first and the last event.
+const AXIS_START = LEFT - 60;
+const AXIS_END = RIGHT + 60;
 const AXIS_Y = (HEIGHT - CAPTION_SPACE) / 2 + 20;
+// Labels keep this far from the edges of the frame, and event labels this far from each other.
+const EDGE = 40;
+const LABEL_GAP = 24;
 
+// Rough width of a line of text, since text cannot be measured here. Archivo is about 0.56 em wide per character.
+const textWidth = (text: string, fontSize: number) => text.length * fontSize * 0.56;
 
-// Splits a label into two lines when it is long, so labels next to each other don't collide.
-function wrap(label: string): string[] {
+// Splits a label into two lines when it is wider than `maxWidth`, at the space that makes the longer line shortest.
+function wrap(label: string, fontSize: number, maxWidth: number): string[] {
   const words = label.split(" ");
-  if (label.length <= 14 || words.length < 2) return [label];
-  const half = Math.ceil(words.length / 2);
-  return [words.slice(0, half).join(" "), words.slice(half).join(" ")];
+  if (textWidth(label, fontSize) <= maxWidth || words.length < 2) return [label];
+  const widest = (lines: string[]) => Math.max(...lines.map((line) => textWidth(line, fontSize)));
+  const splits = words.slice(1).map((_, index) => [words.slice(0, index + 1).join(" "), words.slice(index + 1).join(" ")]);
+  return splits.reduce((best, lines) => (widest(lines) < widest(best) ? lines : best));
 }
 
 const ERA_TOP = AXIS_Y + 200;
 const ERA_HEIGHT = 48;
 const ERA_ROW = 64;
+const ERA_ROWS = 3; // a fourth row would run into the captions
+const ERA_GAP = 40; // between periods on the same row
 
 // Events in order along a line. The axis draws from left to right, the events come in one by one as the narration
 // names them, an amber line follows time from event to event, and the event the scene is about stands out in amber.
@@ -51,26 +62,46 @@ export function TimelineScene({
     oneYear ? (event.date ?? "") : event.date ? `${event.date} ${formatYear(event.year)}` : formatYear(event.year);
   // Long headings, like "20 July 1969", get smaller type so they do not run into each other.
   const longHeadings = events.some((event) => heading(event).length > 7);
+  // Each event label must fit in the space between its dot and the next one, and inside the frame, on at most two
+  // lines. When one does not, every label gets the smaller size, so they stay alike.
+  const labelSpace = events.length > 1 ? Math.min(step - LABEL_GAP, 2 * (LEFT - EDGE)) : WIDTH - 2 * VIDEO.sideMargin;
+  const labelsFit = (fontSize: number) =>
+    events.every((event) => wrap(event.label, fontSize, labelSpace).every((line) => textWidth(line, fontSize) <= labelSpace));
+  const labelSize = labelsFit(VIDEO.fontSize.eventLabel) ? VIDEO.fontSize.eventLabel : VIDEO.fontSize.eventLabelSmall;
   // Events are evenly spaced, so a period is placed between them by time: a year halfway between two events lies
-  // halfway between their dots. Years before the first or after the last event sit at the ends of the line.
+  // halfway between their dots. A period that began before the first event starts where the axis starts, and one
+  // that lasted past the last event runs to where the axis ends.
   const keys = events.map((event) => timeKey(event.year, event.date));
+  const first = keys[0];
+  const last = keys[keys.length - 1];
   const xOfYear = (year: number) => {
     const key = timeKey(year);
-    if (events.length < 2 || key <= keys[0]) return LEFT;
-    if (key >= keys[keys.length - 1]) return RIGHT;
+    if (key <= first) return key < first ? AXIS_START : LEFT;
+    if (key >= last) return key > last ? AXIS_END : RIGHT;
     const after = keys.findIndex((other) => other >= key);
     const share = (key - keys[after - 1]) / Math.max(1, keys[after] - keys[after - 1]);
     return LEFT + step * (after - 1 + share);
   };
-  // Overlapping periods go on separate rows: each goes on the first row where it overlaps nothing.
+  // A period that lies wholly before the first event or after the last has no place on this axis, so it is left out.
+  // The label starts inside the band and may run on past its end. When it would run out of the frame, it sits just
+  // before the band instead. Each period goes on the first row where neither its band nor its label comes near
+  // another one, and a period that finds no free row is left out rather than squeezed in.
   const rows: [number, number][][] = [];
-  const eraRows = eras.map((era) => {
-    const span: [number, number] = [xOfYear(era.start), xOfYear(era.end)];
-    const free = (row: [number, number][]) => row.every(([start, end]) => span[1] <= start || span[0] >= end);
+  const placedEras = eras.flatMap((era) => {
+    if (events.length < 2 || era.start >= era.end || timeKey(era.start) >= last || timeKey(era.end) <= first) return [];
+    const x1 = xOfYear(era.start);
+    const x2 = Math.max(x1 + 24, xOfYear(era.end));
+    const text = `${era.label} · ${formatYears(era.start, era.end)}`;
+    const width = textWidth(text, VIDEO.fontSize.eraLabel);
+    const textX = x1 + 22 + width <= WIDTH - EDGE ? x1 + 22 : x1 - 14 - width;
+    if (textX < EDGE) return [];
+    const extent: [number, number] = [Math.min(x1, textX), Math.max(x2, textX + width)];
+    const free = (row: [number, number][]) => row.every(([start, end]) => extent[1] + ERA_GAP <= start || extent[0] >= end + ERA_GAP);
     let row = rows.findIndex(free);
-    if (row === -1) row = rows.push([]) - 1;
-    rows[row].push(span);
-    return row;
+    if (row === -1 && rows.length < ERA_ROWS) row = rows.push([]) - 1;
+    if (row === -1) return [];
+    rows[row].push(extent);
+    return [{ x1, x2, y: ERA_TOP + row * ERA_ROW, text, textX }];
   });
   const starts = revealTimes(
     events.map((event) => `${Math.abs(event.year)} ${event.date ?? ""} ${event.label}`),
@@ -85,9 +116,9 @@ export function TimelineScene({
     <AbsoluteFill>
       <svg width={WIDTH} height={HEIGHT} viewBox={`0 0 ${WIDTH} ${HEIGHT}`}>
         <line
-          x1={LEFT - 60}
+          x1={AXIS_START}
           y1={AXIS_Y}
-          x2={LEFT - 60 + (RIGHT - LEFT + 120) * axis}
+          x2={AXIS_START + (AXIS_END - AXIS_START) * axis}
           y2={AXIS_Y}
           stroke={COLORS.border}
           strokeWidth={6}
@@ -96,17 +127,22 @@ export function TimelineScene({
         {events.length > 1 ? (
           <line x1={LEFT} y1={AXIS_Y} x2={LEFT + step * reached} y2={AXIS_Y} stroke={COLORS.signal} strokeWidth={6} strokeLinecap="round" />
         ) : null}
-        {eras.map((era, index) => {
-          const x1 = xOfYear(era.start);
-          const x2 = Math.max(x1 + 24, xOfYear(era.end));
-          const y = ERA_TOP + eraRows[index] * ERA_ROW;
+        {placedEras.map((era, index) => {
           const grow = ease(frame, fps, 0.3 + index * 0.25, 0.9);
           return (
             <g key={`era-${index}`} opacity={grow}>
-              <rect x={x1} y={y} width={(x2 - x1) * grow} height={ERA_HEIGHT} fill={COLORS.land} stroke={COLORS.border} strokeWidth={2} />
-              <rect x={x1} y={y} width={8} height={ERA_HEIGHT} fill={COLORS.teal} />
-              <text x={x1 + 22} y={y + ERA_HEIGHT / 2} dominantBaseline="middle" fontFamily={FONTS.body} fontSize={30} fontWeight={600} fill={COLORS.paper}>
-                {era.label} · {formatYear(era.start)}–{formatYear(era.end)}
+              <rect x={era.x1} y={era.y} width={(era.x2 - era.x1) * grow} height={ERA_HEIGHT} fill={COLORS.land} stroke={COLORS.border} strokeWidth={2} />
+              <rect x={era.x1} y={era.y} width={8} height={ERA_HEIGHT} fill={COLORS.teal} />
+              <text
+                x={era.textX}
+                y={era.y + ERA_HEIGHT / 2}
+                dominantBaseline="middle"
+                fontFamily={FONTS.body}
+                fontSize={VIDEO.fontSize.eraLabel}
+                fontWeight={600}
+                fill={COLORS.paper}
+              >
+                {era.text}
               </text>
             </g>
           );
@@ -148,12 +184,12 @@ export function TimelineScene({
                 y={AXIS_Y + 90}
                 textAnchor="middle"
                 fontFamily={FONTS.body}
-                fontSize={VIDEO.fontSize.eventLabel}
+                fontSize={labelSize}
                 fontWeight={isFocus ? 700 : 500}
                 fill={isFocus ? COLORS.paper : COLORS.dim}
               >
-                {wrap(event.label).map((line, lineIndex) => (
-                  <tspan key={lineIndex} x={x} dy={lineIndex === 0 ? 0 : 50}>
+                {wrap(event.label, labelSize, labelSpace).map((line, lineIndex) => (
+                  <tspan key={lineIndex} x={x} dy={lineIndex === 0 ? 0 : labelSize * 1.25}>
                     {line}
                   </tspan>
                 ))}

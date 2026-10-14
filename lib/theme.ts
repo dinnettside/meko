@@ -31,6 +31,7 @@ export const VIDEO = {
   height: 1080,
   sideMargin: 220, // left and right padding of title and text scenes
   captionSpace: 260, // room kept free for captions at the bottom
+  topSpace: 150, // room kept free at the top for the year and the sources in the corners
   captionBottom: 120, // distance from the caption box to the bottom edge
   mapPadding: 240, // left and right padding when the camera fits countries
   fontSize: {
@@ -44,6 +45,8 @@ export const VIDEO = {
     year: 64,
     focusYear: 92,
     eventLabel: 40,
+    eventLabelSmall: 32, // event labels when a long one would run into the next
+    eraLabel: 30, // the name and years of a period on a timeline
   },
 };
 
