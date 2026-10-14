@@ -39,6 +39,7 @@ export function directPlanPrompt(
         'Each scene lists under "cannot" the kinds its facts have no data for, like a timeline without years. Never list those.',
         "Use a map when the scene is about where something happens on Earth or a movement between places on Earth. Never for space, the human body or ideas.",
         "The video should not show the same kind again and again, so the other choices matter: the best one is not always used.",
+        "The last scene sums up the video. When it names 2 or 3 main points, a list fits it well.",
       ].join("\n"),
     },
     { role: "user", content: `Video title: ${title}\n\nScenes:\n${JSON.stringify(scenes, null, 1)}` },

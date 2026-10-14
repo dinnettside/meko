@@ -463,7 +463,13 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
                 {new Date(finished.example.madeAt).toLocaleDateString("en-GB", { dateStyle: "long" })}.
               </p>
             ) : null}
-            <StoryboardPlayer storyboard={finished.storyboard} voice={finished.voice} sites={sites} playerRef={playerRef} />
+            <StoryboardPlayer
+              storyboard={finished.storyboard}
+              voice={finished.voice}
+              sites={sites}
+              checks={finished.report}
+              playerRef={playerRef}
+            />
             <p className="text-sm text-dim">
               Made in {Math.round(finished.ms / 1000)} seconds. Model cost ${finished.costUsd.toFixed(3)}.
             </p>

@@ -4,6 +4,7 @@ import { Player } from "@remotion/player";
 import type { PlayerRef } from "@remotion/player";
 import type { Ref } from "react";
 import type { Storyboard } from "@/lib/storyboard";
+import type { CheckCounts } from "@/remotion/Credits";
 import type { SceneVoice } from "@/lib/voice";
 import { StoryboardVideo, storyboardFrames } from "@/remotion/StoryboardVideo";
 
@@ -11,18 +12,20 @@ export function StoryboardPlayer({
   storyboard,
   voice,
   sites,
+  checks,
   playerRef,
 }: {
   storyboard: Storyboard;
   voice: Record<string, SceneVoice>;
   sites: Record<string, string[]>;
+  checks: CheckCounts;
   playerRef?: Ref<PlayerRef>;
 }) {
   return (
     <Player
       ref={playerRef}
       component={StoryboardVideo}
-      inputProps={{ storyboard, voice, sites }}
+      inputProps={{ storyboard, voice, sites, checks }}
       durationInFrames={storyboardFrames(storyboard)}
       fps={storyboard.fps}
       compositionWidth={storyboard.width}

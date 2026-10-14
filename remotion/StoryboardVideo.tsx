@@ -7,6 +7,7 @@ import type { TimedWord } from "@/lib/elevenlabs";
 import type { SceneVoice } from "@/lib/voice";
 import { Caption, estimateWords } from "./Caption";
 import { Credits } from "./Credits";
+import type { CheckCounts } from "./Credits";
 import { YearMark } from "./YearMark";
 import { SourceChip } from "./SourceChip";
 import { CompareScene } from "./scenes/CompareScene";
@@ -56,15 +57,18 @@ const NO_VOICE: Record<string, SceneVoice> = {};
 const NO_SITES: Record<string, string[]> = {};
 
 // `voice` holds the recorded narration by scene ID. Without it, the video plays silently with captions.
-// `sites` holds the sites behind each scene's facts, shown in a corner of the scene.
+// `sites` holds the sites behind each scene's facts, shown in a corner of the scene. `checks` is the fact-check
+// result, shown in the closing credits.
 export function StoryboardVideo({
   storyboard,
   voice = NO_VOICE,
   sites = NO_SITES,
+  checks,
 }: {
   storyboard: Storyboard;
   voice?: Record<string, SceneVoice>;
   sites?: Record<string, string[]>;
+  checks?: CheckCounts;
 }) {
   const overlap = overlapFrames(storyboard.fps);
   const credits = creditsFrames(storyboard);
@@ -88,7 +92,14 @@ export function StoryboardVideo({
           return (
             <Series.Sequence key={scene.id} durationInFrames={frames} offset={index === 0 ? 0 : -overlap}>
               <Fade frames={frames} fade={overlap} fadeOut={fadeOut}>
-                <SceneView scene={scene} previous={storyboard.scenes[index - 1]} words={words} storyboard={storyboard} region={region} />
+                <SceneView
+                  scene={scene}
+                  previous={storyboard.scenes[index - 1]}
+                  isLast={index === storyboard.scenes.length - 1}
+                  words={words}
+                  storyboard={storyboard}
+                  region={region}
+                />
                 {/* A timeline shows its own years, and the title card is kept clear. */}
                 {scene.kind !== "timeline" && scene.kind !== "title" ? <YearMark narration={scene.narration} /> : null}
                 {/* The title has no claims to source, and a quote names its own source. */}
@@ -102,7 +113,7 @@ export function StoryboardVideo({
         {credits > 0 ? (
           <Series.Sequence durationInFrames={credits} offset={-overlap}>
             <Fade frames={credits} fade={overlap} fadeOut>
-              <Credits sources={storyboard.sources} />
+              <Credits sources={storyboard.sources} checks={checks} />
             </Fade>
           </Series.Sequence>
         ) : null}
@@ -127,12 +138,14 @@ function Fade({ frames, fade, fadeOut, children }: { frames: number; fade: numbe
 function SceneView({
   scene,
   previous,
+  isLast,
   words,
   storyboard,
   region,
 }: {
   scene: Scene;
   previous?: Scene;
+  isLast: boolean;
   words: TimedWord[];
   storyboard: Storyboard;
   region: string[];
@@ -152,10 +165,12 @@ function SceneView({
     case "compare":
       return <CompareScene title={scene.title} unit={scene.unit} bars={scene.bars} {...timing} />;
     case "quote":
-      return <QuoteScene text={scene.text} source={storyboard.sources.find((source) => source.id === scene.sourceId)} />;
+      return (
+        <QuoteScene text={scene.text} source={storyboard.sources.find((source) => source.id === scene.sourceId)} durationSec={scene.durationSec} />
+      );
     case "steps":
       return <StepsScene steps={scene.steps} {...timing} />;
     case "list":
-      return <ListScene items={scene.items} {...timing} />;
+      return <ListScene items={scene.items} summary={isLast} {...timing} />;
   }
 }

@@ -1,11 +1,12 @@
-import { AbsoluteFill } from "remotion";
+import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
-import { useEase } from "../motion";
+import { ease } from "../motion";
 import { revealTimes } from "../spoken";
 import { COLORS, FONTS, MOTION, VIDEO } from "@/lib/theme";
 
-// Up to three short lines. The first is the key point: bigger, brighter and marked in amber.
-// The lines come in one by one, as the narration gets to them.
+// Up to three short lines. The first is the key point: bigger, brighter, marked in amber, and its names and
+// numbers are amber too. Each line comes in word by word as the narration gets to it, every word landing with a
+// small punch, so the words arrive with the voice instead of sitting on a slide.
 export function TextScene({ lines, words, durationSec }: { lines: string[]; words: TimedWord[]; durationSec: number }) {
   const spacing = Math.max(MOTION.stagger, Math.min(2.5, (durationSec * 0.7) / lines.length));
   const starts = revealTimes(lines, words, { firstSec: 0.2, spreadSec: spacing * lines.length, gapSec: MOTION.stagger, durationSec });
@@ -18,21 +19,29 @@ export function TextScene({ lines, words, durationSec }: { lines: string[]; word
   );
 }
 
+// Names and numbers stand out: any word with a digit, and capitalized words after the first.
+const isKeyWord = (word: string, position: number) => /\d/.test(word) || (position > 0 && /^\p{Lu}/u.test(word));
+
+// How long after the line starts each next word lands.
+const WORD_GAP_SEC = 0.09;
+
 function Line({ text, index, startSec }: { text: string; index: number; startSec: number }) {
-  const progress = useEase(startSec, MOTION.entrance);
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
   const isKey = index === 0;
+  const bar = ease(frame, fps, startSec, MOTION.entrance);
+  const parts = text.split(/\s+/).filter(Boolean);
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 40,
-        marginBottom: isKey ? 56 : 36,
-        opacity: progress,
-        transform: `translateX(${(progress - 1) * 40}px)`,
-      }}
-    >
-      <div style={{ width: 12, alignSelf: "stretch", backgroundColor: isKey ? COLORS.signal : "transparent" }} />
+    <div style={{ display: "flex", alignItems: "center", gap: 40, marginBottom: isKey ? 56 : 36 }}>
+      <div
+        style={{
+          width: 12,
+          alignSelf: "stretch",
+          backgroundColor: isKey ? COLORS.signal : "transparent",
+          transform: `scaleY(${bar})`,
+          transformOrigin: "top",
+        }}
+      />
       <div
         style={{
           fontFamily: isKey ? FONTS.display : FONTS.body,
@@ -42,7 +51,23 @@ function Line({ text, index, startSec }: { text: string; index: number; startSec
           color: isKey ? COLORS.paper : COLORS.dim,
         }}
       >
-        {text}
+        {parts.map((word, position) => {
+          const land = ease(frame, fps, startSec + position * WORD_GAP_SEC, 0.28);
+          return (
+            <span
+              key={position}
+              style={{
+                display: "inline-block",
+                marginRight: "0.26em",
+                opacity: land,
+                transform: `scale(${1.3 - 0.3 * land})`,
+                color: isKey && isKeyWord(word, position) ? COLORS.signal : undefined,
+              }}
+            >
+              {word}
+            </span>
+          );
+        })}
       </div>
     </div>
   );

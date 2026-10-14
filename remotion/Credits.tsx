@@ -11,9 +11,12 @@ const siteOf = (url: string) => {
   }
 };
 
-// The closing credits: every source the video used, so anyone can check what it says.
-export function Credits({ sources }: { sources: Source[] }) {
+export type CheckCounts = { supported: number; revised: number; removed: number };
+
+// The closing credits: every source the video used, so anyone can check what it says, and how the fact-check went.
+export function Credits({ sources, checks }: { sources: Source[]; checks?: CheckCounts }) {
   const headingIn = useEase(0.2, 0.6);
+  const checksIn = useEase(0.6 + sources.length * 0.2, 0.6);
   const twoColumns = sources.length > 5;
   return (
     <AbsoluteFill style={{ justifyContent: "center", padding: `0 ${VIDEO.sideMargin}px` }}>
@@ -24,6 +27,14 @@ export function Credits({ sources }: { sources: Source[] }) {
           <CreditLine key={source.id} source={source} startSec={0.5 + index * 0.2} />
         ))}
       </div>
+      {checks ? (
+        <div style={{ marginTop: 52, fontFamily: FONTS.body, fontSize: 34, color: COLORS.teal, opacity: checksIn }}>
+          ✓{" "}
+          {checks.revised + checks.removed === 0
+            ? `All ${checks.supported} sentences were checked against their sources and supported.`
+            : `Every sentence was checked against its sources: ${checks.supported} supported, ${checks.revised} revised, ${checks.removed} removed.`}
+        </div>
+      ) : null}
     </AbsoluteFill>
   );
 }

@@ -10,14 +10,18 @@ const CARD_HEIGHT = 300;
 // Two to four things of one kind side by side, like types, goods or effects. Each card comes in as the narration
 // names it, and the newest gets the amber rule. There are no arrows and no numbers, because the items do not lead
 // to each other: that is what steps are for.
+//
+// As the last scene, the list sums up the video, and each card gets a check mark as it comes in.
 export function ListScene({
   items,
   words,
   durationSec,
+  summary = false,
 }: {
   items: { title: string; detail?: string }[];
   words: TimedWord[];
   durationSec: number;
+  summary?: boolean;
 }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -30,7 +34,10 @@ export function ListScene({
   );
   const time = frame / fps;
   const newest = starts.reduce((latest, start, index) => (time >= start ? index : latest), 0);
-  const titleSize = items.length > 3 ? 58 : 70;
+  // The longest word has to fit on one line of its card, so long words get smaller type instead of breaking.
+  const longestWord = Math.max(...items.flatMap((item) => item.title.split(/\s+/).map((word) => word.length)));
+  const textWidth = cardWidth - 64 - (summary ? 64 : 0);
+  const titleSize = Math.min(items.length > 3 ? 58 : 70, Math.floor(textWidth / (longestWord * 0.6)));
 
   return (
     <AbsoluteFill style={{ justifyContent: "center", padding: `0 ${VIDEO.sideMargin}px ${VIDEO.captionSpace}px` }}>
@@ -39,6 +46,7 @@ export function ListScene({
         {items.map((item, index) => {
           const appear = ease(frame, fps, starts[index], 0.5);
           const rule = ease(frame, fps, starts[index] + 0.1, 0.5);
+          const check = ease(frame, fps, starts[index] + 0.35, 0.3);
           const isNewest = index === newest;
           return (
             <div
@@ -63,14 +71,37 @@ export function ListScene({
                   backgroundColor: isNewest ? COLORS.signal : COLORS.border,
                 }}
               />
+              {summary ? (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 28,
+                    right: 28,
+                    width: 56,
+                    height: 56,
+                    borderRadius: 28,
+                    backgroundColor: COLORS.teal,
+                    color: COLORS.ink,
+                    fontSize: 38,
+                    fontWeight: 700,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: check,
+                    transform: `scale(${1.4 - 0.4 * check})`,
+                  }}
+                >
+                  ✓
+                </div>
+              ) : null}
               <div
                 style={{
                   fontFamily: FONTS.display,
                   fontSize: titleSize,
                   fontWeight: 700,
                   lineHeight: 1.05,
+                  paddingRight: summary ? 64 : 0,
                   color: isNewest ? COLORS.signal : COLORS.paper,
-                  overflowWrap: "break-word",
                 }}
               >
                 {item.title}
