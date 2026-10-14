@@ -1,9 +1,12 @@
-// Runs topics through the whole pipeline and reports how much of each script held up in the fact-check,
-// what it cost and how long it took. Prints a table and writes docs/eval.md.
-// Run with `npm run eval -- 2` for the first 2 topics, or `npm run eval` for all 10.
+// Runs topics through the pipeline and reports how much of each script held up in the fact-check, which kinds
+// of scene it got, what it cost and how long it took. Prints a table and writes docs/eval.md.
+// Run with `npm run eval -- 2` for the first 2 topics, or `npm run eval` for all 10. A folder after the count,
+// like `npm run eval -- 10 /tmp/runs`, also saves each run there as JSON, to look at the scenes afterwards.
+// The voice-over is skipped to save ElevenLabs credits, so video lengths are estimated from the narration.
 // The app must be running (npm run dev). It makes paid API calls.
 
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { runPipeline } from "./pipeline-client.ts";
 
 const TOPICS = [
@@ -19,6 +22,8 @@ const TOPICS = [
   "The partition of India in 1947",
 ];
 const count = Math.min(Number(process.argv[2]) || TOPICS.length, TOPICS.length);
+const saveDir = process.argv[3];
+if (saveDir) mkdirSync(saveDir, { recursive: true });
 
 type Row = {
   topic: string;
@@ -32,6 +37,8 @@ type Row = {
   facts: number;
   dropped: number;
   kinds: string;
+  scenes: number;
+  textScenes: number;
   costUsd: number;
   characters: number;
   steps: string;
@@ -42,8 +49,13 @@ for (const topic of TOPICS.slice(0, count)) {
   console.log(`\n${topic}`);
   const started = Date.now();
   try {
-    const run = await runPipeline({ topic, audience: "High school", lengthSec: 90, language: "en" });
+    const run = await runPipeline({ topic, audience: "High school", lengthSec: 90, language: "en" }, { voice: false });
     const { report } = run.factcheck;
+    if (saveDir) {
+      const file = join(saveDir, `${topic.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.json`);
+      const { storyboard } = run.directed;
+      writeFileSync(file, JSON.stringify({ request: run.request, storyboard, report, facts: run.research.facts, sources: run.research.sources.map(({ id, title, url }) => ({ id, title, url })) }, null, 1));
+    }
     const scenes = run.voiced.storyboard.scenes;
     const kinds = new Map<string, number>();
     for (const scene of scenes) kinds.set(scene.kind, (kinds.get(scene.kind) ?? 0) + 1);
@@ -58,11 +70,11 @@ for (const topic of TOPICS.slice(0, count)) {
       facts: run.research.facts.length,
       dropped: run.research.droppedFacts,
       kinds: [...kinds].map(([kind, n]) => `${n} ${kind}`).join(", "),
+      scenes: scenes.length,
+      textScenes: kinds.get("text") ?? 0,
       costUsd: run.costUsd,
       characters: run.voiced.characters,
-      steps: [run.research, run.script, run.factcheck, run.directed, run.voiced]
-        .map((step) => (step.ms / 1000).toFixed(1))
-        .join(" / "),
+      steps: [run.research, run.script, run.factcheck, run.directed].map((step) => (step.ms / 1000).toFixed(1)).join(" / "),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -79,6 +91,8 @@ for (const topic of TOPICS.slice(0, count)) {
       facts: 0,
       dropped: 0,
       kinds: "",
+      scenes: 0,
+      textScenes: 0,
       costUsd: 0,
       characters: 0,
       steps: "",
@@ -100,7 +114,8 @@ const lines = [
   `- Sentences supported as written: ${percent(done.reduce((t, r) => t + r.supported, 0), allSentences)} (revised ${percent(done.reduce((t, r) => t + r.revised, 0), allSentences)}, removed ${percent(done.reduce((t, r) => t + r.removed, 0), allSentences)})`,
   `- Average time per video: ${average(done.map((r) => r.totalSec)).toFixed(1)} s`,
   `- Average Token Factory cost per video: $${average(done.map((r) => r.costUsd)).toFixed(4)}`,
-  `- Average voice length: ${Math.round(average(done.map((r) => r.characters)))} characters`,
+  `- Average narration length: ${Math.round(average(done.map((r) => r.characters)))} characters`,
+  `- Scenes shown as plain text: ${percent(done.reduce((t, r) => t + r.textScenes, 0), done.reduce((t, r) => t + r.scenes, 0))}`,
   "",
   "| Topic | Supported | Revised | Removed | Facts (dropped) | Scenes | Video | Time | Steps (s) | Cost |",
   "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
@@ -110,7 +125,7 @@ const lines = [
       : `| ${row.topic} | ${row.supported}/${row.sentences} | ${row.revised} | ${row.removed} | ${row.facts} (${row.dropped}) | ${row.kinds} | ${Math.round(row.videoSec)} s | ${row.totalSec.toFixed(1)} s | ${row.steps} | $${row.costUsd.toFixed(4)} |`,
   ),
   "",
-  "Steps are research / script / fact-check / direct / voice, measured on the server.",
+  "Steps are research / script / fact-check / direct, measured on the server. The voice-over was skipped, so video lengths are estimated from the narration.",
   "Supported means the fact-check found every claim of the sentence in the quotes of its cited facts.",
   "",
 ];

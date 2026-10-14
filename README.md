@@ -16,8 +16,8 @@ The language model writes and checks everything, but plain code checks the model
 - **Every sentence cites facts.** The script must name the facts behind each sentence. Unknown fact IDs send the script back for another try.
 - **Every claim is checked.** The fact-check splits each sentence into its separate claims (people, numbers, dates, places, causes) and judges each one only against the quotes of the cited facts. Links count as claims too: two true facts joined by a false "after" or "because" make a false sentence, so the code spells out each link for the model to judge. Two checks run side by side and the stricter verdict counts. A sentence with an unsupported claim is rewritten or removed, and the code makes sure it can never be marked as supported.
 - **The narration is not touched again.** The director only chooses what is shown on screen. The voice reads the fact-checked text word for word.
-- **What is on screen is checked too.** Numbers on screen must appear in the narration or the cited facts, and labels must use their words. Each event on a timeline names the fact that states its year, and the code checks that the year is in it. A quote must be a whole sentence copied from a source. Each city on a map comes with its coordinates and the country it lies in, and the code checks that the point is inside that country's borders and asks the model a second time where the city is. A country cannot carry the name of a region it is not in, and an arrow labeled "eastward" must point east.
-- **You can see all of it.** Next to the video, the fact-check report lists every sentence as supported, revised or removed, with the reason, the quotes and links to the sources. The sentence being spoken is marked as the video plays, and clicking a sentence plays the video from there.
+- **What is on screen is checked too.** Numbers on screen must appear in the narration or the cited facts, and labels must use their words. Each event on a timeline names the fact that states its year, and the code checks that the year is in it. A quote must be a whole sentence copied from a source. Each city on a map comes with its coordinates and the country it lies in, and the code checks that the point is inside that country's borders and asks the model a second time where the city is. A country cannot carry the name of a region it is not in, and an arrow labeled "eastward" must point east. Dots that show a number as part of a whole need the narration to say exactly that, a chart cannot compare dates or one amount in two units, and a number in a name (Apollo 11) is never shown as an amount.
+- **You can see all of it.** Every scene names the sites its facts come from in a corner of the video. Next to the video, the fact-check report lists every sentence as supported, revised or removed, with the reason, the quotes and links to the sources. The sentence being spoken is marked as the video plays, and clicking a sentence plays the video from there.
 
 ## How it works
 
@@ -26,12 +26,12 @@ The browser calls five API routes in order and shows live progress for each:
 1. **Research** (`/api/research`). Nemotron plans 3 to 6 web searches. [Tavily](https://tavily.com) runs them in parallel, Meko picks the best new page for each search, and Nemotron extracts up to 6 facts from each page, with quotes, all at once. If the model finds an important gap, there is one more round of searches.
 2. **Script** (`/api/script`). Nemotron writes the narration, split into short scenes, with the fact IDs behind every sentence. The length follows the voice's measured pace of about 15 characters per second.
 3. **Fact-check** (`/api/factcheck`). Nemotron checks every claim in every sentence against the quotes, twice at the same time, and the stricter verdict counts. Sentences are kept, revised or removed.
-4. **Direct** (`/api/direct`). One Nemotron call ranks the kinds of picture that fit each scene, and the code picks a varied order from them, using only kinds the facts have data for: no timeline without years, no chart without numbers. Then every scene is directed in its own small call, all in parallel. A scene becomes a map, a timeline, a big number, a bar chart, a quote, a chain of causes or a few lines of text.
-5. **Voice** (`/api/voice`). [ElevenLabs](https://elevenlabs.io) reads each scene, with the text before and after for a natural flow. Its word timings set the length of each scene, drive captions that light up word by word, and time the pictures: a country lights up, a city appears or an arrow draws as the voice names it. When two maps follow each other, the camera flies from one to the next.
+4. **Direct** (`/api/direct`). One Nemotron call ranks the kinds of picture that fit each scene, and the code picks a varied order from them, using only kinds the facts have data for: no timeline without years, no chart without numbers, and no maps in a video that names no countries or regions. Then every scene is directed in its own small call, all in parallel. A scene becomes a map, a timeline, a big number, a bar chart, a quote, a chain of causes or a few lines of text.
+5. **Voice** (`/api/voice`). [ElevenLabs](https://elevenlabs.io) reads each scene, with the text before and after for a natural flow. Its word timings set the length of each scene, drive captions that light up word by word, and time the pictures: a country lights up, a city appears or an arrow draws as the voice names it. When two maps follow each other, the camera flies from one to the next, and a video with maps that would end on plain text ends on a map of every place it showed instead.
 
 The result is a storyboard (plain JSON, see `lib/storyboard.ts`) that [Remotion](https://www.remotion.dev) plays in the browser. All visuals are drawn in code: no stock footage, images or music.
 
-A 90-second video takes about 40 seconds to make and costs about $0.10 in Token Factory calls (see `docs/eval.md`).
+A 90-second video takes about 35 seconds to make and costs about $0.09 in Token Factory calls. On 10 test topics, every video finished and 91% of the sentences were supported as written (see `docs/eval.md`).
 
 ## How Meko uses Nemotron and Token Factory
 
@@ -102,6 +102,9 @@ All colors, fonts, sizes and timings are in `lib/theme.ts`.
 ## Known limitations
 
 - Maps use today's borders, from Natural Earth via world-atlas. Historical borders are out of scope, so a map about the Roman Empire shows modern countries.
+- Maps show countries and cities, not streets, so a story that happens inside one city (like the fall of the Berlin Wall) gets simple maps.
+- Timelines show years. Events from the same year, like the steps of German unification in 1990, cannot share one timeline.
+- Topics without places, like how vaccines work, get no maps and more plain text scenes.
 - Meko trusts its sources. It checks that the narration matches what the sources say, not whether the sources are right. The source list is there so you can judge them.
 - Norwegian output is not supported yet. The models we tested write weak Norwegian.
 - Videos play in the browser. There is no MP4 export yet.

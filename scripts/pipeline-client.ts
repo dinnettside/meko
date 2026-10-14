@@ -39,7 +39,8 @@ async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<
   return json as Timed<T>;
 }
 
-export async function runPipeline(request: VideoRequest): Promise<PipelineRun> {
+// `voice: false` skips the voice-over, to save ElevenLabs credits when only the script and pictures matter.
+export async function runPipeline(request: VideoRequest, { voice = true }: { voice?: boolean } = {}): Promise<PipelineRun> {
   const started = Date.now();
   const research = await post<ResearchResult>("/api/research", request, 190_000);
   const script = await post<ScriptResult>("/api/script", { request, facts: research.facts }, 130_000);
@@ -50,7 +51,15 @@ export async function runPipeline(request: VideoRequest): Promise<PipelineRun> {
     { request, script: factcheck.script, facts: research.facts, sources },
     130_000,
   );
-  const voiced = await post<VoiceResult>("/api/voice", { storyboard: directed.storyboard }, 100_000);
+  const voiced: Timed<VoiceResult> = voice
+    ? await post<VoiceResult>("/api/voice", { storyboard: directed.storyboard }, 100_000)
+    : {
+        storyboard: directed.storyboard,
+        voice: {},
+        characters: directed.storyboard.scenes.reduce((total, scene) => total + scene.narration.length, 0),
+        skipped: "The voice-over was skipped.",
+        ms: 0,
+      };
   const costUsd = [research, script, factcheck, directed].reduce((total, step) => total + step.usage.costUsd, 0);
   return { request, research, script, factcheck, directed, voiced, totalMs: Date.now() - started, costUsd };
 }

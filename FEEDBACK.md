@@ -34,3 +34,11 @@ From building the director and the fact-check (Oct 14):
 - After a retry message, Ultra with thinking off once kept writing until max_tokens (10,000 tokens in 41 s), even with strict `json_schema`. We now start over from the first prompt when an answer is cut off.
 - Ultra planned timelines and charts for scenes whose facts had no years or numbers, and then took years from its own knowledge (for example 100 BC for Zhang Qian, which no fact gave). Listing the years and amounts the facts contain, and only allowing those kinds where the data exists, fixed most of it.
 - On maps, Ultra labeled countries with regions they are not in (China as "Central Asia"), colored all of Russia to point at one port in Crimea, and drew arrows against their own label ("grapes eastward" from China to Iran). Code checks catch these now.
+
+From running 10 topics through the pipeline (Oct 14):
+
+- Ultra planned map scenes for how the immune system works and for the Moon landing, although the prompt says maps are for places on Earth. Asked to list the places each scene names, it listed places on the Moon. A code check for country, region, sea and city names now decides which scenes can be maps.
+- Ultra put map markers on institutions ("Senate", "Magistrates") at Rome's coordinates. Asking a second time whether each name is a place at all catches it.
+- Ultra used the "total" of a number scene to show two unrelated numbers as a share: 70,000 marchers "out of" a later crowd of 320,000, and "4 out of 5 million" for "4 to 5 million". It also charted days of the month as amounts, and one amount in two units (130 tonnes against 143 tons) as if they were two things.
+- When the script missed its length, Ultra often missed again after the retry message, three times in a row, which failed 2 of 10 videos. Saying how many words to cut or add, and keeping the closest script after the last try, fixed it.
+- Most source quotes Ultra copies are parts of sentences, not whole ones, so a quote scene from them often failed. We now only plan a quote where a whole sentence exists.
