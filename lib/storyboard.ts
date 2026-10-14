@@ -61,11 +61,13 @@ const TimelineSceneSchema = z.object({
   focusIndex: z.number(),
 });
 
-// One big number. With `total`, the video draws `value` out of `total` as a grid of dots.
+// One big number. With `total`, the video draws `value` out of `total` as a grid of dots. With `valueMax`, the
+// number is a range, like 25 to 50 million, and the uncertain part is drawn as an outline.
 const StatSceneSchema = z.object({
   ...sceneBase,
   kind: z.literal("stat"),
   value: z.number(),
+  valueMax: z.number().optional(),
   unit: z.string().optional(),
   label: z.string(),
   total: z.number().optional(),

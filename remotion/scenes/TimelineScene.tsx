@@ -1,5 +1,6 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
+import { formatYear } from "../format";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
 import { COLORS, FONTS, VIDEO } from "@/lib/theme";
@@ -9,8 +10,6 @@ const LEFT = 260;
 const RIGHT = WIDTH - 260;
 const AXIS_Y = (HEIGHT - CAPTION_SPACE) / 2 + 20;
 
-// Years before year 1 are shown as "BC".
-const formatYear = (year: number) => (year < 0 ? `${-year} BC` : String(year));
 
 // Splits a label into two lines when it is long, so labels next to each other don't collide.
 function wrap(label: string): string[] {

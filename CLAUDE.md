@@ -92,7 +92,7 @@ type Scene =
     })
   | (SceneBase & { kind: "timeline"; events: { year: number; label: string; date?: string }[]; focusIndex: number }) // `date` (added Oct 14, 2026 with Trym's OK) is a day and month like "20 July", for events in the same year
   // Added Oct 14, 2026 with Trym's OK:
-  | (SceneBase & { kind: "stat"; value: number; unit?: string; label: string; total?: number }) // one big number; `total` draws value out of total as dots
+  | (SceneBase & { kind: "stat"; value: number; valueMax?: number; unit?: string; label: string; total?: number }) // one big number; `total` draws value out of total as dots; `valueMax` (added Oct 14, 2026 with Trym's OK) is the high end when the number is a range, like 25 to 50 million
   | (SceneBase & { kind: "compare"; title: string; unit?: string; bars: { label: string; value: number }[] }) // a bar chart
   | (SceneBase & { kind: "quote"; text: string; sourceId: string }) // a source's exact words
   | (SceneBase & { kind: "steps"; steps: string[] }) // a process or a chain of causes

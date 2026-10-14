@@ -4,7 +4,7 @@ import { addUsage, chatJson, emptyUsage } from "./nebius.ts";
 import { CHARS_PER_SECOND, ResearchFactSchema, ScriptSchema, VideoRequestSchema, countWords } from "./pipeline.ts";
 import type { ResearchFact, Usage } from "./pipeline.ts";
 import { directPlanPrompt, directScenePrompt, directTitlePrompt, placesPrompt } from "./prompts/direct.ts";
-import { amountsIn, datesIn, isDateIn, isPartOf, numbersIn, statesDate, timeKey, yearsIn } from "./numbers.ts";
+import { amountsIn, datesIn, isDateIn, isPartOf, numbersIn, rangesIn, statesDate, timeKey, yearsIn } from "./numbers.ts";
 import { COUNTRY_ALIASES, labelMismatch, namesAPlace } from "./regions.ts";
 import { quoteIsInSource } from "./research.ts";
 import { contentWords } from "./words.ts";
@@ -71,6 +71,7 @@ const SceneVisualSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("stat"),
     value: z.number(),
+    valueMax: z.number().optional(),
     unit: z.string().optional(),
     label: z.string(),
     total: z.number().optional(),
@@ -249,7 +250,13 @@ function shownText(visual: SceneVisual): string[] {
         ...visual.markers.map((m) => m.label),
       ];
     case "stat":
-      return [String(visual.value), visual.total === undefined ? "" : String(visual.total), visual.unit ?? "", visual.label];
+      return [
+        String(visual.value),
+        visual.valueMax === undefined ? "" : String(visual.valueMax),
+        visual.total === undefined ? "" : String(visual.total),
+        visual.unit ?? "",
+        visual.label,
+      ];
     case "compare":
       return [visual.title, visual.unit ?? "", ...visual.bars.flatMap((bar) => [bar.label, String(bar.value)])];
     case "quote":
@@ -392,7 +399,17 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
     case "stat":
       if (tooLong(visual.label, MAX_LINE_WORDS)) problems.push("The stat label is too long. Use at most 8 words.");
       if (visual.unit && tooLong(visual.unit, 2)) problems.push("The unit is too long. Use one or two words, like million or km.");
-      if (visual.total !== undefined && !(visual.total > visual.value)) problems.push("total must be bigger than value, or left out.");
+      if (visual.total !== undefined && !(visual.total > (visual.valueMax ?? visual.value))) problems.push("total must be bigger than value, or left out.");
+      // A range must be shown whole, so the viewer sees how uncertain the number is.
+      {
+        const ranges = rangesIn(source);
+        const range = ranges.find(([low, high]) => low === visual.value || high === visual.value || high === visual.valueMax);
+        if (visual.valueMax !== undefined && !ranges.some(([low, high]) => low === visual.value && high === visual.valueMax)) {
+          problems.push(`The narration and facts do not give ${visual.value} to ${visual.valueMax} as a range. Leave out valueMax.`);
+        } else if (visual.valueMax === undefined && range) {
+          problems.push(`The narration gives the range ${range[0]} to ${range[1]}. Show all of it: value ${range[0]}, valueMax ${range[1]}.`);
+        }
+      }
       // The dots say "value out of total", so the narration must say exactly that.
       if (visual.total !== undefined && !(isPercent(visual.unit) && visual.total === 100) && !isPartOf(visual.value, visual.total, source)) {
         problems.push(`Leave out total: the narration and facts do not say ${visual.value} is part of ${visual.total}, like "25 of 75 million".`);
@@ -406,6 +423,10 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
       }
       if (!isGrounded(visual.label, source)) problems.push(ungrounded(visual.label));
       if (isNameNumber(visual.value, source)) problems.push(`${visual.value} is part of a name here, like Apollo 11, not an amount.`);
+      // The big number is what this scene is about, so it comes from this scene, not from elsewhere in the video.
+      if (!numbersIn(source).includes(String(visual.value))) {
+        problems.push(`${visual.value} is not in this scene's narration or facts. Show a number this scene gives, or another kind.`);
+      }
       break;
     case "compare":
       if (tooLong(visual.title, MAX_LINE_WORDS)) problems.push("The chart title is too long. Use at most 8 words.");
@@ -578,10 +599,12 @@ function repairScene(
       return items.length >= 2 ? { kind: "list", items } : fallback;
     }
     case "stat": {
-      // Most often only the total is wrong. Without it, the number still stands.
-      const withoutTotal = { ...visual, total: undefined };
+      // Most often only the total is wrong, or the number is one end of a range. Fixed, the number still stands.
       if (visualProblems(visual, allowed, facts, source).length === 0) return visual;
-      return visualProblems(withoutTotal, allowed, facts, source).length === 0 ? withoutTotal : fallback;
+      const range = rangesIn(source).find(([low, high]) => low === visual.value || high === visual.value);
+      const ranged = range ? { ...visual, value: range[0], valueMax: range[1] } : { ...visual, valueMax: undefined };
+      const tries = [ranged, { ...ranged, total: undefined }];
+      return tries.find((attempt) => visualProblems(attempt, allowed, facts, source).length === 0) ?? fallback;
     }
     default:
       return visualProblems(visual, allowed, facts, source).length === 0 ? visual : fallback;
@@ -779,7 +802,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
       console.warn(`[direct] A scene call failed, using a fallback: ${error}`);
       return { data: fallback, usage: emptyUsage() };
     });
-  const titleCall = orFallback(
+  const titleCall = orFallback<TitleVisual>(
     chatJson({
       step: `direct/${opening.id}`,
       schemaName: "title",
@@ -919,7 +942,10 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     width: 1920,
     height: 1080,
     scenes: narrated.map((scene, index) => ({
-      ...(index === 0 ? { kind: "title", ...title.data } : forStoryboard(visuals[index - 1], videoFacts)),
+      // The title card asks the question the video answers, when the script has one.
+      ...(index === 0
+        ? { kind: "title", heading: title.data.heading, subheading: script.question || title.data.subheading }
+        : forStoryboard(visuals[index - 1], videoFacts)),
       id: scene.id,
       narration: scene.narration,
       factIds: scene.factIds,

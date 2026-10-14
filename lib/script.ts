@@ -8,6 +8,7 @@ import {
   VideoRequestSchema,
   countWords,
 } from "./pipeline.ts";
+import { numbersIn } from "./numbers.ts";
 import type { Script, Usage } from "./pipeline.ts";
 import { writeScriptPrompt } from "./prompts/write-script.ts";
 
@@ -36,6 +37,7 @@ export function scriptTargets(lengthSec: number) {
 function scriptSchema(targets: ReturnType<typeof scriptTargets>): z.ZodType<Script> {
   return z.object({
     title: z.string(),
+    question: z.string(),
     scenes: z
       .array(z.object({ id: z.string(), sentences: z.array(ScriptSentenceSchema).min(1).max(3) }))
       .min(targets.minScenes)
@@ -51,6 +53,15 @@ function scriptProblems(script: Script, factIds: Set<string>, targets: ReturnTyp
   }
   const sentences = script.scenes.flatMap((scene) => scene.sentences);
   const text = sentences.map((sentence) => sentence.text).join(" ");
+  // The question frames the video on its title card, so it may not bring in numbers the narration does not have.
+  const question = script.question?.trim() ?? "";
+  if (!question.endsWith("?") || countWords(question) < 3 || countWords(question) > 12) {
+    problems.push(`The question must be one question of 3 to 10 words that ends with "?", not "${question}".`);
+  }
+  const narrationNumbers = new Set(numbersIn(text));
+  if (numbersIn(question).some((number) => !narrationNumbers.has(number))) {
+    problems.push("The question has a number the narration does not have.");
+  }
   if (text.length < targets.minChars || text.length > targets.maxChars) {
     const wordsNow = countWords(text);
     const change = Math.max(5, Math.round(Math.abs(wordsNow - targets.words) / 5) * 5);
@@ -104,5 +115,5 @@ export async function writeScript({ request, facts }: z.infer<typeof ScriptInput
   });
   // Our own scene IDs, so the fact-check can name sentences like "scene-2.1".
   const scenes = data.scenes.map((scene, index) => ({ ...scene, id: `scene-${index + 1}` }));
-  return { script: { title: data.title, scenes }, usage };
+  return { script: { title: data.title, question: data.question?.trim(), scenes }, usage };
 }

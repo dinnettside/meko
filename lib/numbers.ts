@@ -95,3 +95,12 @@ export function timeKey(year: number, date?: string): number {
   const parsed = date ? parseDate(date) : null;
   return year * 10_000 + (parsed?.month ?? 0) * 100 + (parsed?.day ?? 0);
 }
+
+// The ranges a text states, like "25 to 50 million", "25-50" or "between 25 and 50", as [low, high] pairs.
+export function rangesIn(text: string): [number, number][] {
+  const plain = text.replace(/(\d),(?=\d{3})/g, "$1");
+  const pattern = /(?:between\s+)?(\d+(?:\.\d+)?)\s*(?:%|percent)?\s*(?:-|–|—|to|and)\s*(\d+(?:\.\d+)?)/gi;
+  return [...plain.matchAll(pattern)]
+    .map((match): [number, number] => [Number(match[1]), Number(match[2])])
+    .filter(([low, high]) => high > low && !(yearsIn(plain).includes(low) && yearsIn(plain).includes(high)));
+}

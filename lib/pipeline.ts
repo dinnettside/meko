@@ -28,6 +28,8 @@ export const ScriptSceneSchema = z.object({
 
 export const ScriptSchema = z.object({
   title: z.string(),
+  // The question the video answers. It is shown on the title card, and the last scene answers it.
+  question: z.string().optional(),
   scenes: z.array(ScriptSceneSchema),
 });
 

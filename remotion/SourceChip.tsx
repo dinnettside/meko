@@ -25,7 +25,7 @@ export function sceneSites(storyboard: Storyboard, facts: Pick<ResearchFact, "id
   );
 }
 
-// A small, calm note in the corner: where what the narration says comes from.
+// A small, calm note in the top right corner: where what the narration says comes from.
 export function SourceChip({ sites }: { sites: string[] }) {
   const appear = useEase(0.8, 0.6);
   if (sites.length === 0) return null;
@@ -34,7 +34,7 @@ export function SourceChip({ sites }: { sites: string[] }) {
       style={{
         position: "absolute",
         top: 48,
-        left: 56,
+        right: 56,
         padding: "10px 20px",
         backgroundColor: COLORS.captionBackground,
         fontFamily: FONTS.body,

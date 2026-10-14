@@ -6,6 +6,8 @@ import { COLORS, FONTS, MOTION } from "@/lib/theme";
 import type { TimedWord } from "@/lib/elevenlabs";
 import type { SceneVoice } from "@/lib/voice";
 import { Caption, estimateWords } from "./Caption";
+import { Credits } from "./Credits";
+import { YearMark } from "./YearMark";
 import { SourceChip } from "./SourceChip";
 import { CompareScene } from "./scenes/CompareScene";
 import { ListScene } from "./scenes/ListScene";
@@ -35,10 +37,19 @@ export function sceneStarts(storyboard: Storyboard): number[] {
   });
 }
 
+// The closing credits list every source, a little longer when there are many.
+export function creditsFrames(storyboard: Storyboard): number {
+  if (storyboard.sources.length === 0) return 0;
+  return Math.round(Math.min(9, Math.max(4.5, 2.5 + 0.7 * storyboard.sources.length)) * storyboard.fps);
+}
+
 export function storyboardFrames(storyboard: Storyboard): number {
   const last = storyboard.scenes.length - 1;
   if (last < 0) return 1;
-  return sceneStarts(storyboard)[last] + sceneFrames(storyboard.scenes[last], storyboard.fps);
+  const scenesEnd = sceneStarts(storyboard)[last] + sceneFrames(storyboard.scenes[last], storyboard.fps);
+  const credits = creditsFrames(storyboard);
+  // The credits dissolve in over the end of the last scene, like one scene into the next.
+  return credits > 0 ? scenesEnd - overlapFrames(storyboard.fps) + credits : scenesEnd;
 }
 
 const NO_VOICE: Record<string, SceneVoice> = {};
@@ -56,6 +67,7 @@ export function StoryboardVideo({
   sites?: Record<string, string[]>;
 }) {
   const overlap = overlapFrames(storyboard.fps);
+  const credits = creditsFrames(storyboard);
   // The opening globe turns to the countries of the first map in the video.
   const firstMap = storyboard.scenes.find((scene) => scene.kind === "map");
   const region = firstMap?.kind === "map" ? firstMap.highlights.map((highlight) => highlight.country) : [];
@@ -70,12 +82,15 @@ export function StoryboardVideo({
       <Series>
         {storyboard.scenes.map((scene, index) => {
           const frames = sceneFrames(scene, storyboard.fps);
-          const isLast = index === storyboard.scenes.length - 1;
+          // Without credits, the last scene fades out to the dark ground itself.
+          const fadeOut = index === storyboard.scenes.length - 1 && credits === 0;
           const words = wordsByScene[index];
           return (
             <Series.Sequence key={scene.id} durationInFrames={frames} offset={index === 0 ? 0 : -overlap}>
-              <Fade frames={frames} fade={overlap} fadeOut={isLast}>
+              <Fade frames={frames} fade={overlap} fadeOut={fadeOut}>
                 <SceneView scene={scene} previous={storyboard.scenes[index - 1]} words={words} storyboard={storyboard} region={region} />
+                {/* A timeline shows its own years, and the title card is kept clear. */}
+                {scene.kind !== "timeline" && scene.kind !== "title" ? <YearMark narration={scene.narration} /> : null}
                 {/* The title has no claims to source, and a quote names its own source. */}
                 {scene.kind !== "title" && scene.kind !== "quote" ? <SourceChip sites={sites[scene.id] ?? []} /> : null}
                 <Caption words={words} />
@@ -84,12 +99,19 @@ export function StoryboardVideo({
             </Series.Sequence>
           );
         })}
+        {credits > 0 ? (
+          <Series.Sequence durationInFrames={credits} offset={-overlap}>
+            <Fade frames={credits} fade={overlap} fadeOut>
+              <Credits sources={storyboard.sources} />
+            </Fade>
+          </Series.Sequence>
+        ) : null}
       </Series>
     </AbsoluteFill>
   );
 }
 
-// A scene fades in over the one before it. Only the last scene fades out, to the dark ground.
+// A scene fades in over the one before it. Only the end of the video fades out, to the dark ground.
 function Fade({ frames, fade, fadeOut, children }: { frames: number; fade: number; fadeOut: boolean; children: ReactNode }) {
   const frame = useCurrentFrame();
   const length = Math.max(1, Math.min(fade, frames / 3));
@@ -126,7 +148,7 @@ function SceneView({
     case "timeline":
       return <TimelineScene events={scene.events} focusIndex={scene.focusIndex} {...timing} />;
     case "stat":
-      return <StatScene value={scene.value} unit={scene.unit} label={scene.label} total={scene.total} {...timing} />;
+      return <StatScene value={scene.value} valueMax={scene.valueMax} unit={scene.unit} label={scene.label} total={scene.total} {...timing} />;
     case "compare":
       return <CompareScene title={scene.title} unit={scene.unit} bars={scene.bars} {...timing} />;
     case "quote":

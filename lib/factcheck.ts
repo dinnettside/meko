@@ -166,7 +166,7 @@ export async function factCheck({ script, facts }: z.infer<typeof FactCheckInput
   if (scenes.length === 0) throw new Error("No sentence in the script could be backed by the sources.");
   const count = (status: SentenceCheck["status"]) => report.filter((check) => check.status === status).length;
   return {
-    script: { title: script.title, scenes },
+    script: { title: script.title, question: script.question, scenes },
     report: { checks: report, supported: count("supported"), revised: count("revised"), removed: count("removed") },
     usage,
   };

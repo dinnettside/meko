@@ -2,13 +2,14 @@ import { geoBounds, geoCentroid, geoMercator, geoPath } from "d3-geo";
 import type { GeoProjection } from "d3-geo";
 import { COUNTRIES } from "@/lib/countries";
 import type { Scene } from "@/lib/storyboard";
-import { countries, countryFeature, mainland, mapIdOf } from "@/lib/world";
+import { countries, countryFeature, homeland, mainland, mapIdOf } from "@/lib/world";
 
 type Box = [[number, number], [number, number]];
 
 export type MapLayout = {
   projection: GeoProjection;
   paths: { code: string | null; d: string }[]; // every country, with its ISO code when it has one
+  homePathOf: (code: string) => string; // a country without its overseas territories, for coloring it
   pointOf: (code: string) => [number, number] | null; // the middle of a country's mainland, on screen
   project: (lon: number, lat: number) => [number, number] | null;
 };
@@ -65,6 +66,11 @@ export function layoutMap(frameCodes: string[], box: Box): MapLayout {
   return {
     projection,
     paths: countries.map((country) => ({ code: codeByMapId.get(mapIdOf(country)) ?? null, d: path(country) ?? "" })),
+    homePathOf: (code) => {
+      const country = countryFeature(code);
+      const shape = country ? homeland(country) : null;
+      return shape ? (path(shape) ?? "") : "";
+    },
     pointOf: (code) => {
       const country = countryFeature(code);
       const shape = country ? mainland(country) : null;

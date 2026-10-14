@@ -147,6 +147,10 @@ export function MapScene({
     () => (previous ? cameraFrom(fitProjection(mapCodes(previous), BOX), plan.layout.projection) : null),
     [previous, plan],
   );
+  const homePaths = useMemo(() => {
+    const codes = new Set([...scene.highlights, ...(previous?.highlights ?? [])].map((highlight) => highlight.country));
+    return new Map([...codes].map((code) => [code, plan.layout.homePathOf(code)]));
+  }, [scene, previous, plan]);
 
   const camera = ease(frame, fps, 0, MOTION.cameraMove);
   const centerX = WIDTH / 2;
@@ -176,10 +180,14 @@ export function MapScene({
       <svg width={WIDTH} height={HEIGHT} viewBox={`0 0 ${WIDTH} ${HEIGHT}`}>
         <g transform={transform}>
           {plan.layout.paths.map((country, index) => (
+            <path key={index} d={country.d} fill={COLORS.land} stroke={COLORS.border} strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
+          ))}
+          {/* Colored countries on top, without their overseas territories. */}
+          {[...fills].map(([code, color]) => (
             <path
-              key={index}
-              d={country.d}
-              fill={(country.code && fills.get(country.code)) || COLORS.land}
+              key={code}
+              d={homePaths.get(code) ?? ""}
+              fill={color}
               stroke={COLORS.border}
               strokeWidth={1.2}
               vectorEffect="non-scaling-stroke"

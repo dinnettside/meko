@@ -8,9 +8,10 @@ import { revealAt } from "../spoken";
 const DOTS = 100; // a 10 x 10 grid, so each dot is one percent
 
 // One big number that counts up as the narration says it. With a total, a grid of dots shows how big a share
-// the number is.
+// the number is. A range, like 25 to 50 million, shows the certain part filled and the uncertain part as an outline.
 export function StatScene({
   value,
+  valueMax,
   unit,
   label,
   total,
@@ -18,6 +19,7 @@ export function StatScene({
   durationSec,
 }: {
   value: number;
+  valueMax?: number;
   unit?: string;
   label: string;
   total?: number;
@@ -34,6 +36,8 @@ export function StatScene({
   const whole = total ?? (/^(%|percent|per cent)$/i.test(unit ?? "") ? 100 : undefined);
   const share = whole && whole > 0 ? Math.min(1, value / whole) : null;
   const filled = share === null ? 0 : Math.round(share * DOTS);
+  // Dots between the low and the high end of a range are drawn as outlines.
+  const outlined = share === null || valueMax === undefined ? filled : Math.round(Math.min(1, valueMax / (whole ?? 1)) * DOTS);
 
   return (
     <AbsoluteFill
@@ -55,8 +59,9 @@ export function StatScene({
             flexWrap: "wrap",
           }}
         >
-          <span style={{ fontFamily: FONTS.display, fontSize: 260, fontWeight: 700, lineHeight: 1, color: COLORS.signal }}>
+          <span style={{ fontFamily: FONTS.display, fontSize: valueMax === undefined ? 260 : 200, fontWeight: 700, lineHeight: 1, color: COLORS.signal }}>
             {countUp(value, count)}
+            {valueMax !== undefined ? `–${countUp(valueMax, count)}` : null}
           </span>
           {unit ? (
             <span style={{ fontFamily: FONTS.display, fontSize: 110, fontWeight: 700, color: COLORS.paper, opacity: count }}>
@@ -77,6 +82,14 @@ export function StatScene({
         >
           {label}
         </div>
+        {/* A range without a whole: a bar, filled up to the low end and outlined up to the high end. */}
+        {valueMax !== undefined && share === null ? (
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 56 }}>
+            <div style={{ width: 900, height: 44, display: "flex", border: `4px solid ${COLORS.signal}`, opacity: count }}>
+              <div style={{ width: `${(value / valueMax) * 100 * count}%`, backgroundColor: COLORS.signal }} />
+            </div>
+          </div>
+        ) : null}
       </div>
       {share !== null ? (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 36px)", gap: 14 }}>
@@ -84,7 +97,19 @@ export function StatScene({
             // Dots fill one after another, starting as the number counts up.
             const fill = ease(frame, fps, start + 0.1 + (index / DOTS) * 1.4, 0.2);
             const color = index < filled ? interpolateColors(fill, [0, 1], [COLORS.land, COLORS.signal]) : COLORS.land;
-            return <div key={index} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: color }} />;
+            const uncertain = index >= filled && index < outlined;
+            return (
+              <div
+                key={index}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: uncertain ? COLORS.land : color,
+                  boxShadow: uncertain ? `inset 0 0 0 4px ${interpolateColors(fill, [0, 1], [COLORS.land, COLORS.signal])}` : "none",
+                }}
+              />
+            );
           })}
         </div>
       ) : null}

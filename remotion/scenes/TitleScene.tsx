@@ -71,15 +71,15 @@ function Globe({ center, region }: { center: [number, number]; region: string[] 
     <svg width={GLOBE} height={GLOBE} viewBox={`0 0 ${GLOBE} ${GLOBE}`} style={{ opacity: ease(frame, fps, 0, 0.8) }}>
       <circle cx={GLOBE / 2} cy={GLOBE / 2} r={GLOBE / 2 - 20} fill={COLORS.globe} />
       <path d={path(graticule) ?? ""} fill="none" stroke={COLORS.border} strokeWidth={1} opacity={0.5} />
-      {globeCountries.map(({ code, shape }, index) => (
-        <path
-          key={index}
-          d={path(shape) ?? ""}
-          fill={code && region.includes(code) ? highlight : COLORS.land}
-          stroke={COLORS.border}
-          strokeWidth={1}
-        />
+      {globeCountries.map(({ shape }, index) => (
+        <path key={index} d={path(shape) ?? ""} fill={COLORS.land} stroke={COLORS.border} strokeWidth={1} />
       ))}
+      {/* The region on top, without overseas territories. */}
+      {globeCountries
+        .filter(({ code }) => code && region.includes(code))
+        .map(({ home }, index) => (
+          <path key={index} d={path(home) ?? ""} fill={highlight} stroke={COLORS.border} strokeWidth={1} />
+        ))}
       <circle cx={GLOBE / 2} cy={GLOBE / 2} r={GLOBE / 2 - 20} fill="none" stroke={COLORS.border} strokeWidth={3} />
     </svg>
   );

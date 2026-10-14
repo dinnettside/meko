@@ -36,7 +36,7 @@ const EXCLUDED_DOMAINS = [
   "studymoose.com", "papersowl.com", "edubirdie.com", "ukessays.com", "bartleby.com", "studycorgi.com", "tutorchase.com",
   "vaia.com", "enotes.com", "kibin.com", "phdessay.com", "123helpme.com", "cram.com", "ipl.org", "answers.com",
   "quora.com", "reddit.com", "youtube.com", "tiktok.com", "pinterest.com", "facebook.com", "instagram.com", "x.com",
-  "twitter.com", "scribd.com",
+  "twitter.com", "scribd.com", "medium.com", "preceden.com",
 ];
 
 function headers(): Record<string, string> {
