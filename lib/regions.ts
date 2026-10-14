@@ -57,6 +57,13 @@ export function labelMismatch(label: string, country: string): string | null {
     // "Papua New Guinea" names Guinea, but only as part of its own name.
     if (code !== country && names(text, other) && !own.toLowerCase().includes(other)) return `it names ${entry.name}, not ${own}`;
   }
+  // Other names count too: "Rome" on Romania (ROU) means Italy.
+  for (const [code, aliases] of Object.entries(COUNTRY_ALIASES)) {
+    const alias = aliases.find((name) => names(text, name));
+    if (code !== country && alias && !(COUNTRY_ALIASES[country] ?? []).includes(alias)) {
+      return `"${alias}" is in ${COUNTRIES[code]?.name ?? code}, not ${own}`;
+    }
+  }
   return null;
 }
 
