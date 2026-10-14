@@ -5,6 +5,8 @@ import { StoryboardSchema } from "./storyboard.ts";
 import type { Storyboard } from "./storyboard.ts";
 
 const PAUSE_SEC = 0.6;
+// The opening holds a little longer if needed, so the title and the globe have time to come in.
+const MIN_OPENING_SEC = 4.5;
 // ElevenLabs limits how many requests run at once. The Creator plan allows 5.
 const CONCURRENCY = 4;
 
@@ -52,10 +54,10 @@ export async function recordVoice({ storyboard }: z.infer<typeof VoiceInputSchem
   return {
     storyboard: {
       ...storyboard,
-      scenes: scenes.map((scene, index) => ({
-        ...scene,
-        durationSec: Math.round((speeches[index].durationSec + PAUSE_SEC) * 10) / 10,
-      })),
+      scenes: scenes.map((scene, index) => {
+        const seconds = speeches[index].durationSec + PAUSE_SEC;
+        return { ...scene, durationSec: Math.round((index === 0 ? Math.max(MIN_OPENING_SEC, seconds) : seconds) * 10) / 10 };
+      }),
     },
     voice: Object.fromEntries(
       scenes.map((scene, index) => [

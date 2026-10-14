@@ -53,7 +53,7 @@ for each step. Each route must finish well within Vercel's function time limit.
    The model extracts short, atomic facts, each tied to one source. If the model reports gaps, run one more round (max 2 rounds).
    Output: `{ sources, facts }`.
 2. `POST /api/script`: writes the narration split into scenes. Every sentence references fact IDs.
-   Target about 2.3 spoken words per second of video (measured on the chosen voice; it was 2.5 before voice existed).
+   Length is checked in characters: about 15 spoken characters per second, measured on the chosen voice (words per second varied too much with word length).
 3. `POST /api/factcheck`: checks every sentence against the source text behind its facts.
    Status per sentence: `supported`, `revised` or `removed`. Output: revised scenes plus a report.
 4. `POST /api/direct`: turns the scenes into a `Storyboard` (contract below), validated with zod.

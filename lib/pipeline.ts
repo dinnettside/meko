@@ -66,8 +66,11 @@ export type Usage = {
   costUsd: number;
 };
 
-// How fast the narrator speaks. Measured on the George voice with Multilingual v2 (2.33 words per second).
-export const WORDS_PER_SECOND = 2.3;
+// How fast the narrator speaks, in characters per second including spaces. Measured on the George voice with
+// Multilingual v2: 14 to 16. Words per second varied more (2.1 to 2.6), because long words take longer.
+export const CHARS_PER_SECOND = 15;
+// Characters per word including the space, in our narrations: about 6.2 to 6.7.
+export const CHARS_PER_WORD = 6.5;
 
 export function countWords(text: string): number {
   return text.split(/\s+/).filter(Boolean).length;
