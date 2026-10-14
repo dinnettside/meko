@@ -63,6 +63,7 @@ You need Node.js 22.18 or newer and npm.
    | `TAVILY_API_KEY` | API key for Tavily web search. Without it, Meko uses Tavily's free keyless mode, which has a low hourly limit and is only meant for development |
    | `ELEVENLABS_API_KEY` | API key for ElevenLabs text-to-speech. Without it, videos play silently with captions |
    | `ELEVENLABS_VOICE_ID` | The ElevenLabs voice. Meko uses the default voice George, `JBFqnCBsd6RMkjVDRZzb` |
+   | `DEMO_CODE` | Only for a public deployment: making a video then needs this code, so strangers cannot spend your API credits. Leave it empty locally |
 
 3. Start the dev server and open http://localhost:3000:
 
@@ -84,6 +85,16 @@ You need Node.js 22.18 or newer and npm.
 | `npm run eval -- 2` | Makes videos for the first 2 of 10 test topics and writes `docs/eval.md`. Leave out the number to run all 10. Needs the app running and makes paid API calls |
 | `npm run make-example` | Remakes the example video in `public/examples`. Needs the app running and makes paid API calls |
 | `npm run check-models` | Tests the NVIDIA models on Token Factory and writes `docs/model-check.md`. Makes paid API calls, capped at 1 USD |
+
+## Deploy
+
+Meko runs on [Vercel](https://vercel.com) with no extra configuration:
+
+1. In Vercel, choose Add New, then Project, and import the GitHub repository.
+2. Add the environment variables from the table above, including `DEMO_CODE`. The example video plays for everyone; making a new video asks for the code.
+3. Deploy. Every push to `main` deploys again.
+
+Each API route sets its own `maxDuration`, at most 180 seconds, which is within Vercel's 300-second limit on every plan.
 
 ## Project structure
 

@@ -9,8 +9,8 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "check-models": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/check-models.ts",
-    "eval": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/eval.ts",
-    "make-example": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/make-example.ts"
+    "eval": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/eval.ts",
+    "make-example": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/make-example.ts"
   },
   "dependencies": {
     "@remotion/player": "4.0.535",

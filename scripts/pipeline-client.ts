@@ -29,7 +29,8 @@ async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<
   const started = Date.now();
   const response = await fetch(`${BASE_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    // The hosted demo needs its demo code; locally there is usually none.
+    headers: { "Content-Type": "application/json", ...(process.env.DEMO_CODE ? { "x-demo-code": process.env.DEMO_CODE } : {}) },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(timeoutMs),
   });

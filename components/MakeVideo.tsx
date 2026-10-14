@@ -95,12 +95,12 @@ async function loadExample(): Promise<Finished> {
 }
 
 // Turns network and server errors into a sentence people can act on.
-async function postJson<T>(url: string, body: unknown, timeoutMs: number): Promise<Timed<T>> {
+async function postJson<T>(url: string, body: unknown, timeoutMs: number, demoCode: string): Promise<Timed<T>> {
   let response: Response;
   try {
     response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(demoCode ? { "x-demo-code": demoCode } : {}) },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(timeoutMs),
     });
@@ -112,6 +112,7 @@ async function postJson<T>(url: string, body: unknown, timeoutMs: number): Promi
   }
   const json = await response.json().catch(() => null);
   const message: string = json?.error ?? "";
+  if (response.status === 401) throw new Error("That demo code is not right. Check it and try again.");
   if (response.status === 429 || /\b429\b/.test(message)) {
     throw new Error("Too many requests right now. Wait a minute, then try again.");
   }
@@ -121,8 +122,21 @@ async function postJson<T>(url: string, body: unknown, timeoutMs: number): Promi
   return json as Timed<T>;
 }
 
-export function MakeVideo() {
+const DEMO_CODE_KEY = "meko-demo-code";
+
+// `codeRequired` is true on the hosted demo, where making a video needs a demo code.
+export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
   const [topic, setTopic] = useState("");
+  // Remembered from the last video made in this browser. The page is prerendered without it, so the field
+  // fills in on the client; storage can be blocked, and then it starts empty.
+  const [demoCode, setDemoCode] = useState(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      return localStorage.getItem(DEMO_CODE_KEY) ?? "";
+    } catch {
+      return "";
+    }
+  });
   const [audience, setAudience] = useState(AUDIENCES[1]);
   const [lengthSec, setLengthSec] = useState(90);
   const [steps, setSteps] = useState(waitingSteps);
@@ -171,7 +185,7 @@ export function MakeVideo() {
     const timeoutMs = STEPS.find((candidate) => candidate.id === id)?.timeoutMs ?? 130_000;
     setStep(id, { status: "running", startedAt: Date.now() });
     try {
-      const result = await postJson<T>(url, body, timeoutMs);
+      const result = await postJson<T>(url, body, timeoutMs, demoCode.trim());
       setStep(id, { status: "done", ms: result.ms, detail: describe(result) });
       return result;
     } catch (error) {
@@ -265,6 +279,10 @@ export function MakeVideo() {
   function makeVideo(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (running) return;
+    // Remembered in this browser, so the code is only typed once. Storage can be blocked, and that is fine.
+    try {
+      if (codeRequired) localStorage.setItem(DEMO_CODE_KEY, demoCode.trim());
+    } catch {}
     setStarted(true);
     setFinished(null);
     setActiveSentence(null);
@@ -341,6 +359,20 @@ export function MakeVideo() {
               ))}
             </select>
           </label>
+          {codeRequired ? (
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-dim">Demo code</span>
+              <input
+                value={demoCode}
+                onChange={(event) => setDemoCode(event.target.value)}
+                required
+                autoComplete="off"
+                spellCheck={false}
+                suppressHydrationWarning
+                className="w-full rounded border border-line bg-ink px-3 py-2 text-paper sm:w-36"
+              />
+            </label>
+          ) : null}
           <button
             type="submit"
             disabled={running}
@@ -349,6 +381,9 @@ export function MakeVideo() {
             {running ? "Making video…" : "Make video"}
           </button>
         </form>
+        {codeRequired ? (
+          <p className="text-sm text-dim">Making a new video needs the demo code from the Meko submission. The example works without it.</p>
+        ) : null}
         <p className="flex flex-wrap items-center gap-2 text-sm text-dim">
           Try:
           {SUGGESTIONS.map((suggestion) => (

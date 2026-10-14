@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { demoCodeIsWrong } from "./demo-code.ts";
 
 const MAX_BODY_CHARS = 300_000;
 
@@ -8,6 +9,10 @@ export async function runStep<I, O extends object>(
   schema: z.ZodType<I>,
   step: (input: I) => Promise<O>,
 ): Promise<Response> {
+  // Checked before anything else, so a request without the code never reaches a paid API.
+  if (demoCodeIsWrong(request)) {
+    return Response.json({ error: "Making a video needs the right demo code." }, { status: 401 });
+  }
   const body = await request.text();
   if (body.length > MAX_BODY_CHARS) {
     return Response.json({ error: "The request is too large." }, { status: 413 });
