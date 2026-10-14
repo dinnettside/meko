@@ -5,106 +5,95 @@
   "lengthSec": 90,
   "language": "en"
  },
- "madeAt": "2026-10-13T20:48:36.639Z",
- "ms": 30910,
- "costUsd": 0.058227999999999995,
+ "madeAt": "2026-10-14T07:49:55.408Z",
+ "ms": 43719,
+ "costUsd": 0.11257999999999999,
  "storyboard": {
-  "title": "The Silk Road: Connecting East and West",
+  "title": "The Silk Road: Trade, Ideas, and Decline",
   "language": "en",
   "fps": 30,
   "width": 1920,
   "height": 1080,
   "scenes": [
    {
-    "kind": "title",
-    "heading": "The Silk Road: Connecting East and West",
-    "subheading": "A vast network stitches continents together",
     "id": "scene-1",
-    "narration": "For over a thousand years, a vast network of routes stitched continents together across Eurasia.",
+    "narration": "For over 1,500 years, a vast network linked East and West across 4,000 miles.",
     "factIds": [
-     "f1",
-     "f8"
+     "f25",
+     "f26"
     ],
-    "durationSec": 6.6
+    "durationSec": 7.1,
+    "kind": "title",
+    "heading": "The Silk Road",
+    "subheading": "Linking East and West"
    },
    {
+    "id": "scene-2",
+    "narration": "It began around 114 BCE when the Han dynasty expanded into Central Asia.",
+    "factIds": [
+     "f28"
+    ],
+    "durationSec": 6.6,
+    "kind": "steps",
+    "steps": [
+     "Han dynasty expanded",
+     "Zhang Qian missions opened routes"
+    ]
+   },
+   {
+    "id": "scene-3",
+    "narration": "The eastern starting point was Chang'an, now called Xi'an, China's ancient capital.",
+    "factIds": [
+     "f5"
+    ],
+    "durationSec": 7.1,
     "kind": "map",
     "frame": [
-     "CHN",
-     "KAZ",
-     "UZB",
-     "TKM",
-     "IRN",
-     "MNG"
+     "CHN"
     ],
     "highlights": [
      {
       "country": "CHN",
-      "label": "Han Dynasty China",
+      "label": "China",
       "tone": "primary"
-     },
-     {
-      "country": "UZB",
-      "label": "Sogdiana region",
-      "tone": "secondary"
-     },
-     {
-      "country": "KAZ",
-      "label": "Central Asia",
-      "tone": "secondary"
      }
     ],
-    "arrows": [
-     {
-      "from": "CHN",
-      "to": "UZB",
-      "label": "Zhang Qian's mission"
-     }
-    ],
+    "arrows": [],
     "markers": [
      {
-      "lon": 108.95,
-      "lat": 34.27,
-      "label": "Chang'an"
-     },
-     {
-      "lon": 66.97,
-      "lat": 39.65,
-      "label": "Samarkand"
+      "lon": 108.93,
+      "lat": 34.34,
+      "label": "Chang'an (Xi'an)"
      }
-    ],
-    "id": "scene-2",
-    "narration": "It began around 130 BC when China's Han Dynasty sent envoys westward seeking allies against the Xiongnu. Zhang Qian's diplomatic mission marked the true beginning of the Silk Road.",
-    "factIds": [
-     "f10",
-     "f34"
-    ],
-    "durationSec": 13.2
+    ]
    },
    {
+    "id": "scene-4",
+    "narration": "Traders moved exotic goods such as spices, textiles, and precious stones along the Silk Road. By the first century CE, Chinese silk was widely sought after in Rome.",
+    "factIds": [
+     "f21",
+     "f30"
+    ],
+    "durationSec": 11.7,
     "kind": "map",
     "frame": [
      "CHN",
-     "KAZ",
+     "ITA",
+     "SAU",
      "IRN",
-     "TUR",
-     "ITA"
+     "UZB",
+     "KAZ"
     ],
     "highlights": [
      {
       "country": "CHN",
-      "label": "China (East)",
+      "label": "China",
       "tone": "primary"
      },
      {
       "country": "ITA",
-      "label": "Italy (West)",
+      "label": "Rome",
       "tone": "primary"
-     },
-     {
-      "country": "KAZ",
-      "label": "Central Asia",
-      "tone": "secondary"
      },
      {
       "country": "IRN",
@@ -115,217 +104,147 @@
     "arrows": [
      {
       "from": "CHN",
-      "to": "KAZ",
-      "label": "Eastward trade"
-     },
-     {
-      "from": "KAZ",
-      "to": "IRN",
-      "label": ""
-     },
-     {
-      "from": "IRN",
       "to": "ITA",
-      "label": "6,400 km total"
+      "label": "Silk trade"
      }
     ],
     "markers": [
      {
-      "lon": 108.95,
-      "lat": 34.27,
-      "label": "Chang'an"
-     },
-     {
-      "lon": 66.97,
-      "lat": 39.65,
-      "label": "Samarkand"
+      "lon": 108.94,
+      "lat": 34.26,
+      "label": "Chang'an (Xi'an)"
      },
      {
       "lon": 12.5,
       "lat": 41.9,
       "label": "Rome"
      }
-    ],
-    "id": "scene-3",
-    "narration": "These land paths stretched over 6,400 kilometers, making it the longest land-based trade route in history.",
-    "factIds": [
-     "f2",
-     "f30"
-    ],
-    "durationSec": 8.2
+    ]
    },
    {
-    "kind": "text",
-    "lines": [
-     "Silk flowed west to Europe",
-     "Buddhism spread east from India",
-     "Ideas and goods exchanged"
-    ],
-    "id": "scene-4",
-    "narration": "Chinese silk traveled west to Europe, while Buddhism moved east from India to China and Central Asia.",
+    "id": "scene-5",
+    "narration": "The route spread Buddhism from India into Central Asia, China, and beyond. It also carried Islam, Christianity, and Zoroastrianism across continents.",
     "factIds": [
-     "f15",
-     "f16"
+     "f13",
+     "f14"
     ],
-    "durationSec": 7.2
-   },
-   {
+    "durationSec": 10.3,
     "kind": "map",
     "frame": [
+     "IND",
      "CHN",
      "KAZ",
-     "IRN",
+     "UZB",
      "TUR",
-     "SAU",
-     "EGY"
+     "IRN"
     ],
     "highlights": [
      {
+      "country": "IND",
+      "label": "India",
+      "tone": "primary"
+     },
+     {
       "country": "CHN",
       "label": "China",
-      "tone": "primary"
+      "tone": "secondary"
      },
      {
       "country": "KAZ",
       "label": "Central Asia",
-      "tone": "primary"
-     },
-     {
-      "country": "IRN",
-      "label": "Persia",
-      "tone": "secondary"
-     },
-     {
-      "country": "TUR",
-      "label": "Anatolia",
       "tone": "secondary"
      }
     ],
     "arrows": [
      {
-      "from": "CHN",
+      "from": "IND",
       "to": "KAZ",
-      "label": "East to West"
+      "label": "Buddhism"
      },
      {
       "from": "KAZ",
-      "to": "IRN",
-      "label": "Across steppes"
-     },
-     {
-      "from": "IRN",
-      "to": "TUR",
-      "label": "To Mediterranean"
+      "to": "CHN",
+      "label": "Buddhism"
      }
     ],
-    "markers": [
-     {
-      "lon": 108.95,
-      "lat": 34.27,
-      "label": "Chang'an"
-     },
-     {
-      "lon": 66.97,
-      "lat": 39.65,
-      "label": "Samarkand"
-     },
-     {
-      "lon": 44.36,
-      "lat": 33.31,
-      "label": "Baghdad"
-     }
-    ],
-    "id": "scene-5",
-    "narration": "Traders also carried major religions like Islam, Christianity, and Zoroastrianism across the steppes.",
-    "factIds": [
-     "f17"
-    ],
-    "durationSec": 7.7
+    "markers": []
    },
    {
-    "kind": "map",
-    "frame": [
-     "CHN",
-     "SAU",
-     "IRQ",
-     "SYR",
-     "TUR",
-     "ITA"
-    ],
-    "highlights": [
-     {
-      "country": "CHN",
-      "label": "China",
-      "tone": "primary"
-     },
-     {
-      "country": "SAU",
-      "label": "Arab world",
-      "tone": "secondary"
-     },
-     {
-      "country": "ITA",
-      "label": "Europe",
-      "tone": "secondary"
-     }
-    ],
-    "arrows": [
-     {
-      "from": "CHN",
-      "to": "SAU",
-      "label": "Papermaking spread"
-     },
-     {
-      "from": "SAU",
-      "to": "ITA",
-      "label": "To Europe"
-     }
-    ],
-    "markers": [
-     {
-      "lon": 108.95,
-      "lat": 34.27,
-      "label": "Chang'an"
-     },
-     {
-      "lon": 44.36,
-      "lat": 33.31,
-      "label": "Baghdad"
-     },
-     {
-      "lon": 12.34,
-      "lat": 45.44,
-      "label": "Venice"
-     }
-    ],
     "id": "scene-6",
-    "narration": "Papermaking technology spread from China through the Arab world and onward to Europe along these paths.",
+    "narration": "Chinese inventions like paper and gunpowder traveled west along these roads. Papermaking reached the Arab world during the 8th century and later Europe.",
     "factIds": [
-     "f18"
+     "f49",
+     "f50",
+     "f15",
+     "f16"
     ],
-    "durationSec": 7.1
+    "durationSec": 10.6,
+    "kind": "quote",
+    "text": "The Silk Road was vital in spreading papermaking technology from China to the Arab world, and eventually to Europe.",
+    "sourceId": "s3"
    },
    {
-    "kind": "text",
-    "lines": [
-     "Mongol Empire unified 75% of routes",
-     "Created rare peacetime for traders",
-     "Safe passage across Eurasia"
-    ],
     "id": "scene-7",
-    "narration": "Under the Mongol Empire, 75 percent of the routes were unified, creating a rare peacetime for safe passage.",
+    "narration": "The Mongol Empire once provided a stable and secure environment for traders. But it fragmented into warring khanates in the 14th century.",
     "factIds": [
-     "f7"
+     "f8",
+     "f9",
+     "f7",
+     "f10",
+     "f11"
     ],
-    "durationSec": 7.7
-   },
-   {
+    "durationSec": 9.6,
     "kind": "map",
     "frame": [
      "CHN",
      "MNG",
      "KAZ",
+     "UZB",
      "RUS",
+     "IRN"
+    ],
+    "highlights": [
+     {
+      "country": "MNG",
+      "label": "Mongol Empire",
+      "tone": "primary"
+     },
+     {
+      "country": "CHN",
+      "label": "China",
+      "tone": "secondary"
+     },
+     {
+      "country": "KAZ",
+      "label": "Khanates",
+      "tone": "muted"
+     }
+    ],
+    "arrows": [],
+    "markers": [
+     {
+      "lon": 66.9,
+      "lat": 39.6,
+      "label": "Samarkand"
+     }
+    ]
+   },
+   {
+    "id": "scene-8",
+    "narration": "The Black Death spread from Central Asia to Europe by the mid-14th century. It decimated labor forces and caused a marked decline in trade volume.",
+    "factIds": [
+     "f37",
+     "f38",
+     "f39",
+     "f40",
+     "f41"
+    ],
+    "durationSec": 10.3,
+    "kind": "map",
+    "frame": [
+     "CHN",
+     "KAZ",
+     "MNG",
      "TUR",
      "ITA"
     ],
@@ -333,78 +252,54 @@
      {
       "country": "CHN",
       "label": "China",
-      "tone": "muted"
-     },
-     {
-      "country": "MNG",
-      "label": "Mongolia",
-      "tone": "muted"
+      "tone": "primary"
      },
      {
       "country": "KAZ",
       "label": "Central Asia",
-      "tone": "secondary"
-     },
-     {
-      "country": "TUR",
-      "label": "Ottoman Empire",
-      "tone": "muted"
+      "tone": "primary"
      },
      {
       "country": "ITA",
       "label": "Europe",
-      "tone": "primary"
+      "tone": "secondary"
      }
     ],
     "arrows": [
      {
-      "from": "CHN",
-      "to": "KAZ",
-      "label": "Plague spreads"
-     },
-     {
       "from": "KAZ",
-      "to": "TUR",
-      "label": "Along trade routes"
-     },
-     {
-      "from": "TUR",
       "to": "ITA",
-      "label": "Reaches Europe"
+      "label": "Black Death spread"
      }
     ],
     "markers": [
      {
-      "lon": 71.4,
-      "lat": 51.2,
-      "label": "Astana"
+      "lon": 108.94,
+      "lat": 34.26,
+      "label": "Chang'an (Xi'an)"
      },
      {
-      "lon": 28.9,
-      "lat": 41,
+      "lon": 28.98,
+      "lat": 41.01,
       "label": "Constantinople"
-     },
-     {
-      "lon": 15.5,
-      "lat": 38.2,
-      "label": "Messina"
      }
-    ],
-    "id": "scene-8",
-    "narration": "The Black Death in the 14th century disrupted travel along the routes, killing an estimated 25 million people.",
-    "factIds": [
-     "f12"
-    ],
-    "durationSec": 7.4
+    ]
    },
    {
+    "id": "scene-9",
+    "narration": "Sea routes rose in the late medieval period and further disrupted the land network. The Ottoman Empire boycotted trade with the West in 1453, closing the road.",
+    "factIds": [
+     "f23",
+     "f53"
+    ],
+    "durationSec": 11.5,
     "kind": "map",
     "frame": [
      "TUR",
+     "CHN",
      "ITA",
-     "EGY",
-     "IND",
-     "CHN"
+     "ESP",
+     "PRT"
     ],
     "highlights": [
      {
@@ -413,26 +308,21 @@
       "tone": "primary"
      },
      {
-      "country": "ITA",
-      "label": "Italian Maritime States",
+      "country": "CHN",
+      "label": "China",
       "tone": "secondary"
      },
      {
-      "country": "EGY",
-      "label": "Mamluk Sultanate",
-      "tone": "muted"
+      "country": "ITA",
+      "label": "the West",
+      "tone": "secondary"
      }
     ],
     "arrows": [
      {
-      "from": "CHN",
+      "from": "TUR",
       "to": "ITA",
-      "label": "Maritime routes rise"
-     },
-     {
-      "from": "CHN",
-      "to": "TUR",
-      "label": "Land routes decline"
+      "label": "Trade closed"
      }
     ],
     "markers": [
@@ -440,51 +330,35 @@
       "lon": 28.9784,
       "lat": 41.0082,
       "label": "Constantinople"
-     },
-     {
-      "lon": 12.3155,
-      "lat": 45.4408,
-      "label": "Venice"
-     },
-     {
-      "lon": 113.2644,
-      "lat": 23.1291,
-      "label": "Canton"
      }
-    ],
-    "id": "scene-9",
-    "narration": "By the 15th century, rising maritime routes and heavy Ottoman taxes made the land network less attractive.",
-    "factIds": [
-     "f19",
-     "f20"
-    ],
-    "durationSec": 7.5
+    ]
    },
    {
+    "id": "scene-10",
+    "narration": "Its legacy remains the foundation of modern intercultural interactions and global trade.",
+    "factIds": [
+     "f24",
+     "f19"
+    ],
+    "durationSec": 6.1,
     "kind": "text",
     "lines": [
-     "The Silk Road linked East and West",
-     "Goods, ideas, and culture flowed",
-     "Maritime routes replaced it"
-    ],
-    "id": "scene-10",
-    "narration": "The Silk Road connected East and West, exchanging goods, ideas, and culture for centuries before fading away.",
-    "factIds": [
-     "f24"
-    ],
-    "durationSec": 7.5
+     "Foundation of modern global exchange",
+     "Early basis for today's trade",
+     "Interconnected world legacy"
+    ]
    }
   ],
   "sources": [
    {
     "id": "s1",
-    "title": "Silk Road",
-    "url": "https://en.wikipedia.org/wiki/Silk_Road"
+    "title": "Silk Road Travel Guide",
+    "url": "https://www.advantour.com/silkroad"
    },
    {
     "id": "s2",
-    "title": "The Silk Road \u2014 Google Arts & Culture",
-    "url": "https://artsandculture.google.com/story/the-silk-road/9AXhNncN4Aag-Q?hl=en"
+    "title": "How did the Mongols' decline affect Silk Road trade? | TutorChase",
+    "url": "https://www.tutorchase.com/answers/ib/history/how-did-the-mongols--decline-affect-silk-road-trade"
    },
    {
     "id": "s3",
@@ -493,18 +367,23 @@
    },
    {
     "id": "s4",
-    "title": "Why did the Silk Road's importance decline in the 15th century? | TutorChase",
-    "url": "https://www.tutorchase.com/answers/ib/history/why-did-the-silk-road-s-importance-decline-in-the-15th-century"
+    "title": "The Impact of the Silk Road on Modern Global Trade",
+    "url": "https://samples.essaypro.com/the-impact-of-the-silk-road-on-modern-global-trade"
    },
    {
     "id": "s5",
-    "title": "Silk Road Travel Guide",
-    "url": "https://www.advantour.com/silkroad"
+    "title": "Silk Road",
+    "url": "https://en.wikipedia.org/wiki/Silk_Road"
    },
    {
-    "id": "s6",
-    "title": "Niels Groeneveld on X: \"Riding the Heavenly Horses: The Influence of Ferghana\u2019s Prized Steeds on Chinese Warfare\n\nThe majestic Ferghana horses, often referred to as the \"heavenly horses\" by the ancient Chinese, played a pivotal role in shaping Chinese military strategies and facilitating the establ\u2026 / X",
-    "url": "https://x.com/nigroeneveld/status/1804123306989093204"
+    "id": "s7",
+    "title": "How the Plague (Black Death) Disrupted Silk Road Trade and Economies",
+    "url": "https://silk-road.com/2025/08/04/how-the-plague-black-death-disrupted-silk-road-trade-and-economies"
+   },
+   {
+    "id": "s9",
+    "title": "[FREE] According to \"History: The Silk Road,\" where did paper and gunpowder develop? How did the Silk Road play a - brainly.com",
+    "url": "https://brainly.com/question/29689339"
    }
   ]
  },
@@ -521,892 +400,997 @@
     "end": 0.499
    },
    {
-    "text": "a",
-    "start": 0.557,
-    "end": 0.58
-   },
-   {
-    "text": "thousand",
-    "start": 0.65,
-    "end": 1.022
+    "text": "1,500",
+    "start": 0.569,
+    "end": 1.567
    },
    {
     "text": "years,",
-    "start": 1.103,
-    "end": 1.486
+    "start": 1.637,
+    "end": 2.078
    },
    {
     "text": "a",
-    "start": 1.521,
-    "end": 1.579
+    "start": 2.252,
+    "end": 2.322
    },
    {
     "text": "vast",
-    "start": 1.672,
-    "end": 1.95
+    "start": 2.415,
+    "end": 2.705
    },
    {
     "text": "network",
-    "start": 2.02,
-    "end": 2.392
+    "start": 2.775,
+    "end": 3.193
    },
    {
-    "text": "of",
-    "start": 2.45,
-    "end": 2.508
+    "text": "linked",
+    "start": 3.274,
+    "end": 3.506
    },
    {
-    "text": "routes",
-    "start": 2.577,
-    "end": 2.879
+    "text": "East",
+    "start": 3.587,
+    "end": 3.831
    },
    {
-    "text": "stitched",
-    "start": 2.995,
-    "end": 3.355
+    "text": "and",
+    "start": 3.878,
+    "end": 3.959
    },
    {
-    "text": "continents",
-    "start": 3.413,
-    "end": 3.924
-   },
-   {
-    "text": "together",
-    "start": 3.959,
-    "end": 4.331
+    "text": "West",
+    "start": 4.029,
+    "end": 4.319
    },
    {
     "text": "across",
-    "start": 4.389,
-    "end": 4.69
+    "start": 4.377,
+    "end": 4.656
    },
    {
-    "text": "Eurasia.",
-    "start": 4.748,
-    "end": 6.037
+    "text": "4,000",
+    "start": 4.714,
+    "end": 5.306
+   },
+   {
+    "text": "miles.",
+    "start": 5.364,
+    "end": 6.455
    }
   ],
   "scene-2": [
    {
     "text": "It",
     "start": 0,
-    "end": 0.174
+    "end": 0.151
    },
    {
     "text": "began",
-    "start": 0.221,
-    "end": 0.534
+    "start": 0.197,
+    "end": 0.476
    },
    {
     "text": "around",
-    "start": 0.592,
-    "end": 0.848
+    "start": 0.522,
+    "end": 0.766
    },
    {
-    "text": "130",
-    "start": 0.94,
-    "end": 1.544
+    "text": "114",
+    "start": 0.848,
+    "end": 1.823
    },
    {
-    "text": "BC",
-    "start": 1.625,
-    "end": 1.892
+    "text": "BCE",
+    "start": 1.881,
+    "end": 2.519
    },
    {
     "text": "when",
-    "start": 2.403,
-    "end": 2.601
+    "start": 2.763,
+    "end": 2.937
    },
    {
-    "text": "China's",
-    "start": 2.647,
-    "end": 3.042
+    "text": "the",
+    "start": 2.961,
+    "end": 3.03
    },
    {
     "text": "Han",
-    "start": 3.1,
-    "end": 3.297
+    "start": 3.088,
+    "end": 3.274
    },
    {
-    "text": "Dynasty",
-    "start": 3.379,
-    "end": 3.889
+    "text": "dynasty",
+    "start": 3.344,
+    "end": 3.727
    },
    {
-    "text": "sent",
-    "start": 4.063,
-    "end": 4.331
+    "text": "expanded",
+    "start": 3.785,
+    "end": 4.296
    },
    {
-    "text": "envoys",
-    "start": 4.389,
-    "end": 4.818
+    "text": "into",
+    "start": 4.342,
+    "end": 4.505
    },
    {
-    "text": "westward",
-    "start": 4.876,
-    "end": 5.352
+    "text": "Central",
+    "start": 4.563,
+    "end": 4.923
    },
    {
-    "text": "seeking",
-    "start": 5.526,
-    "end": 5.898
-   },
-   {
-    "text": "allies",
-    "start": 5.968,
-    "end": 6.327
-   },
-   {
-    "text": "against",
-    "start": 6.374,
-    "end": 6.664
-   },
-   {
-    "text": "the",
-    "start": 6.699,
-    "end": 6.769
-   },
-   {
-    "text": "Xiongnu.",
-    "start": 6.838,
-    "end": 7.581
-   },
-   {
-    "text": "Zhang",
-    "start": 8.092,
-    "end": 8.324
-   },
-   {
-    "text": "Qian's",
-    "start": 8.406,
-    "end": 8.742
-   },
-   {
-    "text": "diplomatic",
-    "start": 8.789,
-    "end": 9.346
-   },
-   {
-    "text": "mission",
-    "start": 9.416,
-    "end": 9.752
-   },
-   {
-    "text": "marked",
-    "start": 9.996,
-    "end": 10.321
-   },
-   {
-    "text": "the",
-    "start": 10.356,
-    "end": 10.426
-   },
-   {
-    "text": "true",
-    "start": 10.472,
-    "end": 10.693
-   },
-   {
-    "text": "beginning",
-    "start": 10.728,
-    "end": 11.064
-   },
-   {
-    "text": "of",
-    "start": 11.111,
-    "end": 11.157
-   },
-   {
-    "text": "the",
-    "start": 11.204,
-    "end": 11.273
-   },
-   {
-    "text": "Silk",
-    "start": 11.32,
-    "end": 11.564
-   },
-   {
-    "text": "Road.",
-    "start": 11.633,
-    "end": 12.632
+    "text": "Asia.",
+    "start": 4.992,
+    "end": 5.991
    }
   ],
   "scene-3": [
    {
-    "text": "These",
+    "text": "The",
     "start": 0,
-    "end": 0.337
+    "end": 0.163
    },
    {
-    "text": "land",
-    "start": 0.383,
-    "end": 0.65
+    "text": "eastern",
+    "start": 0.244,
+    "end": 0.615
    },
    {
-    "text": "paths",
-    "start": 0.731,
-    "end": 1.115
+    "text": "starting",
+    "start": 0.662,
+    "end": 1.068
    },
    {
-    "text": "stretched",
-    "start": 1.161,
-    "end": 1.567
+    "text": "point",
+    "start": 1.126,
+    "end": 1.347
    },
    {
-    "text": "over",
-    "start": 1.614,
-    "end": 1.8
+    "text": "was",
+    "start": 1.405,
+    "end": 1.533
    },
    {
-    "text": "6,400",
-    "start": 1.881,
-    "end": 3.007
+    "text": "Chang'an,",
+    "start": 1.591,
+    "end": 2.368
    },
    {
-    "text": "kilometers,",
-    "start": 3.065,
-    "end": 3.785
+    "text": "now",
+    "start": 2.694,
+    "end": 2.879
    },
    {
-    "text": "making",
-    "start": 4.029,
-    "end": 4.319
+    "text": "called",
+    "start": 2.972,
+    "end": 3.251
    },
    {
-    "text": "it",
-    "start": 4.365,
-    "end": 4.423
+    "text": "Xi'an,",
+    "start": 3.309,
+    "end": 3.971
    },
    {
-    "text": "the",
-    "start": 4.47,
-    "end": 4.54
+    "text": "China's",
+    "start": 4.412,
+    "end": 4.841
    },
    {
-    "text": "longest",
-    "start": 4.598,
-    "end": 4.992
+    "text": "ancient",
+    "start": 4.899,
+    "end": 5.259
    },
    {
-    "text": "land-based",
-    "start": 5.062,
-    "end": 5.666
-   },
-   {
-    "text": "trade",
-    "start": 5.689,
-    "end": 5.979
-   },
-   {
-    "text": "route",
-    "start": 6.014,
-    "end": 6.223
-   },
-   {
-    "text": "in",
-    "start": 6.258,
-    "end": 6.327
-   },
-   {
-    "text": "history.",
-    "start": 6.397,
-    "end": 7.57
+    "text": "capital.",
+    "start": 5.329,
+    "end": 6.502
    }
   ],
   "scene-4": [
    {
-    "text": "Chinese",
+    "text": "Traders",
     "start": 0,
-    "end": 0.534
-   },
-   {
-    "text": "silk",
-    "start": 0.569,
-    "end": 0.836
-   },
-   {
-    "text": "traveled",
-    "start": 0.894,
-    "end": 1.265
-   },
-   {
-    "text": "west",
-    "start": 1.312,
-    "end": 1.556
-   },
-   {
-    "text": "to",
-    "start": 1.591,
-    "end": 1.66
-   },
-   {
-    "text": "Europe,",
-    "start": 1.741,
-    "end": 2.194
-   },
-   {
-    "text": "while",
-    "start": 2.345,
-    "end": 2.577
-   },
-   {
-    "text": "Buddhism",
-    "start": 2.624,
-    "end": 3.042
+    "end": 0.488
    },
    {
     "text": "moved",
-    "start": 3.111,
-    "end": 3.344
+    "start": 0.557,
+    "end": 0.789
    },
    {
-    "text": "east",
-    "start": 3.413,
-    "end": 3.622
+    "text": "exotic",
+    "start": 0.836,
+    "end": 1.312
    },
    {
-    "text": "from",
-    "start": 3.657,
-    "end": 3.796
+    "text": "goods",
+    "start": 1.37,
+    "end": 1.695
    },
    {
-    "text": "India",
-    "start": 3.866,
-    "end": 4.18
+    "text": "such",
+    "start": 1.811,
+    "end": 2.02
    },
    {
-    "text": "to",
-    "start": 4.238,
-    "end": 4.307
+    "text": "as",
+    "start": 2.067,
+    "end": 2.136
    },
    {
-    "text": "China",
-    "start": 4.377,
-    "end": 4.725
+    "text": "spices,",
+    "start": 2.171,
+    "end": 2.81
+   },
+   {
+    "text": "textiles,",
+    "start": 2.844,
+    "end": 3.553
    },
    {
     "text": "and",
-    "start": 4.783,
-    "end": 4.911
+    "start": 3.576,
+    "end": 3.669
    },
    {
-    "text": "Central",
-    "start": 4.969,
-    "end": 5.317
+    "text": "precious",
+    "start": 3.727,
+    "end": 4.098
    },
    {
-    "text": "Asia.",
-    "start": 5.387,
-    "end": 6.641
+    "text": "stones",
+    "start": 4.133,
+    "end": 4.574
+   },
+   {
+    "text": "along",
+    "start": 4.632,
+    "end": 4.865
+   },
+   {
+    "text": "the",
+    "start": 4.911,
+    "end": 4.981
+   },
+   {
+    "text": "Silk",
+    "start": 5.027,
+    "end": 5.271
+   },
+   {
+    "text": "Road.",
+    "start": 5.341,
+    "end": 5.863
+   },
+   {
+    "text": "By",
+    "start": 6.304,
+    "end": 6.432
+   },
+   {
+    "text": "the",
+    "start": 6.478,
+    "end": 6.548
+   },
+   {
+    "text": "first",
+    "start": 6.606,
+    "end": 6.861
+   },
+   {
+    "text": "century",
+    "start": 6.92,
+    "end": 7.303
+   },
+   {
+    "text": "CE,",
+    "start": 7.361,
+    "end": 7.964
+   },
+   {
+    "text": "Chinese",
+    "start": 8.139,
+    "end": 8.568
+   },
+   {
+    "text": "silk",
+    "start": 8.603,
+    "end": 8.847
+   },
+   {
+    "text": "was",
+    "start": 8.893,
+    "end": 8.986
+   },
+   {
+    "text": "widely",
+    "start": 9.056,
+    "end": 9.427
+   },
+   {
+    "text": "sought",
+    "start": 9.485,
+    "end": 9.741
+   },
+   {
+    "text": "after",
+    "start": 9.787,
+    "end": 10.019
+   },
+   {
+    "text": "in",
+    "start": 10.089,
+    "end": 10.159
+   },
+   {
+    "text": "Rome.",
+    "start": 10.228,
+    "end": 11.146
    }
   ],
   "scene-5": [
    {
-    "text": "Traders",
+    "text": "The",
     "start": 0,
-    "end": 0.453
+    "end": 0.128
    },
    {
-    "text": "also",
-    "start": 0.511,
-    "end": 0.836
+    "text": "route",
+    "start": 0.197,
+    "end": 0.406
    },
    {
-    "text": "carried",
-    "start": 0.917,
-    "end": 1.231
+    "text": "spread",
+    "start": 0.441,
+    "end": 0.708
    },
    {
-    "text": "major",
-    "start": 1.289,
-    "end": 1.579
+    "text": "Buddhism",
+    "start": 0.766,
+    "end": 1.161
    },
    {
-    "text": "religions",
-    "start": 1.625,
-    "end": 2.136
+    "text": "from",
+    "start": 1.219,
+    "end": 1.358
    },
    {
-    "text": "like",
-    "start": 2.345,
-    "end": 2.566
+    "text": "India",
+    "start": 1.44,
+    "end": 1.776
    },
    {
-    "text": "Islam,",
-    "start": 2.601,
-    "end": 3.17
+    "text": "into",
+    "start": 1.834,
+    "end": 2.02
    },
    {
-    "text": "Christianity,",
-    "start": 3.228,
-    "end": 4.087
+    "text": "Central",
+    "start": 2.09,
+    "end": 2.438
+   },
+   {
+    "text": "Asia,",
+    "start": 2.519,
+    "end": 2.949
+   },
+   {
+    "text": "China,",
+    "start": 3.007,
+    "end": 3.437
    },
    {
     "text": "and",
-    "start": 4.11,
-    "end": 4.238
+    "start": 3.46,
+    "end": 3.576
+   },
+   {
+    "text": "beyond.",
+    "start": 3.634,
+    "end": 4.214
+   },
+   {
+    "text": "It",
+    "start": 4.656,
+    "end": 4.783
+   },
+   {
+    "text": "also",
+    "start": 4.818,
+    "end": 5.05
+   },
+   {
+    "text": "carried",
+    "start": 5.12,
+    "end": 5.399
+   },
+   {
+    "text": "Islam,",
+    "start": 5.457,
+    "end": 5.991
+   },
+   {
+    "text": "Christianity,",
+    "start": 6.026,
+    "end": 6.815
+   },
+   {
+    "text": "and",
+    "start": 6.838,
+    "end": 6.954
    },
    {
     "text": "Zoroastrianism",
-    "start": 4.296,
-    "end": 5.248
+    "start": 7.012,
+    "end": 7.964
    },
    {
     "text": "across",
-    "start": 5.364,
-    "end": 5.724
+    "start": 8.081,
+    "end": 8.406
    },
    {
-    "text": "the",
-    "start": 5.759,
-    "end": 5.828
-   },
-   {
-    "text": "steppes.",
-    "start": 5.875,
-    "end": 7.059
+    "text": "continents.",
+    "start": 8.464,
+    "end": 9.706
    }
   ],
   "scene-6": [
    {
-    "text": "Papermaking",
+    "text": "Chinese",
     "start": 0,
-    "end": 0.697
+    "end": 0.488
    },
    {
-    "text": "technology",
-    "start": 0.743,
-    "end": 1.358
+    "text": "inventions",
+    "start": 0.522,
+    "end": 1.068
    },
    {
-    "text": "spread",
-    "start": 1.474,
-    "end": 1.788
+    "text": "like",
+    "start": 1.126,
+    "end": 1.312
    },
    {
-    "text": "from",
-    "start": 1.823,
-    "end": 1.95
-   },
-   {
-    "text": "China",
-    "start": 2.02,
-    "end": 2.392
-   },
-   {
-    "text": "through",
-    "start": 2.438,
-    "end": 2.682
-   },
-   {
-    "text": "the",
-    "start": 2.705,
-    "end": 2.775
-   },
-   {
-    "text": "Arab",
-    "start": 2.844,
-    "end": 3.088
-   },
-   {
-    "text": "world",
-    "start": 3.158,
-    "end": 3.495
+    "text": "paper",
+    "start": 1.358,
+    "end": 1.683
    },
    {
     "text": "and",
-    "start": 3.622,
-    "end": 3.831
+    "start": 1.741,
+    "end": 1.823
    },
    {
-    "text": "onward",
-    "start": 3.901,
-    "end": 4.191
+    "text": "gunpowder",
+    "start": 1.892,
+    "end": 2.485
    },
    {
-    "text": "to",
-    "start": 4.226,
-    "end": 4.284
+    "text": "traveled",
+    "start": 2.728,
+    "end": 3.146
    },
    {
-    "text": "Europe",
-    "start": 4.377,
-    "end": 4.737
+    "text": "west",
+    "start": 3.204,
+    "end": 3.506
    },
    {
     "text": "along",
-    "start": 4.783,
-    "end": 5.027
+    "start": 3.564,
+    "end": 3.785
    },
    {
     "text": "these",
-    "start": 5.085,
-    "end": 5.271
+    "start": 3.831,
+    "end": 4.017
    },
    {
-    "text": "paths.",
-    "start": 5.317,
-    "end": 6.455
+    "text": "roads.",
+    "start": 4.063,
+    "end": 4.632
+   },
+   {
+    "text": "Papermaking",
+    "start": 5.074,
+    "end": 5.724
+   },
+   {
+    "text": "reached",
+    "start": 5.793,
+    "end": 6.072
+   },
+   {
+    "text": "the",
+    "start": 6.107,
+    "end": 6.188
+   },
+   {
+    "text": "Arab",
+    "start": 6.269,
+    "end": 6.56
+   },
+   {
+    "text": "world",
+    "start": 6.629,
+    "end": 6.966
+   },
+   {
+    "text": "during",
+    "start": 7.117,
+    "end": 7.396
+   },
+   {
+    "text": "the",
+    "start": 7.43,
+    "end": 7.5
+   },
+   {
+    "text": "8th",
+    "start": 7.581,
+    "end": 7.779
+   },
+   {
+    "text": "century",
+    "start": 7.825,
+    "end": 8.231
+   },
+   {
+    "text": "and",
+    "start": 8.301,
+    "end": 8.417
+   },
+   {
+    "text": "later",
+    "start": 8.487,
+    "end": 8.754
+   },
+   {
+    "text": "Europe.",
+    "start": 8.824,
+    "end": 10.031
    }
   ],
   "scene-7": [
-   {
-    "text": "Under",
-    "start": 0,
-    "end": 0.279
-   },
-   {
-    "text": "the",
-    "start": 0.325,
-    "end": 0.395
-   },
-   {
-    "text": "Mongol",
-    "start": 0.43,
-    "end": 0.72
-   },
-   {
-    "text": "Empire,",
-    "start": 0.789,
-    "end": 1.335
-   },
-   {
-    "text": "75",
-    "start": 1.486,
-    "end": 2.009
-   },
-   {
-    "text": "percent",
-    "start": 2.067,
-    "end": 2.426
-   },
-   {
-    "text": "of",
-    "start": 2.473,
-    "end": 2.519
-   },
-   {
-    "text": "the",
-    "start": 2.566,
-    "end": 2.635
-   },
-   {
-    "text": "routes",
-    "start": 2.682,
-    "end": 2.926
-   },
-   {
-    "text": "were",
-    "start": 2.961,
-    "end": 3.088
-   },
-   {
-    "text": "unified,",
-    "start": 3.146,
-    "end": 3.831
-   },
-   {
-    "text": "creating",
-    "start": 4.156,
-    "end": 4.598
-   },
-   {
-    "text": "a",
-    "start": 4.644,
-    "end": 4.667
-   },
-   {
-    "text": "rare",
-    "start": 4.748,
-    "end": 4.969
-   },
-   {
-    "text": "peacetime",
-    "start": 5.016,
-    "end": 5.55
-   },
-   {
-    "text": "for",
-    "start": 5.584,
-    "end": 5.689
-   },
-   {
-    "text": "safe",
-    "start": 5.747,
-    "end": 6.002
-   },
-   {
-    "text": "passage.",
-    "start": 6.049,
-    "end": 7.105
-   }
-  ],
-  "scene-8": [
    {
     "text": "The",
     "start": 0,
     "end": 0.139
    },
    {
-    "text": "Black",
-    "start": 0.186,
-    "end": 0.43
+    "text": "Mongol",
+    "start": 0.197,
+    "end": 0.511
    },
    {
-    "text": "Death",
-    "start": 0.488,
-    "end": 0.755
+    "text": "Empire",
+    "start": 0.58,
+    "end": 1.033
    },
    {
-    "text": "in",
-    "start": 0.813,
-    "end": 0.882
+    "text": "once",
+    "start": 1.091,
+    "end": 1.312
    },
    {
-    "text": "the",
-    "start": 0.917,
-    "end": 0.987
+    "text": "provided",
+    "start": 1.358,
+    "end": 1.8
    },
    {
-    "text": "14th",
-    "start": 1.033,
-    "end": 1.474
-   },
-   {
-    "text": "century",
-    "start": 1.509,
+    "text": "a",
+    "start": 1.846,
     "end": 1.881
    },
    {
-    "text": "disrupted",
+    "text": "stable",
     "start": 1.939,
-    "end": 2.473
+    "end": 2.345
    },
    {
-    "text": "travel",
-    "start": 2.519,
-    "end": 2.833
+    "text": "and",
+    "start": 2.38,
+    "end": 2.461
    },
    {
-    "text": "along",
-    "start": 2.891,
-    "end": 3.1
+    "text": "secure",
+    "start": 2.531,
+    "end": 2.949
+   },
+   {
+    "text": "environment",
+    "start": 2.995,
+    "end": 3.506
+   },
+   {
+    "text": "for",
+    "start": 3.553,
+    "end": 3.646
+   },
+   {
+    "text": "traders.",
+    "start": 3.692,
+    "end": 4.342
+   },
+   {
+    "text": "But",
+    "start": 4.783,
+    "end": 4.934
+   },
+   {
+    "text": "it",
+    "start": 4.969,
+    "end": 5.039
+   },
+   {
+    "text": "fragmented",
+    "start": 5.097,
+    "end": 5.677
+   },
+   {
+    "text": "into",
+    "start": 5.735,
+    "end": 5.921
+   },
+   {
+    "text": "warring",
+    "start": 6.002,
+    "end": 6.351
+   },
+   {
+    "text": "khanates",
+    "start": 6.42,
+    "end": 7.024
+   },
+   {
+    "text": "in",
+    "start": 7.094,
+    "end": 7.187
    },
    {
     "text": "the",
-    "start": 3.146,
-    "end": 3.216
+    "start": 7.221,
+    "end": 7.291
    },
    {
-    "text": "routes,",
-    "start": 3.262,
-    "end": 3.692
+    "text": "14th",
+    "start": 7.338,
+    "end": 7.779
    },
    {
-    "text": "killing",
-    "start": 3.901,
-    "end": 4.203
+    "text": "century.",
+    "start": 7.814,
+    "end": 8.963
+   }
+  ],
+  "scene-8": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.163
    },
    {
-    "text": "an",
-    "start": 4.249,
-    "end": 4.307
+    "text": "Black",
+    "start": 0.209,
+    "end": 0.441
    },
    {
-    "text": "estimated",
-    "start": 4.365,
-    "end": 4.865
+    "text": "Death",
+    "start": 0.511,
+    "end": 0.766
    },
    {
-    "text": "25",
-    "start": 4.923,
-    "end": 5.422
+    "text": "spread",
+    "start": 0.824,
+    "end": 1.138
    },
    {
-    "text": "million",
-    "start": 5.492,
+    "text": "from",
+    "start": 1.184,
+    "end": 1.312
+   },
+   {
+    "text": "Central",
+    "start": 1.382,
+    "end": 1.73
+   },
+   {
+    "text": "Asia",
+    "start": 1.8,
+    "end": 2.136
+   },
+   {
+    "text": "to",
+    "start": 2.194,
+    "end": 2.276
+   },
+   {
+    "text": "Europe",
+    "start": 2.368,
+    "end": 2.775
+   },
+   {
+    "text": "by",
+    "start": 2.891,
+    "end": 3.019
+   },
+   {
+    "text": "the",
+    "start": 3.065,
+    "end": 3.135
+   },
+   {
+    "text": "mid-14th",
+    "start": 3.181,
+    "end": 3.831
+   },
+   {
+    "text": "century.",
+    "start": 3.866,
+    "end": 4.516
+   },
+   {
+    "text": "It",
+    "start": 5.027,
+    "end": 5.178
+   },
+   {
+    "text": "decimated",
+    "start": 5.224,
     "end": 5.77
    },
    {
-    "text": "people.",
+    "text": "labor",
     "start": 5.828,
-    "end": 6.827
+    "end": 6.084
+   },
+   {
+    "text": "forces",
+    "start": 6.142,
+    "end": 6.548
+   },
+   {
+    "text": "and",
+    "start": 6.664,
+    "end": 6.838
+   },
+   {
+    "text": "caused",
+    "start": 6.896,
+    "end": 7.198
+   },
+   {
+    "text": "a",
+    "start": 7.245,
+    "end": 7.268
+   },
+   {
+    "text": "marked",
+    "start": 7.338,
+    "end": 7.616
+   },
+   {
+    "text": "decline",
+    "start": 7.639,
+    "end": 8.069
+   },
+   {
+    "text": "in",
+    "start": 8.104,
+    "end": 8.173
+   },
+   {
+    "text": "trade",
+    "start": 8.231,
+    "end": 8.522
+   },
+   {
+    "text": "volume.",
+    "start": 8.557,
+    "end": 9.706
    }
   ],
   "scene-9": [
    {
-    "text": "By",
+    "text": "Sea",
     "start": 0,
-    "end": 0.186
-   },
-   {
-    "text": "the",
-    "start": 0.232,
-    "end": 0.302
-   },
-   {
-    "text": "15th",
-    "start": 0.348,
-    "end": 0.755
-   },
-   {
-    "text": "century,",
-    "start": 0.789,
-    "end": 1.335
-   },
-   {
-    "text": "rising",
-    "start": 1.451,
-    "end": 1.823
-   },
-   {
-    "text": "maritime",
-    "start": 1.869,
-    "end": 2.368
+    "end": 0.29
    },
    {
     "text": "routes",
-    "start": 2.415,
-    "end": 2.694
+    "start": 0.348,
+    "end": 0.58
    },
    {
-    "text": "and",
-    "start": 2.74,
-    "end": 2.868
+    "text": "rose",
+    "start": 0.673,
+    "end": 1.033
    },
    {
-    "text": "heavy",
-    "start": 2.937,
-    "end": 3.158
-   },
-   {
-    "text": "Ottoman",
-    "start": 3.228,
-    "end": 3.576
-   },
-   {
-    "text": "taxes",
-    "start": 3.634,
-    "end": 4.133
-   },
-   {
-    "text": "made",
-    "start": 4.412,
-    "end": 4.644
+    "text": "in",
+    "start": 1.068,
+    "end": 1.138
    },
    {
     "text": "the",
-    "start": 4.667,
-    "end": 4.737
+    "start": 1.173,
+    "end": 1.242
+   },
+   {
+    "text": "late",
+    "start": 1.289,
+    "end": 1.486
+   },
+   {
+    "text": "medieval",
+    "start": 1.533,
+    "end": 1.939
+   },
+   {
+    "text": "period",
+    "start": 1.997,
+    "end": 2.368
+   },
+   {
+    "text": "and",
+    "start": 2.543,
+    "end": 2.694
+   },
+   {
+    "text": "further",
+    "start": 2.763,
+    "end": 3.065
+   },
+   {
+    "text": "disrupted",
+    "start": 3.111,
+    "end": 3.611
+   },
+   {
+    "text": "the",
+    "start": 3.657,
+    "end": 3.727
    },
    {
     "text": "land",
-    "start": 4.783,
-    "end": 4.969
+    "start": 3.773,
+    "end": 3.982
    },
    {
-    "text": "network",
-    "start": 5.039,
-    "end": 5.422
+    "text": "network.",
+    "start": 4.052,
+    "end": 4.69
    },
    {
-    "text": "less",
-    "start": 5.503,
-    "end": 5.7
+    "text": "The",
+    "start": 5.132,
+    "end": 5.259
    },
    {
-    "text": "attractive.",
-    "start": 5.735,
-    "end": 6.92
+    "text": "Ottoman",
+    "start": 5.329,
+    "end": 5.642
+   },
+   {
+    "text": "Empire",
+    "start": 5.7,
+    "end": 6.118
+   },
+   {
+    "text": "boycotted",
+    "start": 6.165,
+    "end": 6.734
+   },
+   {
+    "text": "trade",
+    "start": 6.769,
+    "end": 7.07
+   },
+   {
+    "text": "with",
+    "start": 7.094,
+    "end": 7.21
+   },
+   {
+    "text": "the",
+    "start": 7.245,
+    "end": 7.314
+   },
+   {
+    "text": "West",
+    "start": 7.361,
+    "end": 7.663
+   },
+   {
+    "text": "in",
+    "start": 7.721,
+    "end": 7.802
+   },
+   {
+    "text": "1453,",
+    "start": 7.86,
+    "end": 9.149
+   },
+   {
+    "text": "closing",
+    "start": 9.323,
+    "end": 9.706
+   },
+   {
+    "text": "the",
+    "start": 9.752,
+    "end": 9.822
+   },
+   {
+    "text": "road.",
+    "start": 9.88,
+    "end": 10.867
    }
   ],
   "scene-10": [
    {
-    "text": "The",
+    "text": "Its",
     "start": 0,
-    "end": 0.174
+    "end": 0.244
    },
    {
-    "text": "Silk",
-    "start": 0.232,
-    "end": 0.488
+    "text": "legacy",
+    "start": 0.302,
+    "end": 0.72
    },
    {
-    "text": "Road",
-    "start": 0.569,
-    "end": 0.824
+    "text": "remains",
+    "start": 0.789,
+    "end": 1.184
    },
    {
-    "text": "connected",
-    "start": 0.882,
-    "end": 1.289
+    "text": "the",
+    "start": 1.242,
+    "end": 1.312
    },
    {
-    "text": "East",
+    "text": "foundation",
     "start": 1.37,
-    "end": 1.614
+    "end": 1.916
+   },
+   {
+    "text": "of",
+    "start": 1.95,
+    "end": 2.009
+   },
+   {
+    "text": "modern",
+    "start": 2.101,
+    "end": 2.426
+   },
+   {
+    "text": "intercultural",
+    "start": 2.508,
+    "end": 3.239
+   },
+   {
+    "text": "interactions",
+    "start": 3.309,
+    "end": 4.063
    },
    {
     "text": "and",
-    "start": 1.66,
-    "end": 1.753
-   },
-   {
-    "text": "West,",
-    "start": 1.823,
-    "end": 2.287
-   },
-   {
-    "text": "exchanging",
-    "start": 2.403,
-    "end": 2.949
-   },
-   {
-    "text": "goods,",
-    "start": 3.019,
-    "end": 3.413
-   },
-   {
-    "text": "ideas,",
-    "start": 3.46,
-    "end": 3.936
-   },
-   {
-    "text": "and",
-    "start": 3.959,
-    "end": 4.04
-   },
-   {
-    "text": "culture",
     "start": 4.11,
-    "end": 4.574
+    "end": 4.261
    },
    {
-    "text": "for",
-    "start": 4.69,
-    "end": 4.83
+    "text": "global",
+    "start": 4.331,
+    "end": 4.679
    },
    {
-    "text": "centuries",
-    "start": 4.888,
-    "end": 5.352
-   },
-   {
-    "text": "before",
-    "start": 5.399,
-    "end": 5.712
-   },
-   {
-    "text": "fading",
-    "start": 5.77,
-    "end": 6.107
-   },
-   {
-    "text": "away.",
-    "start": 6.153,
-    "end": 6.873
+    "text": "trade.",
+    "start": 4.737,
+    "end": 5.48
    }
   ]
  },
@@ -1415,416 +1399,508 @@
    {
     "sentenceId": "scene-1.1",
     "factIds": [
-     "f1",
-     "f8"
+     "f25",
+     "f26"
     ],
     "status": "supported",
-    "original": "For over a thousand years, a vast network of routes stitched continents together across Eurasia.",
+    "original": "For over 1,500 years, a vast network linked East and West across 4,000 miles.",
     "revised": "",
     "reason": ""
    },
    {
     "sentenceId": "scene-2.1",
     "factIds": [
-     "f10"
+     "f28"
     ],
     "status": "supported",
-    "original": "It began around 130 BC when China's Han Dynasty sent envoys westward seeking allies against the Xiongnu.",
-    "revised": "",
-    "reason": ""
-   },
-   {
-    "sentenceId": "scene-2.2",
-    "factIds": [
-     "f34"
-    ],
-    "status": "supported",
-    "original": "Zhang Qian's diplomatic mission marked the true beginning of the Silk Road.",
+    "original": "It began around 114 BCE when the Han dynasty expanded into Central Asia.",
     "revised": "",
     "reason": ""
    },
    {
     "sentenceId": "scene-3.1",
     "factIds": [
-     "f2",
-     "f30"
+     "f5"
     ],
     "status": "supported",
-    "original": "These land paths stretched over 6,400 kilometers, making it the longest land-based trade route in history.",
+    "original": "The eastern starting point was Chang'an, now called Xi'an, China's ancient capital.",
     "revised": "",
     "reason": ""
    },
    {
     "sentenceId": "scene-4.1",
     "factIds": [
-     "f15",
-     "f16"
+     "f21"
     ],
     "status": "supported",
-    "original": "Chinese silk traveled west to Europe, while Buddhism moved east from India to China and Central Asia.",
+    "original": "Traders moved exotic goods such as spices, textiles, and precious stones along the Silk Road.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-4.2",
+    "factIds": [
+     "f30"
+    ],
+    "status": "supported",
+    "original": "By the first century CE, Chinese silk was widely sought after in Rome.",
     "revised": "",
     "reason": ""
    },
    {
     "sentenceId": "scene-5.1",
     "factIds": [
-     "f17"
+     "f13"
     ],
     "status": "supported",
-    "original": "Traders also carried major religions like Islam, Christianity, and Zoroastrianism across the steppes.",
+    "original": "The route spread Buddhism from India into Central Asia, China, and beyond.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-5.2",
+    "factIds": [
+     "f14"
+    ],
+    "status": "supported",
+    "original": "It also carried Islam, Christianity, and Zoroastrianism across continents.",
     "revised": "",
     "reason": ""
    },
    {
     "sentenceId": "scene-6.1",
     "factIds": [
-     "f18"
+     "f49",
+     "f50"
     ],
     "status": "supported",
-    "original": "Papermaking technology spread from China through the Arab world and onward to Europe along these paths.",
+    "original": "Chinese inventions like paper and gunpowder traveled west along these roads.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-6.2",
+    "factIds": [
+     "f15",
+     "f16"
+    ],
+    "status": "supported",
+    "original": "Papermaking reached the Arab world during the 8th century and later Europe.",
     "revised": "",
     "reason": ""
    },
    {
     "sentenceId": "scene-7.1",
     "factIds": [
-     "f7"
+     "f8",
+     "f9"
     ],
     "status": "supported",
-    "original": "Under the Mongol Empire, 75 percent of the routes were unified, creating a rare peacetime for safe passage.",
+    "original": "The Mongol Empire once provided a stable and secure environment for traders.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-7.2",
+    "factIds": [
+     "f7",
+     "f10",
+     "f11"
+    ],
+    "status": "supported",
+    "original": "But it fragmented into warring khanates in the 14th century.",
     "revised": "",
     "reason": ""
    },
    {
     "sentenceId": "scene-8.1",
     "factIds": [
-     "f12"
+     "f37",
+     "f38"
     ],
     "status": "supported",
-    "original": "The Black Death in the 14th century disrupted travel along the routes, killing an estimated 25 million people.",
+    "original": "The Black Death spread from Central Asia to Europe by the mid-14th century.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-8.2",
+    "factIds": [
+     "f39",
+     "f40",
+     "f41"
+    ],
+    "status": "supported",
+    "original": "It decimated labor forces and caused a marked decline in trade volume.",
     "revised": "",
     "reason": ""
    },
    {
     "sentenceId": "scene-9.1",
     "factIds": [
-     "f19",
-     "f20"
+     "f23"
     ],
     "status": "supported",
-    "original": "By the 15th century, rising maritime routes and heavy Ottoman taxes made the land network less attractive.",
+    "original": "Sea routes rose in the late medieval period and further disrupted the land network.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-9.2",
+    "factIds": [
+     "f53"
+    ],
+    "status": "supported",
+    "original": "The Ottoman Empire boycotted trade with the West in 1453, closing the road.",
     "revised": "",
     "reason": ""
    },
    {
     "sentenceId": "scene-10.1",
     "factIds": [
-     "f24"
+     "f24",
+     "f19"
     ],
     "status": "supported",
-    "original": "The Silk Road connected East and West, exchanging goods, ideas, and culture for centuries before fading away.",
+    "original": "Its legacy remains the foundation of modern intercultural interactions and global trade.",
     "revised": "",
     "reason": ""
    }
   ],
-  "supported": 11,
+  "supported": 16,
   "revised": 0,
   "removed": 0
  },
  "facts": [
   {
    "id": "f1",
-   "text": "The Silk Road was a network of Asian trade routes active from the second century BCE until the mid-15th century.",
-   "quote": "The Silk Road was a network of Asian trade routes active from the second century BCE until the mid-15th century.",
+   "text": "The Silk Road operated from the 2nd century BC to the mid-15th century AD.",
+   "quote": "operated from the 2nd century BC to the mid-15th century AD",
    "sourceId": "s1"
   },
   {
    "id": "f2",
-   "text": "The Silk Road spanned over 6,400 km (4,000 mi) on land.",
-   "quote": "Spanning over 6,400 km (4,000 mi) on land",
+   "text": "The overland caravan routes covered between 6,400 and 10,000 kilometers.",
+   "quote": "the overland caravan routes covered between 6,400 and 10,000 kilometers",
    "sourceId": "s1"
   },
   {
    "id": "f3",
-   "text": "The Silk Road facilitated economic, cultural, political, and religious interactions between the Eastern and Western worlds.",
-   "quote": "it played a central role in facilitating economic, cultural, political, and religious interactions between the Eastern and Western worlds",
+   "text": "The term 'Silk Road' was first coined by German explorer Ferdinand von Richthofen in 1877.",
+   "quote": "The term \"Silk Road\" was first coined by German explorer Ferdinand von Richthofen in 1877",
    "sourceId": "s1"
   },
   {
    "id": "f4",
-   "text": "The name \"Silk Road\" was coined in the late 19th century.",
-   "quote": "The name \"Silk Road\" was coined in the late 19th century",
+   "text": "The Silk Road was the longest land-based trade route in history.",
+   "quote": "The Silk Road was the longest land-based trade route in history",
    "sourceId": "s1"
   },
   {
    "id": "f5",
-   "text": "Historians prefer the term \"Silk Routes\" to describe the intricate web of land and sea routes connecting multiple regions.",
-   "quote": "some 20th- and 21st-century historians instead prefer the term Silk Routes, on the grounds that it more accurately describes the intricate web of land and sea routes",
+   "text": "The eastern starting point was Chang'an, now called Xi'an, China's ancient capital.",
+   "quote": "Its eastern starting point was Chang'an (now Xi'an), China's ancient capital",
    "sourceId": "s1"
   },
   {
    "id": "f6",
-   "text": "The Silk Road was never a single east-west trade route linking China to the Mediterranean, nor was there unrestricted trade before the Mongol Empire.",
-   "quote": "Silk Road was never a singular east-west trade route that linked China to the Mediterranean, nor was there unrestricted trade before the Mongol Empire",
+   "text": "The route spanned more than 40 modern countries.",
+   "quote": "The Silk Road spanned more than 40 modern countries",
    "sourceId": "s1"
   },
   {
    "id": "f7",
-   "text": "The Mongolian Empire controlled 75 percent of the Silk Road, unifying warring nations and creating peacetime.",
-   "quote": "During the Mongolian reign, 75 percent of the Silk Road fell under Mongolian control which served to unify the warring nations and bring about peacetime.",
+   "text": "The Mongol Empire began to decline in the 14th century.",
+   "quote": "The Mongols' decline in the 14th century had a profound impact on the Silk Road trade.",
    "sourceId": "s2"
   },
   {
    "id": "f8",
-   "text": "The Silk Road existed for over 1,000 years, spanning the rise and fall of the Han Dynasty, Mongol Empire, Roman Empire, and the beginning of the British Empire.",
-   "quote": "The Silk Road spanned over 1,000 years outlasting empires, disease, wars, and famines. It saw the rise and fall of the Han Dynasty, the Mongol Empire and the Roman Empire, and even lasted until the beginning of the British Empire.",
+   "text": "At its height, the Mongol Empire provided a stable and secure environment for Silk Road traders.",
+   "quote": "The Mongol Empire, at its height, had provided a stable and secure environment for traders along the Silk Road.",
    "sourceId": "s2"
   },
   {
    "id": "f9",
-   "text": "The Silk Road built upon earlier Persian Empire courier routes from Susa to the Mediterranean Sea established between 500\u2013330 BC.",
-   "quote": "the Silk Road actually built upon previously established routes forged during the Persian Empire between 500\u2013330 BC",
+   "text": "Mongol governance and military power ensured trader safety and encouraged more trade.",
+   "quote": "Their effective governance and military might ensured the safety of traders, which in turn encouraged more trade.",
    "sourceId": "s2"
   },
   {
    "id": "f10",
-   "text": "The Han Dynasty initiated the Silk Road around 130 BC while seeking allies against the Xiongnu.",
-   "quote": "It was the Han Dynasty seeking allies in their war with the Xiongnu (the Huns), which would bring about The Silk Road.",
+   "text": "The empire fragmented into smaller, less stable khanates due to internal strife and weak leadership.",
+   "quote": "This resulted in the fragmentation of the empire into smaller, less stable khanates.",
    "sourceId": "s2"
   },
   {
    "id": "f11",
-   "text": "The Persian Royal Road had outposts with fresh horses so couriers could travel quickly from Susa to the Mediterranean Sea.",
-   "quote": "Along the route, outposts were established where fresh horses would be waiting so that couriers could travel quickly.",
+   "text": "Warring khanates created insecurity and danger for traders on the Silk Road.",
+   "quote": "These khanates were often at war with each other, creating an environment of insecurity and danger for traders.",
    "sourceId": "s2"
   },
   {
    "id": "f12",
-   "text": "The Bubonic Plague spread from Asia to Europe along the Silk Road via infected rats on trade caravans around 1346\u20131347 AD, killing an estimated 25 million people.",
-   "quote": "The Bubonic Plague started in Asia and China around 1346 AD. It spread along the Silk Road by infected rats accompanying the trade caravans. Within a year, the plague had reached Europe. It is estimated 25 million people died due to the plague.",
+   "text": "Trade volume decreased significantly as traders faced attacks from bandits and rival factions.",
+   "quote": "Traders were often subjected to attacks by bandits and rival factions, leading to a significant decrease in the volume of trade.",
    "sourceId": "s2"
   },
   {
    "id": "f13",
-   "text": "The Silk Road facilitated the exchange of goods, ideas, religions, and technologies between East and West.",
-   "quote": "The Silk Road facilitated the exchange of goods, ideas, religions, and technologies between East and West",
+   "text": "The Silk Road enabled the spread of Buddhism from India into Central Asia, China, and beyond.",
+   "quote": "One of the most profound cultural exchanges facilitated by the Silk Roads was the spread of Buddhism from India into Central Asia, China, and beyond.",
    "sourceId": "s3"
   },
   {
    "id": "f14",
-   "text": "The Silk Road fostered cross-cultural interactions that enriched civilizations' knowledge in astronomy, medicine, and literature.",
-   "quote": "fostering cross-cultural interactions. It allowed for the spread of Buddhism to China, Chinese silk to Europe, and enriched both civilisations' knowledge in fields such as astronomy, medicine, and literature",
+   "text": "The Silk Road facilitated the spread of major religions including Buddhism, Zoroastrianism, Islam, and Christianity.",
+   "quote": "Major religions like Buddhism, Zoroastrianism, Islam, and Christianity travelled along with traders, influencing local cultures and promoting mutual understanding between different civilizations.",
    "sourceId": "s3"
   },
   {
    "id": "f15",
-   "text": "The Silk Road allowed the spread of Buddhism from India to China and Central Asia.",
-   "quote": "It allowed for the spread of Buddhism to China",
+   "text": "Papermaking technology spread from China to the Arab world during the 8th century via the Silk Road.",
+   "quote": "the introduction of paper and papermaking technology by the Chinese to the Islamic world during the 8th century revolutionised record-keeping, education, and literature.",
    "sourceId": "s3"
   },
   {
    "id": "f16",
-   "text": "The Silk Road allowed Chinese silk to reach Europe.",
-   "quote": "Chinese silk to Europe",
+   "text": "Papermaking technology moved from China to the Arab world and then to Europe along the Silk Road.",
+   "quote": "The Silk Road was vital in spreading papermaking technology from China to the Arab world, and eventually to Europe.",
    "sourceId": "s3"
   },
   {
    "id": "f17",
-   "text": "Major religions such as Buddhism, Zoroastrianism, Islam, and Christianity traveled along the Silk Road with traders.",
-   "quote": "Major religions like Buddhism, Zoroastrianism, Islam, and Christianity travelled along with traders",
+   "text": "The Silk Road exchanged scientific knowledge and technologies such as the compass, papermaking, and printing techniques.",
+   "quote": "The exchange of scientific knowledge and technological innovations. The compass, papermaking, and printing techniques are notable examples.",
    "sourceId": "s3"
   },
   {
    "id": "f18",
-   "text": "Papermaking technology spread from China to the Arab world and then to Europe via the Silk Road.",
-   "quote": "The Silk Road was vital in spreading papermaking technology from China to the Arab world, and eventually to Europe",
+   "text": "The Silk Road disseminated artistic styles and musical traditions, enriching cultural expressions far beyond their origins.",
+   "quote": "The dissemination of artistic styles and musical traditions, enriching cultural expressions far beyond their origins.",
    "sourceId": "s3"
   },
   {
    "id": "f19",
-   "text": "The Silk Road declined in the 15th century because maritime trade routes rose and the Ottoman Empire imposed restrictions.",
-   "quote": "The Silk Road's importance declined in the 15th century due to the rise of maritime trade routes and the Ottoman Empire's restrictions.",
+   "text": "The Silk Road connected distant markets and allowed the exchange of goods, ideas, and monetary systems, forming an early basis for today's global market economy.",
+   "quote": "the Silk Road facilitated the first-time long-distance trade, interconnecting markets and allowing not only the circulation of material goods, but also of ideas and monetary systems",
    "sourceId": "s4"
   },
   {
    "id": "f20",
-   "text": "The Ottoman Empire controlled key regions along the Silk Road and imposed heavy taxes and restrictions on trade.",
-   "quote": "The Ottomans, who controlled key regions along the Silk Road, imposed heavy taxes and restrictions on trade.",
+   "text": "The route linked East and West in art, religion, language, and science.",
+   "quote": "facilitated the interactions in the area of art, religion, language, and science between the East and the West",
    "sourceId": "s4"
   },
   {
    "id": "f21",
-   "text": "Ottoman taxes and restrictions made the Silk Road less attractive, so merchants favored the new maritime routes.",
-   "quote": "This made the Silk Road less attractive for merchants, who began to favour the new maritime routes.",
+   "text": "Traders moved exotic goods such as spices, textiles, and precious stones along the Silk Road.",
+   "quote": "Silk Road enabled the trade of exotic goods such as spices, textiles, and precious stones",
    "sourceId": "s4"
   },
   {
    "id": "f22",
-   "text": "Ottoman policies and the advantages of sea travel caused a significant decrease in trade volume on the Silk Road.",
-   "quote": "The Ottoman Empire's policies, coupled with the advantages of sea travel, led to a significant decrease in the volume of trade along the Silk Road.",
+   "text": "Knowledge spread included Chinese papermaking and gunpowder, Indian mathematics, and Middle Eastern philosophical and religious ideas.",
+   "quote": "spread of knowledge, including technological innovations like papermaking and gunpowder from China, mathematical concepts from India, and philosophical and religious ideas from the Middle East",
    "sourceId": "s4"
   },
   {
    "id": "f23",
-   "text": "The Black Death in the 14th century had already disrupted Silk Road trade and caused a decline in its use.",
-   "quote": "the spread of the Black Death in the 14th century had already disrupted trade along the Silk Road, causing a decline in its use.",
+   "text": "The Silk Road's importance declined with the rise of sea trade in the late medieval period and was further disrupted by political changes and new oceanic routes.",
+   "quote": "The Silk Road's influence waned with the rise of sea trade in the late medieval period and was further disrupted by political changes and the discovery of new oceanic routes",
    "sourceId": "s4"
   },
   {
    "id": "f24",
-   "text": "The Silk Road was a network of trade routes connecting East and West that exchanged goods, ideas, and culture for centuries.",
-   "quote": "The Silk Road, a network of trade routes connecting East and West, was a vital artery for the exchange of goods, ideas, and culture for centuries.",
+   "text": "Its legacy remains the foundation of modern intercultural interactions and international trade.",
+   "quote": "legacy as a catalyst for the interconnected world today remains indelible",
    "sourceId": "s4"
   },
   {
    "id": "f25",
-   "text": "The Silk Road was a network of trade routes connecting Europe and Asia.",
-   "quote": "The Silk Road, a network of trade routes spanning Europe and Asia",
+   "text": "The Silk Road was a network of trade routes active from the second century BCE until the mid-15th century.",
+   "quote": "active from the second century BCE until the mid-15th century",
    "sourceId": "s5"
   },
   {
    "id": "f26",
-   "text": "It operated from the 2nd century BC to the mid-15th century AD.",
-   "quote": "operated from the 2nd century BC to the mid-15th century AD",
+   "text": "The land routes of the Silk Road spanned over 6,400 kilometers (4,000 miles).",
+   "quote": "Spanning over 6,400 km (4,000 mi) on land",
    "sourceId": "s5"
   },
   {
    "id": "f27",
-   "text": "The overland caravan routes covered between 6,400 and 10,000 kilometers.",
-   "quote": "the overland caravan routes covered between 6,400 and 10,000 kilometers",
+   "text": "The name \"Silk Road\" was coined in the late 19th century.",
+   "quote": "The name \"Silk Road\" was coined in the late 19th century",
    "sourceId": "s5"
   },
   {
    "id": "f28",
-   "text": "The name 'Silk Road' comes from silk being a key export from China.",
-   "quote": "The route earned the name \"Silk Road\" because silk was a key export from China",
+   "text": "The network began with the Han dynasty's expansion into Central Asia around 114 BCE through the missions of Zhang Qian.",
+   "quote": "The network began with the expansion of the Han dynasty (202 BCE – 220 CE) into Central Asia around 114 BCE, through the missions and explorations of the Chinese imperial envoy Zhang Qian",
    "sourceId": "s5"
   },
   {
    "id": "f29",
-   "text": "The term 'Silk Road' was first coined by German explorer Ferdinand von Richthofen in 1877.",
-   "quote": "The term \"Silk Road\" was first coined by German explorer Ferdinand von Richthofen in 1877",
+   "text": "The Chinese extended the Great Wall of China to protect the trade route.",
+   "quote": "extended the Great Wall of China to ensure the protection of the trade route",
    "sourceId": "s5"
   },
   {
    "id": "f30",
-   "text": "The Silk Road was the longest land-based trade route in history.",
-   "quote": "The Silk Road was the longest land-based trade route in history",
+   "text": "By the first century CE, Chinese silk was widely sought after in Rome.",
+   "quote": "By the first century CE, Chinese silk was widely sought after in Rome",
    "sourceId": "s5"
   },
   {
    "id": "f31",
-   "text": "Ferghana horses originated from the Ferghana Valley in modern-day Uzbekistan.",
-   "quote": "The Ferghana horses originated from the Ferghana Valley, a fertile region in modern-day Uzbekistan",
+   "text": "Cinnamon was being traded throughout Asia as early as 2000 BCE.",
+   "quote": "cinnamon was being traded throughout Asia as early as 2000 BCE.",
    "sourceId": "s6"
   },
   {
    "id": "f32",
-   "text": "Ancient Chinese called Ferghana horses \"heavenly horses.\"",
-   "quote": "often referred to as the \"heavenly horses\" by the ancient Chinese",
+   "text": "Nutmeg and cloves grew only in the Moluccas, a small group of Indonesian islands known as the Spice Islands.",
+   "quote": "nutmeg and cloves, for example, grew only in the Moluccas, a small group of Indonesian islands known at the time as the Spice Islands.",
    "sourceId": "s6"
   },
   {
    "id": "f33",
-   "text": "Emperor Wudi sent Zhang Qian on a diplomatic mission around 138 BCE.",
-   "quote": "Sent by Emperor Wudi around 138 BCE, Zhang Qian's journey marked the beginning of the Silk Road.",
+   "text": "The word \"spice\" is derived from the Latin word for \"special wares.\"",
+   "quote": "the word “spice” is even derived from the Latin word for “special wares.”",
    "sourceId": "s6"
   },
   {
    "id": "f34",
-   "text": "Zhang Qian's journey marked the beginning of the Silk Road.",
-   "quote": "Zhang Qian's journey marked the beginning of the Silk Road.",
+   "text": "Alexandria, Egypt became an important spice-trading hub around the turn of the second century CE.",
+   "quote": "Around the turn of the second century CE, Alexandria, Egypt, then under Roman rule, became an important spice-trading hub",
    "sourceId": "s6"
   },
   {
    "id": "f35",
-   "text": "Zhang Qian was captured and detained by the Xiongnu for over a decade.",
-   "quote": "Despite being captured and detained by the Xiongnu for over a decade",
+   "text": "Spices reached northern Europe via Genoa and Venice starting around the 11th century.",
+   "quote": "Spices reached northern Europe via Genoa and Venice starting around the 11th century.",
    "sourceId": "s6"
   },
   {
    "id": "f36",
-   "text": "Ferghana horses significantly improved the mobility and effectiveness of Chinese military forces.",
-   "quote": "they significantly improved the mobility and effectiveness of Chinese military forces",
+   "text": "Camellia sinensis originated in Southeast Asia and has been part of Chinese culture since at least the 10th century BCE.",
+   "quote": "Camellia sinensis, the plant that grows tea leaves, originated in Southeast Asia (roughly where China, India, and Myanmar meet today) and has been part of Chinese culture since at least as far back as the 10th century BCE.",
    "sourceId": "s6"
   },
   {
    "id": "f37",
-   "text": "The Yam was a Mongol postal and messenger relay system.",
-   "quote": "was a Mongol postal system or supply point route messenger system",
+   "text": "The Black Death originated in Central Asia and reached Europe by the mid-14th century via the Silk Road.",
+   "quote": "originated in the heart of Central Asia, subsequently reaching the heart of Europe by the mid-14th century",
    "sourceId": "s7"
   },
   {
    "id": "f38",
-   "text": "\u00d6gedei Khan expanded the Yam and gave it special attention because Mongol armies traveled quickly and their messengers had to be even faster.",
-   "quote": "\u00d6gedei Khan gave special attention to the yam because Mongol armies traveled quickly; their messengers had to be even faster",
+   "text": "Traders and travelers on the Silk Road inadvertently carried and spread the plague across vast distances.",
+   "quote": "As traders and other travelers journeyed these paths, they inadvertently became agents of transmission, carrying the plague across vast geographical expanses",
    "sourceId": "s7"
   },
   {
    "id": "f39",
-   "text": "Messengers using the Yam covered 200\u2013300 kilometres (120\u2013190 mi) per day.",
-   "quote": "they covered 200\u2013300 kilometres (120\u2013190 mi) per day",
+   "text": "The plague's high death toll decimated labor forces, directly harming Silk Road trade networks.",
+   "quote": "Population decimation rendered labor forces woefully inadequate, which was a direct blow to the intricate networks of trade",
    "sourceId": "s7"
   },
   {
    "id": "f40",
-   "text": "A messenger would hand off information to a fresh messenger at each station so documents kept moving without the rider getting tired.",
-   "quote": "A messenger would arrive at a station and give his information to another messenger, and meanwhile rest and let the other messenger go on to the next station to hand the document to yet another messenger",
+   "text": "Cities along the Silk Road that depended on trade suffered severe socio-economic upheaval.",
+   "quote": "Cities that lay along the Silk Road and were heavily reliant on trade faced severe socio-economic upheaval",
    "sourceId": "s7"
   },
   {
    "id": "f41",
-   "text": "The Secret History of the Mongols says \u00d6gedei Khan founded the Yam, though a rudimentary system existed under Genghis Khan.",
-   "quote": "According to The Secret History of the Mongols, the yam was founded by \u00d6gedei Khan. Other sources show that a rudimentary postal system had already existed during the reign of Genghis Khan.",
+   "text": "Reduced manpower hampered production and transportation of goods, causing a marked decline in trade volume.",
+   "quote": "The reduction in available manpower hampered the production and transportation of goods, leading to a marked decline in trade volume",
    "sourceId": "s7"
   },
   {
    "id": "f42",
-   "text": "The Ottoman Empire captured Constantinople in 1453.",
-   "quote": "The capture of Constantinople (1453) to the Ottoman Turks was a key event.",
+   "text": "The Maritime Silk Road connected China, Southeast Asia, South Asia, the Middle East, East Africa, and Europe.",
+   "quote": "connecting regions such as China, Southeast Asia, South Asia, the Middle East, East Africa, and Europe",
    "sourceId": "s8"
   },
   {
    "id": "f43",
-   "text": "After capturing Constantinople, the Ottomans gained significant control of the Silk Road.",
-   "quote": "they now had significant control of the Silk Road, which European countries used to trade with Asia",
+   "text": "The Maritime Silk Road was established around 200 BCE.",
+   "quote": "established initially around 200 BCE",
    "sourceId": "s8"
   },
   {
    "id": "f44",
-   "text": "The claim that the Ottomans blocked the Silk Road by raising taxes lacks support from historical research.",
-   "quote": "this is not supported by any larger body of historical research",
+   "text": "Historians believe the Maritime Silk Road transported more silk and other goods to the West than the overland routes.",
+   "quote": "Historians believe that the Maritime Silk Road was responsible for transporting more silk and other goods to the West via sea routes, rather than overland routes",
    "sourceId": "s8"
   },
   {
    "id": "f45",
-   "text": "There was no general decline in spice imports to Europe after 1453.",
-   "quote": "there was no general decline in spice imports to Europe after 1453",
+   "text": "Arab, Persian, and Indian vessels handled the majority of Maritime Silk Road trade, not Chinese ships.",
+   "quote": "Arab, Persian, and Indian vessels were responsible for the majority of this trade, rather than Chinese ones",
    "sourceId": "s8"
   },
   {
    "id": "f46",
-   "text": "Constantinople was not a major route for the spice trade.",
-   "quote": "Constantinople was not a major trade route in the spice trade",
+   "text": "The Gelasa Strait between Bangka and Belitung islands was notorious for shallow reefs and submerged rocks that made navigation perilous.",
+   "quote": "treacherous areas like the Gelasa Strait, a narrow passageway between the Indonesian islands of Bangka and Belitung, were notorious for their shallow reefs and submerged rocks",
    "sourceId": "s8"
   },
   {
    "id": "f47",
-   "text": "Most spice trade came through Alexandria or Beirut instead of Constantinople.",
-   "quote": "most trade instead came from Alexandria or Beirut",
+   "text": "Advances in shipbuilding technology allowed merchants to travel longer distances across oceans, expanding the Maritime Silk Road.",
+   "quote": "As shipbuilding technology advanced, merchants could travel longer distances across vast oceans to reach other continents",
    "sourceId": "s8"
+  },
+  {
+   "id": "f48",
+   "text": "The Silk Road was a vast network of trade routes stretching over 4,000 miles.",
+   "quote": "The Silk Road, a vast network of trade routes stretching over 4,000 miles",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f49",
+   "text": "Paper and gunpowder were invented by the Chinese during the Han Dynasty.",
+   "quote": "commodities like paper and gunpowder invented by the Chinese during the Han Dynasty",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f50",
+   "text": "The Silk Road played a crucial role in disseminating paper and gunpowder to the West.",
+   "quote": "played a crucial role in the dissemination of these inventions to the West",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f51",
+   "text": "Merchants transported paper and gunpowder along the Silk Road through trade interactions.",
+   "quote": "merchants transported goods such as paper and gunpowder along these routes",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f52",
+   "text": "Traders including Arabs and Persians exchanged items and took these innovations back to their homelands.",
+   "quote": "traders, including Arabs, Persians, and others exchanged items, they took these innovations back to their homelands",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f53",
+   "text": "The Silk Road was closed in 1453 A.D. when the Ottoman Empire boycotted trade with the West.",
+   "quote": "was closed in 1453 A.D when the Ottoman empire boycotted trade with the west and shut down the routes",
+   "sourceId": "s9"
   }
  ],
  "sources": [
   {
    "id": "s1",
-   "title": "Silk Road",
-   "url": "https://en.wikipedia.org/wiki/Silk_Road"
+   "title": "Silk Road Travel Guide",
+   "url": "https://www.advantour.com/silkroad"
   },
   {
    "id": "s2",
-   "title": "The Silk Road \u2014 Google Arts & Culture",
-   "url": "https://artsandculture.google.com/story/the-silk-road/9AXhNncN4Aag-Q?hl=en"
+   "title": "How did the Mongols' decline affect Silk Road trade? | TutorChase",
+   "url": "https://www.tutorchase.com/answers/ib/history/how-did-the-mongols--decline-affect-silk-road-trade"
   },
   {
    "id": "s3",
@@ -1833,28 +1909,33 @@
   },
   {
    "id": "s4",
-   "title": "Why did the Silk Road's importance decline in the 15th century? | TutorChase",
-   "url": "https://www.tutorchase.com/answers/ib/history/why-did-the-silk-road-s-importance-decline-in-the-15th-century"
+   "title": "The Impact of the Silk Road on Modern Global Trade",
+   "url": "https://samples.essaypro.com/the-impact-of-the-silk-road-on-modern-global-trade"
   },
   {
    "id": "s5",
-   "title": "Silk Road Travel Guide",
-   "url": "https://www.advantour.com/silkroad"
+   "title": "Silk Road",
+   "url": "https://en.wikipedia.org/wiki/Silk_Road"
   },
   {
    "id": "s6",
-   "title": "Niels Groeneveld on X: \"Riding the Heavenly Horses: The Influence of Ferghana\u2019s Prized Steeds on Chinese Warfare\n\nThe majestic Ferghana horses, often referred to as the \"heavenly horses\" by the ancient Chinese, played a pivotal role in shaping Chinese military strategies and facilitating the establ\u2026 / X",
-   "url": "https://x.com/nigroeneveld/status/1804123306989093204"
+   "title": "INDIA - Textiles and Heritage | (Long post) The Most Popular Things Traded on the Silk Road | Facebook",
+   "url": "https://www.facebook.com/groups/409572685777207/posts/7382908191776920"
   },
   {
    "id": "s7",
-   "title": "Yam (route) - Wikipedia",
-   "url": "https://en.wikipedia.org/wiki/Yam_(route)"
+   "title": "How the Plague (Black Death) Disrupted Silk Road Trade and Economies",
+   "url": "https://silk-road.com/2025/08/04/how-the-plague-black-death-disrupted-silk-road-trade-and-economies"
   },
   {
    "id": "s8",
-   "title": "Economic history of the Ottoman Empire - Wikipedia",
-   "url": "https://en.wikipedia.org/wiki/Economic_history_of_the_Ottoman_Empire"
+   "title": "5.2: The Maritime and Overland Silk Road (200 BCE - 200 CE) - Humanities LibreTexts",
+   "url": "https://human.libretexts.org/Courses/Evergreen_Valley_College/Asian_Art_History_(Gustlin_and_Gustlin)/05%3A_The_Maritime_and_Overland_Silk_Road_(400_BCE__50_BCE)/5.02%3A_The_Maritime_and_Overland_Silk_Road_(200_BCE_-_200_CE)"
+  },
+  {
+   "id": "s9",
+   "title": "[FREE] According to \"History: The Silk Road,\" where did paper and gunpowder develop? How did the Silk Road play a - brainly.com",
+   "url": "https://brainly.com/question/29689339"
   }
  ]
 }
