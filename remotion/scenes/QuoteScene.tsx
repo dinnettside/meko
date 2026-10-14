@@ -16,7 +16,7 @@ function hostname(url: string): string {
 const MARKER = "#61502B";
 
 // A source's own words, revealed a few words at a time, with the source's name under it. Then a marker sweeps
-// over the words, the way you would mark the line in a book that backs a claim, and a stamp says it was checked.
+// over the words, the way you would mark the line in a book that backs a claim.
 export function QuoteScene({ text, source, durationSec }: { text: string; source?: Source; durationSec: number }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -28,7 +28,6 @@ export function QuoteScene({ text, source, durationSec }: { text: string; source
   const sweepStart = shown + 0.3;
   const sweepEnd = Math.max(sweepStart + 1.2, Math.min(durationSec - 1.8, sweepStart + durationSec * 0.5));
   const sweep = interpolate(frame / fps, [sweepStart, sweepEnd], [0, words.length], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const stamp = ease(frame, fps, sweepEnd + 0.15, 0.35);
 
   return (
     <AbsoluteFill style={{ justifyContent: "center", padding: `0 ${VIDEO.sideMargin + 40}px ${VIDEO.captionSpace}px` }}>
@@ -62,24 +61,6 @@ export function QuoteScene({ text, source, durationSec }: { text: string; source
           — {source.title} <span style={{ color: COLORS.border }}>· {hostname(source.url)}</span>
         </div>
       ) : null}
-      <div style={{ marginTop: 32, display: "flex", justifyContent: "flex-end", maxWidth: 1400 }}>
-        {/* The stamp lands with a little overshoot, like a rubber stamp pressed down. */}
-        <div
-          style={{
-            padding: "10px 22px",
-            border: `5px solid ${COLORS.teal}`,
-            borderRadius: 10,
-            fontFamily: FONTS.body,
-            fontSize: 36,
-            fontWeight: 700,
-            color: COLORS.teal,
-            opacity: stamp,
-            transform: `rotate(-5deg) scale(${1.35 - 0.35 * stamp})`,
-          }}
-        >
-          ✓ Checked against the source
-        </div>
-      </div>
     </AbsoluteFill>
   );
 }

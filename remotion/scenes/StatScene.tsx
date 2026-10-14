@@ -28,9 +28,11 @@ export function StatScene({
 }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  // Counting takes a moment, so it starts a little before the number is said and is done soon after.
-  const start = Math.max(0.3, revealAt(words, String(value), 0.3, 0.3, durationSec) - 0.6);
-  const count = ease(frame, fps, start, 1.6);
+  // The number counts up from the start of the scene and lands as the narration says it, so the screen never shows
+  // a zero waiting for its turn.
+  const start = 0;
+  const spoken = revealAt(words, String(value), start, 0.3, durationSec);
+  const count = ease(frame, fps, start, Math.max(1.2, spoken + 0.3 - start));
   const labelIn = ease(frame, fps, start + 0.7, 0.6);
   // A percentage is always out of 100, so it gets the dots too.
   const whole = total ?? (/^(%|percent|per cent)$/i.test(unit ?? "") ? 100 : undefined);
