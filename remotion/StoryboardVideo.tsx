@@ -8,6 +8,7 @@ import type { SceneVoice } from "@/lib/voice";
 import { Caption, estimateWords } from "./Caption";
 import { SourceChip } from "./SourceChip";
 import { CompareScene } from "./scenes/CompareScene";
+import { ListScene } from "./scenes/ListScene";
 import { MapScene } from "./scenes/MapScene";
 import { QuoteScene } from "./scenes/QuoteScene";
 import { StatScene } from "./scenes/StatScene";
@@ -132,5 +133,7 @@ function SceneView({
       return <QuoteScene text={scene.text} source={storyboard.sources.find((source) => source.id === scene.sourceId)} />;
     case "steps":
       return <StepsScene steps={scene.steps} {...timing} />;
+    case "list":
+      return <ListScene items={scene.items} {...timing} />;
   }
 }

@@ -53,10 +53,11 @@ const MapSceneSchema = z.object({
     .optional(),
 });
 
+// `date` is a day and month like "20 July", so events from the same year can share a timeline.
 const TimelineSceneSchema = z.object({
   ...sceneBase,
   kind: z.literal("timeline"),
-  events: z.array(z.object({ year: z.number(), label: z.string() })),
+  events: z.array(z.object({ year: z.number(), label: z.string(), date: z.string().optional() })),
   focusIndex: z.number(),
 });
 
@@ -94,6 +95,13 @@ const StepsSceneSchema = z.object({
   steps: z.array(z.string()),
 });
 
+// Two to four things of one kind side by side, like types, goods or effects, drawn as cards without arrows.
+const ListSceneSchema = z.object({
+  ...sceneBase,
+  kind: z.literal("list"),
+  items: z.array(z.object({ title: z.string(), detail: z.string().optional() })),
+});
+
 export const SceneSchema = z.discriminatedUnion("kind", [
   TitleSceneSchema,
   TextSceneSchema,
@@ -103,6 +111,7 @@ export const SceneSchema = z.discriminatedUnion("kind", [
   CompareSceneSchema,
   QuoteSceneSchema,
   StepsSceneSchema,
+  ListSceneSchema,
 ]);
 
 export const StoryboardSchema = z.object({

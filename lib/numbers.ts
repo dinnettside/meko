@@ -56,3 +56,42 @@ export function isPartOf(value: number, total: number, text: string): boolean {
   const plain = text.replace(/(\d),(?=\d{3})/g, "$1");
   return new RegExp(`(^|[^\\d.])${value}(?![\\d.])[^.]{0,40}\\b(of|out of|among)\\b[^.]{0,25}(^|[^\\d.])${total}(?![\\d.])`, "i").test(plain);
 }
+
+const MONTH_NAMES = MONTHS.split("|");
+
+// The month (1 to 12) and day of a date like "20 July", "July 20" or "July", or null when it names no month.
+export function parseDate(date: string): { month: number; day: number | null } | null {
+  const text = date.toLowerCase();
+  const month = MONTH_NAMES.findIndex((name) => new RegExp(`\\b${name}\\b`).test(text)) + 1;
+  if (month === 0) return null;
+  const day = text.match(/\b(\d{1,2})(st|nd|rd|th)?\b/);
+  return { month, day: day && Number(day[1]) <= 31 ? Number(day[1]) : null };
+}
+
+// Whether a text states the date, with the day next to the month in either order: "20 July" or "July 20".
+export function statesDate(date: string, text: string): boolean {
+  const parsed = parseDate(date);
+  if (!parsed) return false;
+  const month = MONTH_NAMES[parsed.month - 1];
+  if (parsed.day === null) return new RegExp(`\\b${month}\\b`, "i").test(text);
+  const day = parsed.day;
+  return new RegExp(`\\b${month}\\s+${day}(st|nd|rd|th)?\\b|\\b${day}(st|nd|rd|th)?\\s+(of\\s+)?${month}\\b`, "i").test(text);
+}
+
+// The dates a text states with a day and a month, written like "20 July".
+export function datesIn(text: string): string[] {
+  const found = new Set<string>();
+  const pattern = new RegExp(`\\b(${MONTHS})\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b|\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?(${MONTHS})\\b`, "gi");
+  for (const match of text.matchAll(pattern)) {
+    const month = (match[1] ?? match[4]).toLowerCase();
+    const day = Number(match[2] ?? match[3]);
+    if (day >= 1 && day <= 31) found.add(`${day} ${month[0].toUpperCase()}${month.slice(1)}`);
+  }
+  return [...found];
+}
+
+// A sort key for a point in time: the year, then the month and day when there is a date.
+export function timeKey(year: number, date?: string): number {
+  const parsed = date ? parseDate(date) : null;
+  return year * 10_000 + (parsed?.month ?? 0) * 100 + (parsed?.day ?? 0);
+}

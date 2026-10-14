@@ -28,7 +28,7 @@ export function TimelineScene({
   words,
   durationSec,
 }: {
-  events: { year: number; label: string }[];
+  events: { year: number; label: string; date?: string }[];
   focusIndex: number;
   words: TimedWord[];
   durationSec: number;
@@ -38,8 +38,14 @@ export function TimelineScene({
   const axis = ease(frame, fps, 0.1, 0.9);
   const step = events.length > 1 ? (RIGHT - LEFT) / (events.length - 1) : 0;
   const spacing = Math.max(0.4, Math.min(1.8, (durationSec * 0.6) / events.length));
+  // When every event falls in one year, each shows its date and the year stands once above the line.
+  const oneYear = events.length > 1 && events.every((event) => event.year === events[0].year && event.date);
+  const heading = (event: (typeof events)[number]) =>
+    oneYear ? (event.date ?? "") : event.date ? `${event.date} ${formatYear(event.year)}` : formatYear(event.year);
+  // Long headings, like "20 July 1969", get smaller type so they do not run into each other.
+  const longHeadings = events.some((event) => heading(event).length > 7);
   const starts = revealTimes(
-    events.map((event) => `${Math.abs(event.year)} ${event.label}`),
+    events.map((event) => `${Math.abs(event.year)} ${event.date ?? ""} ${event.label}`),
     words,
     { firstSec: 0.5, spreadSec: spacing * events.length, gapSec: 0.4, durationSec },
   );
@@ -62,6 +68,20 @@ export function TimelineScene({
         {events.length > 1 ? (
           <line x1={LEFT} y1={AXIS_Y} x2={LEFT + step * reached} y2={AXIS_Y} stroke={COLORS.signal} strokeWidth={6} strokeLinecap="round" />
         ) : null}
+        {oneYear ? (
+          <text
+            x={WIDTH / 2}
+            y={AXIS_Y - 230}
+            textAnchor="middle"
+            fontFamily={FONTS.display}
+            fontSize={VIDEO.fontSize.year}
+            fontWeight={700}
+            fill={COLORS.dim}
+            opacity={axis}
+          >
+            {formatYear(events[0].year)}
+          </text>
+        ) : null}
         {events.map((event, index) => {
           const x = events.length > 1 ? LEFT + step * index : WIDTH / 2;
           const isFocus = index === focusIndex;
@@ -74,11 +94,11 @@ export function TimelineScene({
                 y={AXIS_Y - 70}
                 textAnchor="middle"
                 fontFamily={FONTS.display}
-                fontSize={isFocus ? VIDEO.fontSize.focusYear : VIDEO.fontSize.year}
+                fontSize={(isFocus ? VIDEO.fontSize.focusYear : VIDEO.fontSize.year) * (longHeadings ? 0.62 : 1)}
                 fontWeight={700}
                 fill={isFocus ? COLORS.signal : COLORS.paper}
               >
-                {formatYear(event.year)}
+                {heading(event)}
               </text>
               <text
                 x={x}

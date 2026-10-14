@@ -4,7 +4,7 @@ import { addUsage, chatJson, emptyUsage } from "./nebius.ts";
 import { CHARS_PER_SECOND, ResearchFactSchema, ScriptSchema, VideoRequestSchema, countWords } from "./pipeline.ts";
 import type { ResearchFact, Usage } from "./pipeline.ts";
 import { directPlanPrompt, directScenePrompt, directTitlePrompt, placesPrompt } from "./prompts/direct.ts";
-import { amountsIn, isDateIn, isPartOf, numbersIn, yearsIn } from "./numbers.ts";
+import { amountsIn, datesIn, isDateIn, isPartOf, numbersIn, statesDate, timeKey, yearsIn } from "./numbers.ts";
 import { COUNTRY_ALIASES, labelMismatch, namesAPlace } from "./regions.ts";
 import { quoteIsInSource } from "./research.ts";
 import { contentWords } from "./words.ts";
@@ -60,8 +60,12 @@ const SceneVisualSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     kind: z.literal("timeline"),
-    // Each event names the fact that gives its year. The fact ID is checked, then left out of the storyboard.
-    events: z.array(z.object({ year: z.number().int(), label: z.string(), factId: z.string() })).min(2).max(5),
+    // Each event names the fact that gives its year, and its date when events share a year. The fact ID is
+    // checked, then left out of the storyboard.
+    events: z
+      .array(z.object({ year: z.number().int(), date: z.string().optional(), label: z.string(), factId: z.string() }))
+      .min(2)
+      .max(5),
     focusIndex: z.number().int(),
   }),
   z.object({
@@ -80,22 +84,28 @@ const SceneVisualSchema = z.discriminatedUnion("kind", [
   // The quote names its fact; the code checks the words are in that fact's quote, then uses the fact's source.
   z.object({ kind: z.literal("quote"), text: z.string(), factId: z.string() }),
   z.object({ kind: z.literal("steps"), steps: z.array(z.string()).min(2).max(5) }),
+  z.object({
+    kind: z.literal("list"),
+    items: z.array(z.object({ title: z.string(), detail: z.string().optional() })).min(2).max(4),
+  }),
 ]);
 
-const SCENE_KINDS = ["map", "timeline", "stat", "compare", "quote", "steps", "text"] as const;
+const SCENE_KINDS = ["map", "timeline", "stat", "compare", "quote", "steps", "list", "text"] as const;
 type SceneKind = (typeof SCENE_KINDS)[number];
 
 // How often each kind may appear among a video's scenes. Maps are the strongest picture and follow on from each
-// other, but not every time, and a second timeline only has something new to show when the facts give enough years.
-function kindLimits(scenes: number, years: number, geographic: boolean): Record<SceneKind, number> {
+// other, but not every time.
+function kindLimits(scenes: number, geographic: boolean): Record<SceneKind, number> {
   return {
     map: geographic ? Math.max(2, Math.round(scenes * 0.65)) : 0,
-    timeline: years >= 8 ? 2 : 1,
+    // A second timeline mostly showed the same events again.
+    timeline: 1,
     stat: 2,
     compare: 2,
     quote: scenes >= 8 ? 2 : 1,
     // Without maps, a process topic like how vaccines work needs more steps to avoid plain text.
     steps: geographic ? 2 : 3,
+    list: 2,
     text: 2,
   };
 }
@@ -246,6 +256,8 @@ function shownText(visual: SceneVisual): string[] {
       return [];
     case "steps":
       return visual.steps;
+    case "list":
+      return visual.items.flatMap((item) => [item.title, item.detail ?? ""]);
   }
 }
 
@@ -356,15 +368,22 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
           problems.push(
             `The year ${event.year} for "${event.label}" is not in fact ${event.factId}, which gives ${given.length > 0 ? `only ${given.join(", ")}` : "no year"}. Only use years listed under "Years in the facts".`,
           );
+        } else if (event.date && !statesDate(event.date, facts.get(event.factId)?.text ?? "")) {
+          problems.push(`The date "${event.date}" for "${event.label}" is not in fact ${event.factId}. Only use dates its fact states.`);
         }
       }
-      const years = visual.events.map((event) => event.year);
-      if (years.some((year, index) => index > 0 && year < years[index - 1])) problems.push("List the events in time order.");
+      const keys = visual.events.map((event) => timeKey(event.year, event.date));
+      if (keys.some((key, index) => index > 0 && key < keys[index - 1])) problems.push("List the events in time order.");
       if (new Set(visual.events.map((event) => event.label.toLowerCase())).size < visual.events.length) {
         problems.push("Two events have the same label. Give each event its own label, or leave one out.");
       }
-      if (new Set(years).size < 2) problems.push("A timeline needs at least two different years. Use another kind.");
-      else if (new Set(years).size < years.length) problems.push("Two events share a year. Keep one event per year.");
+      // Events may share a year only when each has its own date, like the days of the Moon landing.
+      const years = visual.events.map((event) => event.year);
+      const sharesYear = (event: { year: number }) => years.filter((year) => year === event.year).length > 1;
+      if (new Set(keys).size < 2) problems.push("A timeline needs at least two different years or dates. Use another kind.");
+      else if (new Set(keys).size < keys.length || visual.events.some((event) => sharesYear(event) && !event.date)) {
+        problems.push('Two events share a year. Give each of them a "date" from its fact, or keep one event per year.');
+      }
       if (visual.focusIndex < 0 || visual.focusIndex >= visual.events.length) {
         problems.push(`focusIndex is ${visual.focusIndex}, but there are only ${visual.events.length} events.`);
       }
@@ -409,6 +428,17 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
         if (bar.value < 0) problems.push("Bar values cannot be negative.");
       }
       break;
+    case "list": {
+      const titles = visual.items.map((item) => item.title.trim().toLowerCase());
+      if (new Set(titles).size < titles.length) problems.push("Two items have the same title. Each item is a different thing.");
+      for (const item of visual.items) {
+        if (tooLong(item.title, 4)) problems.push(`The title "${item.title}" is too long. Use at most 3 words.`);
+        if (item.detail && tooLong(item.detail, 7)) problems.push(`The detail "${item.detail}" is too long. Use at most 6 words.`);
+        if (!isGrounded(item.title, source)) problems.push(ungrounded(item.title));
+        if (item.detail && !isGrounded(item.detail, source)) problems.push(ungrounded(item.detail));
+      }
+      break;
+    }
     case "quote": {
       const fact = facts.get(visual.factId);
       const text = visual.text.trim();
@@ -440,7 +470,7 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
         // "Glass, gold, horses move" lists things; a step in a chain says one thing that happens.
         const commas = visual.steps.filter((step) => step.includes(",")).length;
         if (commas >= 2 || (visual.steps.length >= 3 && (sameStart > visual.steps.length / 2 || (sameWord >= 3 && sameWord > visual.steps.length / 2)))) {
-          problems.push("These steps are a list of similar things. Steps must each lead to the next; use another kind for a list.");
+          problems.push("These steps are a list of similar things. Steps must each lead to the next; use a list instead.");
         }
       }
       break;
@@ -492,15 +522,27 @@ function repairScene(
       return textVisual(visual.lines, scene, allowed);
     case "timeline": {
       // Kept only if every label is backed; a timeline with made-up labels is worse than plain lines.
-      const focus = visual.events[visual.focusIndex];
-      const events = visual.events
+      // A date its fact does not state goes; the year stays.
+      const backed = visual.events.map((event) =>
+        event.date && !statesDate(event.date, facts.get(event.factId)?.text ?? "") ? { ...event, date: undefined } : event,
+      );
+      const focus = backed[visual.focusIndex];
+      const key = (event: (typeof backed)[number]) => timeKey(event.year, event.date);
+      const events = backed
         .filter((event) => eventIsBacked(event, facts) && safeLabel(event.label))
         .filter((event) => isGrounded(event.label, `${source} ${facts.get(event.factId)?.text ?? ""}`))
         .filter((event, index, all) => all.findIndex((other) => other.label.toLowerCase() === event.label.toLowerCase()) === index)
-        .filter((event, index, all) => event === focus || !all.some((other, at) => other.year === event.year && (other === focus || at < index)))
-        .sort((a, b) => a.year - b.year);
-      const focusIndex = Math.max(0, focus ? events.indexOf(focus) : events.length - 1);
-      return new Set(events.map((event) => event.year)).size >= 2 ? { kind: "timeline", events, focusIndex } : fallback;
+        .filter((event, index, all) => event === focus || !all.some((other, at) => key(other) === key(event) && (other === focus || at < index)))
+        .sort((a, b) => key(a) - key(b));
+      // Events that share a year all need dates. Without them, one event per year stays: the focus if it is one
+      // of them, else the first.
+      const dated = events.filter((event) => {
+        const sameYear = events.filter((other) => other.year === event.year);
+        if (sameYear.length === 1 || sameYear.every((other) => other.date)) return true;
+        return event === (focus && sameYear.includes(focus) ? focus : sameYear[0]);
+      });
+      const focusIndex = Math.max(0, focus ? dated.indexOf(focus) : dated.length - 1);
+      return new Set(dated.map(key)).size >= 2 ? { kind: "timeline", events: dated, focusIndex } : fallback;
     }
     case "map": {
       const mapLabel = (text: string | undefined, country?: string) =>
@@ -527,6 +569,13 @@ function repairScene(
       const frame = visual.frame.flatMap((place) => resolvePlace(visual, place) ?? []);
       if (highlights.length === 0) return fallback;
       return { kind: "map", frame: frame.length > 0 ? frame : highlights.map((h) => h.country), highlights, arrows, markers };
+    }
+    case "list": {
+      // Items the narration does not back go; two or more good ones still make a list.
+      const items = visual.items
+        .filter((item) => countWords(item.title) <= 4 && isGrounded(item.title, source) && safe(item.title))
+        .map((item) => (item.detail && countWords(item.detail) <= 7 && isGrounded(item.detail, source) && safe(item.detail) ? item : { title: item.title }));
+      return items.length >= 2 ? { kind: "list", items } : fallback;
     }
     case "stat": {
       // Most often only the total is wrong. Without it, the number still stands.
@@ -669,7 +718,9 @@ async function verifyMarkers(
 // The storyboard contract has no fact IDs on timeline events and no countries on markers, and a quote points to
 // its source instead of its fact.
 function forStoryboard(visual: SceneVisual, facts: FactMap) {
-  if (visual.kind === "timeline") return { ...visual, events: visual.events.map(({ year, label }) => ({ year, label })) };
+  if (visual.kind === "timeline") {
+    return { ...visual, events: visual.events.map(({ year, label, date }) => (date ? { year, label, date } : { year, label })) };
+  }
   if (visual.kind === "map") {
     return {
       ...visual,
@@ -700,10 +751,20 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
   const factList = (ids: string[]) => ids.map((id) => ({ id, text: factMap.get(id)?.text ?? "", quote: factMap.get(id)?.quote ?? "" }));
   // Every year the facts state, with the fact it comes from, so a timeline can only use real ones.
   const yearList = videoFactIds.flatMap((id) => {
-    const years = yearsIn(factMap.get(id)?.text ?? "");
-    return years.length > 0 ? [`${id}: ${years.map((year) => (year < 0 ? `${year} (${-year} BC)` : String(year))).join(", ")}`] : [];
+    const text = factMap.get(id)?.text ?? "";
+    const years = yearsIn(text);
+    const dates = datesIn(text);
+    if (years.length === 0) return [];
+    const yearText = years.map((year) => (year < 0 ? `${year} (${-year} BC)` : String(year))).join(", ");
+    return [`${id}: ${yearText}${dates.length > 0 ? ` (dates: ${dates.join(", ")})` : ""}`];
   });
-  const videoYears = new Set(videoFactIds.flatMap((id) => yearsIn(factMap.get(id)?.text ?? ""))).size;
+  // Points in time a timeline can use: the years the facts state, and their dates for events within one year.
+  const videoYears = new Set(
+    videoFactIds.flatMap((id) => {
+      const text = factMap.get(id)?.text ?? "";
+      return [...yearsIn(text).map(String), ...datesIn(text)];
+    }),
+  ).size;
   // The words a scene may put on screen: its narration and the facts behind it.
   const sourceFor = (scene: NarratedScene) =>
     [scene.narration, ...scene.factIds.map((id) => factMap.get(id)?.text ?? "")].join(" ");
@@ -760,7 +821,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
   // system works, and for the Moon landing. Asking the model which scenes name places let the Moon through.
   const hasPlaces = rest.map((scene) => namesAPlace(sourceFor(scene)));
   const geographic = hasPlaces.filter(Boolean).length >= 2;
-  const limits = kindLimits(rest.length, videoYears, geographic);
+  const limits = kindLimits(rest.length, geographic);
   missing.forEach((kinds, index) => {
     if (!geographic || !hasPlaces[index]) kinds.push("map");
   });
