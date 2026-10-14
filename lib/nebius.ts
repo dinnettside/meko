@@ -79,12 +79,14 @@ async function callModel(
   step: string,
   params: Omit<ChatCompletionCreateParamsNonStreaming, "model">,
   timeoutMs: number,
-): Promise<{ content: string; usage: Usage }> {
+  thinking = false,
+): Promise<{ content: string; cutOff: boolean; usage: Usage }> {
   const model = getModel();
   // NVIDIA recommends temperature 1 and top_p 0.95 for Nemotron 3 in every mode.
   const body: ChatCompletionCreateParamsNonStreaming = { temperature: 1, top_p: 0.95, ...params, model };
-  // Thinking off: 2 to 10 times faster, and it did not improve results in docs/model-check.md.
-  Object.assign(body, { chat_template_kwargs: { enable_thinking: false } });
+  // Thinking is off unless a step asks for it: off is 2 to 10 times faster, and it did not improve the results
+  // in docs/model-check.md.
+  Object.assign(body, { chat_template_kwargs: { enable_thinking: thinking } });
 
   let started = performance.now();
   let completion;
@@ -109,8 +111,11 @@ async function callModel(
   console.log(`[${step}] ${ms} ms, ${promptTokens} in / ${completionTokens} out, $${costUsd.toFixed(4)}`);
 
   const choice = completion.choices[0];
-  if (choice?.finish_reason === "length") throw new Error(`${step}: the answer was cut off at max_tokens.`);
-  return { content: choice?.message.content ?? "", usage: { calls: 1, promptTokens, completionTokens, costUsd } };
+  return {
+    content: choice?.message.content ?? "",
+    cutOff: choice?.finish_reason === "length",
+    usage: { calls: 1, promptTokens, completionTokens, costUsd },
+  };
 }
 
 // `data` is null when the reply is not valid JSON or breaks the schema. `problems` lists what is wrong.
@@ -151,6 +156,7 @@ type JsonRequest<T> = {
   maxTokens: number;
   check?: (data: T) => string[]; // rules zod cannot check, one line per problem
   timeoutMs?: number; // per model call, 45 s unless set
+  thinking?: boolean; // lets the model reason before it answers: slower, but better at careful checks
   // Called with the last answer if it still breaks a rule after every retry. Returns a fixed version to use.
   // Without it, the call fails.
   repair?: (data: T) => T;
@@ -181,8 +187,16 @@ export async function chatJson<T>(request: JsonRequest<T>): Promise<{ data: T; u
         },
       },
       request.timeoutMs ?? CALL_TIMEOUT_MS,
+      request.thinking,
     );
     usage = addUsage(usage, reply.usage);
+    // An answer cut off at max_tokens is usually the model repeating itself. It cannot be fixed, so it starts over.
+    if (reply.cutOff) {
+      problems = ["The answer was cut off at max_tokens."];
+      console.warn(`[${request.step}] Cut off at max_tokens on try ${attempt + 1}. Starting over.`);
+      messages = baseMessages;
+      continue;
+    }
     const result = parseJson(reply.content, request.schema, request.check);
     if (result.data && result.problems.length === 0) return { data: result.data, usage };
 
