@@ -1,0 +1,1489 @@
+{
+ "request": {
+  "topic": "The Apollo 11 Moon landing",
+  "audience": "High school",
+  "lengthSec": 90,
+  "language": "en"
+ },
+ "madeAt": "2026-10-14T15:34:30.195Z",
+ "ms": 43217,
+ "costUsd": 0.099275,
+ "storyboard": {
+  "title": "Apollo 11: First Steps on the Moon",
+  "language": "en",
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "scenes": [
+   {
+    "kind": "title",
+    "heading": "Apollo 11: First Steps on the Moon",
+    "subheading": "How did Apollo 11 land humans on the Moon?",
+    "id": "scene-1",
+    "narration": "On July 16, 1969, a Saturn V rocket lifted three astronauts toward the Moon for the first crewed landing mission.",
+    "factIds": [
+     "f3",
+     "f8",
+     "f9",
+     "f15"
+    ],
+    "durationSec": 8.8
+   },
+   {
+    "kind": "list",
+    "items": [
+     {
+      "title": "Neil Armstrong"
+     },
+     {
+      "title": "Buzz Aldrin"
+     },
+     {
+      "title": "Michael Collins"
+     }
+    ],
+    "id": "scene-2",
+    "narration": "Neil Armstrong, Buzz Aldrin, and Michael Collins rode the command module toward lunar orbit.",
+    "factIds": [
+     "f8",
+     "f2"
+    ],
+    "durationSec": 6.4
+   },
+   {
+    "kind": "steps",
+    "steps": [
+     "Entered lunar module Eagle",
+     "Began descent to surface"
+    ],
+    "id": "scene-3",
+    "narration": "Three days later, Armstrong and Aldrin entered the lunar module Eagle and began their descent to the surface.",
+    "factIds": [
+     "f4",
+     "f10"
+    ],
+    "durationSec": 7.7
+   },
+   {
+    "kind": "text",
+    "lines": [
+     "Eagle landed at Tranquility Base",
+     "Sea of Tranquility, July 20, 1969"
+    ],
+    "id": "scene-4",
+    "narration": "Eagle touched down at Tranquility Base in the Sea of Tranquility on July 20, 1969.",
+    "factIds": [
+     "f10",
+     "f11"
+    ],
+    "durationSec": 6.9
+   },
+   {
+    "kind": "quote",
+    "text": "That's one small step for [a] man, one giant leap for mankind.",
+    "sourceId": "s9",
+    "id": "scene-5",
+    "narration": "Armstrong stepped onto the Moon at 10:56 pm EDT and called it a giant leap for mankind.",
+    "factIds": [
+     "f36",
+     "f28"
+    ],
+    "durationSec": 7.8
+   },
+   {
+    "kind": "stat",
+    "value": 20,
+    "unit": "minutes",
+    "label": "Delay before Aldrin joined Armstrong",
+    "id": "scene-6",
+    "narration": "Aldrin joined him 20 minutes later and they spent over two hours outside the module.",
+    "factIds": [
+     "f38",
+     "f39"
+    ],
+    "durationSec": 5.7
+   },
+   {
+    "kind": "list",
+    "items": [
+     {
+      "title": "Set up experiments",
+      "detail": "deployed instruments"
+     },
+     {
+      "title": "Collected volcanic samples",
+      "detail": "roughly 3.6 billion years old"
+     },
+     {
+      "title": "Planted a flag",
+      "detail": "within 100 meters of Eagle"
+     }
+    ],
+    "id": "scene-7",
+    "narration": "They set up experiments, collected volcanic samples, and planted a flag within 100 meters of Eagle.",
+    "factIds": [
+     "f12",
+     "f22",
+     "f23",
+     "f25"
+    ],
+    "durationSec": 7.1
+   },
+   {
+    "kind": "stat",
+    "value": 97,
+    "valueMax": 121,
+    "unit": "kilometers",
+    "label": "Orbit altitude",
+    "id": "scene-8",
+    "narration": "Collins waited alone in Columbia, circling the Moon at an altitude of 97 to 121 kilometers.",
+    "factIds": [
+     "f4",
+     "f5"
+    ],
+    "durationSec": 7.3
+   },
+   {
+    "kind": "timeline",
+    "events": [
+     {
+      "year": 1969,
+      "label": "Apollo 11 launch",
+      "date": "16 July"
+     },
+     {
+      "year": 1969,
+      "label": "Eagle lands on Moon",
+      "date": "20 July"
+     },
+     {
+      "year": 1969,
+      "label": "Ascent stage launches",
+      "date": "21 July"
+     },
+     {
+      "year": 1969,
+      "label": "Splashdown in Pacific",
+      "date": "24 July"
+     }
+    ],
+    "focusIndex": 2,
+    "id": "scene-9",
+    "narration": "On July 21, Eagle's ascent stage launched at 17:54 UTC and rejoined Collins in lunar orbit.",
+    "factIds": [
+     "f1",
+     "f6"
+    ],
+    "durationSec": 8.4
+   },
+   {
+    "kind": "text",
+    "lines": [
+     "Splashed down Pacific July 24"
+    ],
+    "id": "scene-10",
+    "narration": "The crew left lunar orbit the next day and splashed down in the Pacific on July 24, 1969.",
+    "factIds": [
+     "f6",
+     "f24",
+     "f31"
+    ],
+    "durationSec": 7.3
+   }
+  ],
+  "sources": [
+   {
+    "id": "s1",
+    "title": "Apollo 11 - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Apollo_11"
+   },
+   {
+    "id": "s2",
+    "title": "Michael Collins | Biography, Apollo 11, & Facts | Britannica",
+    "url": "https://britannica.com/biography/Michael-Collins-American-astronaut"
+   },
+   {
+    "id": "s3",
+    "title": "Apollo 11 Lunar Surface Journal : Mission Overview",
+    "url": "https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/a11ov.html"
+   },
+   {
+    "id": "s4",
+    "title": "Saturn V - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Saturn_V"
+   },
+   {
+    "id": "s6",
+    "title": "APOLLO 11 MOON LANDING: 50 Anniversary - Science@NASA",
+    "url": "https://science.nasa.gov/wp-content/uploads/2023/09/Apollo11AnniversaryLitho_updated.pdf?emrc=664513282bc7e"
+   },
+   {
+    "id": "s7",
+    "title": "What were Neil Armstrong's famous first words on the moon? | OregonNews",
+    "url": "https://news.uoregon.edu/content/what-were-neil-armstrongs-famous-first-words-moon"
+   },
+   {
+    "id": "s8",
+    "title": "Apollo 11 Moon Landing Timeline: From Liftoff to Splashdown | HISTORY",
+    "url": "https://www.history.com/news/apollo-11-moon-landing-timeline"
+   },
+   {
+    "id": "s9",
+    "title": "Neil Armstrong | Biography, Education, Moon Landing, & Facts | Britannica",
+    "url": "https://www.britannica.com/biography/Neil-Armstrong"
+   }
+  ]
+ },
+ "words": {
+  "scene-1": [
+   {
+    "text": "On",
+    "start": 0,
+    "end": 0.151
+   },
+   {
+    "text": "July",
+    "start": 0.197,
+    "end": 0.476
+   },
+   {
+    "text": "16,",
+    "start": 0.557,
+    "end": 1.091
+   },
+   {
+    "text": "1969,",
+    "start": 1.149,
+    "end": 2.31
+   },
+   {
+    "text": "a",
+    "start": 2.519,
+    "end": 2.589
+   },
+   {
+    "text": "Saturn",
+    "start": 2.67,
+    "end": 3.007
+   },
+   {
+    "text": "V",
+    "start": 3.088,
+    "end": 3.158
+   },
+   {
+    "text": "rocket",
+    "start": 3.367,
+    "end": 3.727
+   },
+   {
+    "text": "lifted",
+    "start": 3.936,
+    "end": 4.272
+   },
+   {
+    "text": "three",
+    "start": 4.319,
+    "end": 4.563
+   },
+   {
+    "text": "astronauts",
+    "start": 4.621,
+    "end": 5.166
+   },
+   {
+    "text": "toward",
+    "start": 5.201,
+    "end": 5.503
+   },
+   {
+    "text": "the",
+    "start": 5.55,
+    "end": 5.619
+   },
+   {
+    "text": "Moon",
+    "start": 5.666,
+    "end": 5.898
+   },
+   {
+    "text": "for",
+    "start": 5.968,
+    "end": 6.072
+   },
+   {
+    "text": "the",
+    "start": 6.107,
+    "end": 6.177
+   },
+   {
+    "text": "first",
+    "start": 6.223,
+    "end": 6.502
+   },
+   {
+    "text": "crewed",
+    "start": 6.571,
+    "end": 6.873
+   },
+   {
+    "text": "landing",
+    "start": 6.931,
+    "end": 7.256
+   },
+   {
+    "text": "mission.",
+    "start": 7.303,
+    "end": 8.22
+   }
+  ],
+  "scene-2": [
+   {
+    "text": "Neil",
+    "start": 0,
+    "end": 0.267
+   },
+   {
+    "text": "Armstrong,",
+    "start": 0.337,
+    "end": 0.952
+   },
+   {
+    "text": "Buzz",
+    "start": 1.068,
+    "end": 1.335
+   },
+   {
+    "text": "Aldrin,",
+    "start": 1.393,
+    "end": 1.788
+   },
+   {
+    "text": "and",
+    "start": 1.811,
+    "end": 1.881
+   },
+   {
+    "text": "Michael",
+    "start": 1.939,
+    "end": 2.252
+   },
+   {
+    "text": "Collins",
+    "start": 2.322,
+    "end": 2.763
+   },
+   {
+    "text": "rode",
+    "start": 3.007,
+    "end": 3.262
+   },
+   {
+    "text": "the",
+    "start": 3.297,
+    "end": 3.367
+   },
+   {
+    "text": "command",
+    "start": 3.413,
+    "end": 3.738
+   },
+   {
+    "text": "module",
+    "start": 3.808,
+    "end": 4.168
+   },
+   {
+    "text": "toward",
+    "start": 4.203,
+    "end": 4.493
+   },
+   {
+    "text": "lunar",
+    "start": 4.54,
+    "end": 4.807
+   },
+   {
+    "text": "orbit.",
+    "start": 4.876,
+    "end": 5.805
+   }
+  ],
+  "scene-3": [
+   {
+    "text": "Three",
+    "start": 0,
+    "end": 0.313
+   },
+   {
+    "text": "days",
+    "start": 0.348,
+    "end": 0.557
+   },
+   {
+    "text": "later,",
+    "start": 0.615,
+    "end": 1.068
+   },
+   {
+    "text": "Armstrong",
+    "start": 1.184,
+    "end": 1.707
+   },
+   {
+    "text": "and",
+    "start": 1.753,
+    "end": 1.834
+   },
+   {
+    "text": "Aldrin",
+    "start": 1.904,
+    "end": 2.287
+   },
+   {
+    "text": "entered",
+    "start": 2.415,
+    "end": 2.763
+   },
+   {
+    "text": "the",
+    "start": 2.786,
+    "end": 2.856
+   },
+   {
+    "text": "lunar",
+    "start": 2.914,
+    "end": 3.193
+   },
+   {
+    "text": "module",
+    "start": 3.228,
+    "end": 3.611
+   },
+   {
+    "text": "Eagle",
+    "start": 3.669,
+    "end": 4.156
+   },
+   {
+    "text": "and",
+    "start": 4.272,
+    "end": 4.435
+   },
+   {
+    "text": "began",
+    "start": 4.493,
+    "end": 4.795
+   },
+   {
+    "text": "their",
+    "start": 4.841,
+    "end": 4.981
+   },
+   {
+    "text": "descent",
+    "start": 5.027,
+    "end": 5.375
+   },
+   {
+    "text": "to",
+    "start": 5.41,
+    "end": 5.468
+   },
+   {
+    "text": "the",
+    "start": 5.526,
+    "end": 5.608
+   },
+   {
+    "text": "surface.",
+    "start": 5.654,
+    "end": 7.059
+   }
+  ],
+  "scene-4": [
+   {
+    "text": "Eagle",
+    "start": 0,
+    "end": 0.395
+   },
+   {
+    "text": "touched",
+    "start": 0.43,
+    "end": 0.72
+   },
+   {
+    "text": "down",
+    "start": 0.743,
+    "end": 0.964
+   },
+   {
+    "text": "at",
+    "start": 1.01,
+    "end": 1.08
+   },
+   {
+    "text": "Tranquility",
+    "start": 1.115,
+    "end": 1.683
+   },
+   {
+    "text": "Base",
+    "start": 1.741,
+    "end": 2.032
+   },
+   {
+    "text": "in",
+    "start": 2.078,
+    "end": 2.159
+   },
+   {
+    "text": "the",
+    "start": 2.206,
+    "end": 2.276
+   },
+   {
+    "text": "Sea",
+    "start": 2.322,
+    "end": 2.508
+   },
+   {
+    "text": "of",
+    "start": 2.543,
+    "end": 2.601
+   },
+   {
+    "text": "Tranquility",
+    "start": 2.647,
+    "end": 3.332
+   },
+   {
+    "text": "on",
+    "start": 3.576,
+    "end": 3.715
+   },
+   {
+    "text": "July",
+    "start": 3.762,
+    "end": 4.04
+   },
+   {
+    "text": "20,",
+    "start": 4.122,
+    "end": 4.563
+   },
+   {
+    "text": "1969.",
+    "start": 4.598,
+    "end": 6.316
+   }
+  ],
+  "scene-5": [
+   {
+    "text": "Armstrong",
+    "start": 0,
+    "end": 0.569
+   },
+   {
+    "text": "stepped",
+    "start": 0.639,
+    "end": 0.94
+   },
+   {
+    "text": "onto",
+    "start": 0.975,
+    "end": 1.138
+   },
+   {
+    "text": "the",
+    "start": 1.196,
+    "end": 1.265
+   },
+   {
+    "text": "Moon",
+    "start": 1.312,
+    "end": 1.544
+   },
+   {
+    "text": "at",
+    "start": 1.614,
+    "end": 1.73
+   },
+   {
+    "text": "10:56",
+    "start": 1.776,
+    "end": 2.554
+   },
+   {
+    "text": "pm",
+    "start": 2.67,
+    "end": 2.972
+   },
+   {
+    "text": "EDT",
+    "start": 3.065,
+    "end": 3.576
+   },
+   {
+    "text": "and",
+    "start": 4.087,
+    "end": 4.238
+   },
+   {
+    "text": "called",
+    "start": 4.307,
+    "end": 4.551
+   },
+   {
+    "text": "it",
+    "start": 4.586,
+    "end": 4.667
+   },
+   {
+    "text": "a",
+    "start": 4.714,
+    "end": 4.748
+   },
+   {
+    "text": "giant",
+    "start": 4.83,
+    "end": 5.213
+   },
+   {
+    "text": "leap",
+    "start": 5.294,
+    "end": 5.526
+   },
+   {
+    "text": "for",
+    "start": 5.596,
+    "end": 5.712
+   },
+   {
+    "text": "mankind.",
+    "start": 5.77,
+    "end": 7.198
+   }
+  ],
+  "scene-6": [
+   {
+    "text": "Aldrin",
+    "start": 0,
+    "end": 0.464
+   },
+   {
+    "text": "joined",
+    "start": 0.534,
+    "end": 0.789
+   },
+   {
+    "text": "him",
+    "start": 0.824,
+    "end": 0.94
+   },
+   {
+    "text": "20",
+    "start": 1.01,
+    "end": 1.277
+   },
+   {
+    "text": "minutes",
+    "start": 1.335,
+    "end": 1.579
+   },
+   {
+    "text": "later",
+    "start": 1.625,
+    "end": 1.95
+   },
+   {
+    "text": "and",
+    "start": 2.078,
+    "end": 2.229
+   },
+   {
+    "text": "they",
+    "start": 2.276,
+    "end": 2.38
+   },
+   {
+    "text": "spent",
+    "start": 2.415,
+    "end": 2.67
+   },
+   {
+    "text": "over",
+    "start": 2.717,
+    "end": 2.879
+   },
+   {
+    "text": "two",
+    "start": 2.937,
+    "end": 3.088
+   },
+   {
+    "text": "hours",
+    "start": 3.146,
+    "end": 3.425
+   },
+   {
+    "text": "outside",
+    "start": 3.495,
+    "end": 3.959
+   },
+   {
+    "text": "the",
+    "start": 3.994,
+    "end": 4.063
+   },
+   {
+    "text": "module.",
+    "start": 4.098,
+    "end": 5.108
+   }
+  ],
+  "scene-7": [
+   {
+    "text": "They",
+    "start": 0,
+    "end": 0.209
+   },
+   {
+    "text": "set",
+    "start": 0.255,
+    "end": 0.441
+   },
+   {
+    "text": "up",
+    "start": 0.488,
+    "end": 0.58
+   },
+   {
+    "text": "experiments,",
+    "start": 0.639,
+    "end": 1.37
+   },
+   {
+    "text": "collected",
+    "start": 1.451,
+    "end": 1.881
+   },
+   {
+    "text": "volcanic",
+    "start": 1.939,
+    "end": 2.415
+   },
+   {
+    "text": "samples,",
+    "start": 2.473,
+    "end": 3.088
+   },
+   {
+    "text": "and",
+    "start": 3.262,
+    "end": 3.402
+   },
+   {
+    "text": "planted",
+    "start": 3.46,
+    "end": 3.82
+   },
+   {
+    "text": "a",
+    "start": 3.855,
+    "end": 3.878
+   },
+   {
+    "text": "flag",
+    "start": 3.936,
+    "end": 4.272
+   },
+   {
+    "text": "within",
+    "start": 4.319,
+    "end": 4.528
+   },
+   {
+    "text": "100",
+    "start": 4.621,
+    "end": 5.062
+   },
+   {
+    "text": "meters",
+    "start": 5.132,
+    "end": 5.445
+   },
+   {
+    "text": "of",
+    "start": 5.492,
+    "end": 5.538
+   },
+   {
+    "text": "Eagle.",
+    "start": 5.596,
+    "end": 6.502
+   }
+  ],
+  "scene-8": [
+   {
+    "text": "Collins",
+    "start": 0,
+    "end": 0.441
+   },
+   {
+    "text": "waited",
+    "start": 0.499,
+    "end": 0.813
+   },
+   {
+    "text": "alone",
+    "start": 0.859,
+    "end": 1.161
+   },
+   {
+    "text": "in",
+    "start": 1.196,
+    "end": 1.265
+   },
+   {
+    "text": "Columbia,",
+    "start": 1.335,
+    "end": 1.974
+   },
+   {
+    "text": "circling",
+    "start": 2.101,
+    "end": 2.531
+   },
+   {
+    "text": "the",
+    "start": 2.589,
+    "end": 2.659
+   },
+   {
+    "text": "Moon",
+    "start": 2.705,
+    "end": 2.937
+   },
+   {
+    "text": "at",
+    "start": 2.995,
+    "end": 3.1
+   },
+   {
+    "text": "an",
+    "start": 3.146,
+    "end": 3.216
+   },
+   {
+    "text": "altitude",
+    "start": 3.262,
+    "end": 3.738
+   },
+   {
+    "text": "of",
+    "start": 3.762,
+    "end": 3.808
+   },
+   {
+    "text": "97",
+    "start": 3.889,
+    "end": 4.481
+   },
+   {
+    "text": "to",
+    "start": 4.54,
+    "end": 4.609
+   },
+   {
+    "text": "121",
+    "start": 4.725,
+    "end": 5.422
+   },
+   {
+    "text": "kilometers.",
+    "start": 5.503,
+    "end": 6.687
+   }
+  ],
+  "scene-9": [
+   {
+    "text": "On",
+    "start": 0,
+    "end": 0.186
+   },
+   {
+    "text": "July",
+    "start": 0.232,
+    "end": 0.511
+   },
+   {
+    "text": "21,",
+    "start": 0.569,
+    "end": 1.196
+   },
+   {
+    "text": "Eagle's",
+    "start": 1.37,
+    "end": 1.73
+   },
+   {
+    "text": "ascent",
+    "start": 1.765,
+    "end": 2.067
+   },
+   {
+    "text": "stage",
+    "start": 2.125,
+    "end": 2.508
+   },
+   {
+    "text": "launched",
+    "start": 2.566,
+    "end": 2.891
+   },
+   {
+    "text": "at",
+    "start": 2.926,
+    "end": 2.995
+   },
+   {
+    "text": "17:54",
+    "start": 3.042,
+    "end": 4.11
+   },
+   {
+    "text": "UTC",
+    "start": 4.203,
+    "end": 4.609
+   },
+   {
+    "text": "and",
+    "start": 5.12,
+    "end": 5.271
+   },
+   {
+    "text": "rejoined",
+    "start": 5.352,
+    "end": 5.77
+   },
+   {
+    "text": "Collins",
+    "start": 5.84,
+    "end": 6.223
+   },
+   {
+    "text": "in",
+    "start": 6.293,
+    "end": 6.385
+   },
+   {
+    "text": "lunar",
+    "start": 6.455,
+    "end": 6.711
+   },
+   {
+    "text": "orbit.",
+    "start": 6.769,
+    "end": 7.848
+   }
+  ],
+  "scene-10": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.128
+   },
+   {
+    "text": "crew",
+    "start": 0.186,
+    "end": 0.406
+   },
+   {
+    "text": "left",
+    "start": 0.464,
+    "end": 0.673
+   },
+   {
+    "text": "lunar",
+    "start": 0.731,
+    "end": 0.998
+   },
+   {
+    "text": "orbit",
+    "start": 1.068,
+    "end": 1.347
+   },
+   {
+    "text": "the",
+    "start": 1.382,
+    "end": 1.451
+   },
+   {
+    "text": "next",
+    "start": 1.498,
+    "end": 1.718
+   },
+   {
+    "text": "day",
+    "start": 1.765,
+    "end": 2.043
+   },
+   {
+    "text": "and",
+    "start": 2.113,
+    "end": 2.241
+   },
+   {
+    "text": "splashed",
+    "start": 2.299,
+    "end": 2.682
+   },
+   {
+    "text": "down",
+    "start": 2.705,
+    "end": 2.914
+   },
+   {
+    "text": "in",
+    "start": 2.961,
+    "end": 3.019
+   },
+   {
+    "text": "the",
+    "start": 3.053,
+    "end": 3.123
+   },
+   {
+    "text": "Pacific",
+    "start": 3.17,
+    "end": 3.646
+   },
+   {
+    "text": "on",
+    "start": 3.855,
+    "end": 4.017
+   },
+   {
+    "text": "July",
+    "start": 4.063,
+    "end": 4.365
+   },
+   {
+    "text": "24,",
+    "start": 4.435,
+    "end": 5.085
+   },
+   {
+    "text": "1969.",
+    "start": 5.155,
+    "end": 6.687
+   }
+  ]
+ },
+ "report": {
+  "checks": [
+   {
+    "sentenceId": "scene-1.1",
+    "factIds": [
+     "f3",
+     "f8",
+     "f9",
+     "f15"
+    ],
+    "status": "supported",
+    "original": "On July 16, 1969, a Saturn V rocket lifted three astronauts toward the Moon for the first crewed landing mission.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-2.1",
+    "factIds": [
+     "f8",
+     "f2"
+    ],
+    "status": "revised",
+    "original": "Neil Armstrong, Buzz Aldrin, and Michael Collins rode the command module Columbia toward lunar orbit.",
+    "revised": "Neil Armstrong, Buzz Aldrin, and Michael Collins rode the command module toward lunar orbit.",
+    "reason": "The quotes do not name the command module Columbia in scene 2 facts."
+   },
+   {
+    "sentenceId": "scene-3.1",
+    "factIds": [
+     "f4",
+     "f10"
+    ],
+    "status": "supported",
+    "original": "Three days later, Armstrong and Aldrin entered the lunar module Eagle and began their descent to the surface.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-4.1",
+    "factIds": [
+     "f10",
+     "f11"
+    ],
+    "status": "supported",
+    "original": "Eagle touched down at Tranquility Base in the Sea of Tranquility on July 20, 1969.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-5.1",
+    "factIds": [
+     "f36",
+     "f28"
+    ],
+    "status": "supported",
+    "original": "Armstrong stepped onto the Moon at 10:56 pm EDT and called it a giant leap for mankind.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-6.1",
+    "factIds": [
+     "f38",
+     "f39"
+    ],
+    "status": "supported",
+    "original": "Aldrin joined him 20 minutes later and they spent over two hours outside the module.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-7.1",
+    "factIds": [
+     "f12",
+     "f22",
+     "f23",
+     "f25"
+    ],
+    "status": "supported",
+    "original": "They set up experiments, collected volcanic samples, and planted a flag within 100 meters of Eagle.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-8.1",
+    "factIds": [
+     "f4",
+     "f5"
+    ],
+    "status": "supported",
+    "original": "Collins waited alone in Columbia, circling the Moon at an altitude of 97 to 121 kilometers.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-9.1",
+    "factIds": [
+     "f1",
+     "f6"
+    ],
+    "status": "supported",
+    "original": "On July 21, Eagle's ascent stage launched at 17:54 UTC and rejoined Collins in lunar orbit.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-10.1",
+    "factIds": [
+     "f6",
+     "f24",
+     "f31"
+    ],
+    "status": "supported",
+    "original": "The crew left lunar orbit the next day and splashed down in the Pacific on July 24, 1969.",
+    "revised": "",
+    "reason": ""
+   }
+  ],
+  "supported": 9,
+  "revised": 1,
+  "removed": 0
+ },
+ "facts": [
+  {
+   "id": "f1",
+   "text": "The Lunar Module ascent stage launched from the Moon on July 21, 1969 at 17:54:00 UTC.",
+   "quote": "Return launch | July 21, 1969, 17:54:00 UTC",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f2",
+   "text": "Michael Collins was the command module pilot of Apollo 11, the first crewed lunar landing mission.",
+   "quote": "who was the command module pilot of Apollo 11, the first crewed lunar landing mission",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f3",
+   "text": "Apollo 11 launched on July 16, 1969.",
+   "quote": "On July 16, 1969, Collins was launched to the Moon in the Apollo 11 mission",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f4",
+   "text": "Armstrong and Aldrin landed on the Moon on July 20, 1969, while Collins remained in the command module Columbia.",
+   "quote": "Armstrong and Aldrin landed on the Moon in the lunar module Eagle on July 20 while Collins remained in the command module Columbia",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f5",
+   "text": "The command module Columbia circled the Moon at an altitude of 97\u2013121 km (60\u201375 miles).",
+   "quote": "circling the Moon at an altitude of 97\u2013121 km (60\u201375 miles)",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f6",
+   "text": "Armstrong and Aldrin rejoined Collins on July 21, 1969, and they left lunar orbit the next day.",
+   "quote": "On July 21 Armstrong and Aldrin rejoined him, and the following day the astronauts left lunar orbit",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f7",
+   "text": "Michael Collins was born on October 31, 1930, in Rome, Italy.",
+   "quote": "Michael Collins (born October 31, 1930, Rome, Italy",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f8",
+   "text": "The crew consisted of Neil A. Armstrong, Michael Collins, and Edwin E. 'Buzz' Aldrin, Jr.",
+   "quote": "Neil A. Armstrong Michael Collins Edwin E. \"Buzz\" Aldrin, Jr.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f9",
+   "text": "Apollo 11 was the first manned lunar landing mission and included the first lunar surface EVA.",
+   "quote": "First manned lunar landing mission and lunar surface EVA.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f10",
+   "text": "The lunar module Eagle landed at Tranquility Base in the Sea of Tranquility on July 20, 1969.",
+   "quote": "\"HOUSTON, TRANQUILITY BASE HERE. THE EAGLE HAS LANDED.\"--July 20, Landing site: Sea of Tranquility.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f11",
+   "text": "The landing coordinates were 0.67409 degrees North, 23.47298 degrees East.",
+   "quote": "Landing Coordinates: 0.67409 degrees North, 23.47298 degrees East",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f12",
+   "text": "The single EVA lasted 2 hours and 31 minutes during which the flag and instruments were deployed and a plaque was unveiled.",
+   "quote": "1 EVA of 02 hours, 31 minutes. Flag and instruments deployed; unveiled plaque on the LM descent stage",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f13",
+   "text": "The Saturn V first flew on November 9, 1967, with the Apollo 4 mission.",
+   "quote": "First flight | November 9, 1967 (AS-501 Apollo 4)",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f14",
+   "text": "The Saturn V made its last flight on May 14, 1973, launching Skylab.",
+   "quote": "Last flight | May 14, 1973 (AS-513 Skylab)",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f15",
+   "text": "The Saturn V was the first rocket to carry humans beyond low Earth orbit.",
+   "quote": "The Saturn V was the first launch vehicle to carry humans beyond low Earth orbit (LEO)",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f16",
+   "text": "The Saturn V holds the record for the largest payload capacity to low Earth orbit at 140,000 kg.",
+   "quote": "The Saturn V holds the record for the largest payload capacity to low Earth orbit, 140,000 kg (310,000 lb)",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f17",
+   "text": "An estimated 125 to 150 million Americans watched the Apollo 11 moon landing in 1969.",
+   "quote": "An estimated 125 to 150 million Americans watched the Apollo 11 moon landing in 1969.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f18",
+   "text": "The Apollo 11 moon landing is considered the most watched broadcast of all time with an estimated viewership of 125\u2013150 million.",
+   "quote": "The Apollo 11 moon landing is considered the most watched broadcast of all time, with an estimated viewership of 125\u2013150 million.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f19",
+   "text": "The Apollo 11 moon landing is considered a news event and not a telecast because major networks each produced their own coverage.",
+   "quote": "the Apollo 11 moon landing is considered a news event and not a telecast, as the major networks each produced their own coverage of the event",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f20",
+   "text": "Apollo 11 launched on July 16, 1969.",
+   "quote": "embarked on their journey to the Moon on July 16, 1969",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f21",
+   "text": "The crew was Neil Armstrong, Buzz Aldrin, and Michael Collins.",
+   "quote": "Neil Armstrong, Buzz Aldrin, and Michael Collins first embarked on their journey",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f22",
+   "text": "Armstrong and Aldrin stayed within about 100 meters (300 feet) of the lunar module Eagle.",
+   "quote": "remained within about 100 meters (around 300 feet) of the lunar module Eagle",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f23",
+   "text": "They spent approximately two and a half hours outside Eagle collecting samples and setting up experiments.",
+   "quote": "spent approximately two and a half hours outside Eagle, collecting rock and soil samples and setting up science experiments",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f24",
+   "text": "Apollo 11 splashed down in the Pacific Ocean on July 24.",
+   "quote": "splashed down in the Pacific Ocean on July 24",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f25",
+   "text": "The volcanic samples collected are roughly 3.6 billion years old.",
+   "quote": "The volcanic samples collected by Apollo 11 are old \u2013 roughly 3.6 billion years old.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f26",
+   "text": "Neil Armstrong descended to the Moon's surface on July 20, 1969.",
+   "quote": "On July 20, 1969, an estimated 650 million people watched in suspense as Neil Armstrong descended a ladder towards the surface of the Moon.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f27",
+   "text": "An estimated 650 million people watched the Moon landing live.",
+   "quote": "On July 20, 1969, an estimated 650 million people watched in suspense as Neil Armstrong descended a ladder towards the surface of the Moon.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f28",
+   "text": "The media reported Armstrong's first words as \"That's one small step for man. One giant leap for mankind.\"",
+   "quote": "As he took his first steps, he uttered words that would be written into history books for generations to come: \u201cThat\u2019s one small step for man. One giant leap for mankind.\u201d",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f29",
+   "text": "Armstrong insisted he actually said \"That's one small step for a man.\"",
+   "quote": "But Armstrong insisted that he actually said, \u201cThat\u2019s one small step for a man.\u201d",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f30",
+   "text": "NASA's official transcript records the quote as \"that's one small step for (a) man.\"",
+   "quote": "In fact, in the official transcript of the Moon landing mission, NASA transcribes the quote as \u201cthat\u2019s one small step for (a) man.\u201d",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f31",
+   "text": "The Apollo 11 mission concluded with splashdown in the Pacific Ocean on July 24, 1969, eight days, three hours, 18 minutes and 35 seconds after launch.",
+   "quote": "The Apollo 11 mission concluded exactly eight days, three hours, 18 minutes and 35 seconds after launch with a splashdown landing in the Pacific Ocean",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f32",
+   "text": "The splashdown location was about 800 nautical miles southwest of Hawaii.",
+   "quote": "about 800 nautical miles southwest of Hawaii",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f33",
+   "text": "The command module splashed down 12 miles from the recovery ship USS Hornet.",
+   "quote": "12 miles from the recovery ship, the USS Hornet",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f34",
+   "text": "Apollo 11 launched on July 16, 1969, carrying Neil Armstrong, Buzz Aldrin, and Michael Collins.",
+   "quote": "On July 16, 1969, Armstrong, along with Edwin E. Aldrin, Jr., and Michael Collins, blasted off in the Apollo 11 vehicle toward the Moon",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f35",
+   "text": "The Eagle lunar module landed on July 20, 1969 at 4:17 pm EDT near the southwestern edge of the Sea of Tranquility.",
+   "quote": "Four days later, at 4:17 pm U.S. Eastern Daylight Time (EDT), the Eagle lunar landing module, guided manually by Armstrong, touched down on a plain near the southwestern edge of the Sea of Tranquility",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f36",
+   "text": "Neil Armstrong stepped onto the Moon on July 20, 1969 at 10:56 pm EDT and said his famous quote.",
+   "quote": "At 10:56 pm EDT on July 20, 1969, Armstrong stepped from the Eagle onto the Moon\u2019s dusty surface with the words, \u201cThat\u2019s one small step for [a] man, one giant leap for mankind.\u201d",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f37",
+   "text": "Armstrong described the lunar surface as fine and powdery and noted no difficulty moving about.",
+   "quote": "He immediately described the surface as \u201cfine and powdery\u201d and said that there was no difficulty moving about.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f38",
+   "text": "Buzz Aldrin joined Armstrong on the lunar surface about 20 minutes after Armstrong's first step.",
+   "quote": "Aldrin joined his companion about 20 minutes later.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f39",
+   "text": "Armstrong and Aldrin spent over two hours outside the module deploying instruments, collecting samples, and taking photographs.",
+   "quote": "Armstrong and Aldrin left the module for more than two hours and deployed scientific instruments, collected surface samples, and took",
+   "sourceId": "s9"
+  }
+ ],
+ "sources": [
+  {
+   "id": "s1",
+   "title": "Apollo 11 - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Apollo_11"
+  },
+  {
+   "id": "s2",
+   "title": "Michael Collins | Biography, Apollo 11, & Facts | Britannica",
+   "url": "https://britannica.com/biography/Michael-Collins-American-astronaut"
+  },
+  {
+   "id": "s3",
+   "title": "Apollo 11 Lunar Surface Journal : Mission Overview",
+   "url": "https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/a11ov.html"
+  },
+  {
+   "id": "s4",
+   "title": "Saturn V - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Saturn_V"
+  },
+  {
+   "id": "s5",
+   "title": "List of most watched television broadcasts in the United States - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/List_of_most_watched_television_broadcasts_in_the_United_States"
+  },
+  {
+   "id": "s6",
+   "title": "APOLLO 11 MOON LANDING: 50 Anniversary - Science@NASA",
+   "url": "https://science.nasa.gov/wp-content/uploads/2023/09/Apollo11AnniversaryLitho_updated.pdf?emrc=664513282bc7e"
+  },
+  {
+   "id": "s7",
+   "title": "What were Neil Armstrong's famous first words on the moon? | OregonNews",
+   "url": "https://news.uoregon.edu/content/what-were-neil-armstrongs-famous-first-words-moon"
+  },
+  {
+   "id": "s8",
+   "title": "Apollo 11 Moon Landing Timeline: From Liftoff to Splashdown | HISTORY",
+   "url": "https://www.history.com/news/apollo-11-moon-landing-timeline"
+  },
+  {
+   "id": "s9",
+   "title": "Neil Armstrong | Biography, Education, Moon Landing, & Facts | Britannica",
+   "url": "https://www.britannica.com/biography/Neil-Armstrong"
+  }
+ ]
+}

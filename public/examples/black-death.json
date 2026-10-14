@@ -1,0 +1,1753 @@
+{
+ "request": {
+  "topic": "The Black Death",
+  "audience": "High school",
+  "lengthSec": 90,
+  "language": "en"
+ },
+ "madeAt": "2026-10-14T15:33:00.806Z",
+ "ms": 49322,
+ "costUsd": 0.09241799999999999,
+ "storyboard": {
+  "title": "The Black Death: Europe's Deadly Pandemic",
+  "language": "en",
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "scenes": [
+   {
+    "id": "scene-1",
+    "narration": "In the mid-1300s, a deadly disease swept across Europe and changed everything.",
+    "factIds": [
+     "f17",
+     "f18"
+    ],
+    "durationSec": 5.7,
+    "kind": "title",
+    "heading": "The Black Death: Europe's Deadly Pandemic",
+    "subheading": "How did the Black Death reshape Europe?"
+   },
+   {
+    "id": "scene-2",
+    "narration": "The Black Death was caused by the bacterium Yersinia pestis. It spreads mainly through flea bites.",
+    "factIds": [
+     "f8",
+     "f9"
+    ],
+    "durationSec": 7,
+    "kind": "list",
+    "items": [
+     {
+      "title": "Bacterium",
+      "detail": "Yersinia pestis"
+     },
+     {
+      "title": "Transmission",
+      "detail": "Flea bites"
+     }
+    ]
+   },
+   {
+    "id": "scene-3",
+    "narration": "The outbreak reached Europe in 1347 when Genoese traders fled a siege in Caffa, Crimea. Ships carried infected rats and fleas across the Mediterranean Basin.",
+    "factIds": [
+     "f4",
+     "f5",
+     "f31"
+    ],
+    "durationSec": 11.7,
+    "kind": "map",
+    "frame": [
+     "ITA",
+     "UKR"
+    ],
+    "highlights": [
+     {
+      "country": "UKR",
+      "label": "Crimea",
+      "tone": "primary"
+     },
+     {
+      "country": "ITA",
+      "label": "Italy",
+      "tone": "secondary"
+     }
+    ],
+    "arrows": [
+     {
+      "from": "UKR",
+      "to": "ITA",
+      "label": "Genoese ships"
+     }
+    ],
+    "markers": [
+     {
+      "lon": 14.02,
+      "lat": 37.6,
+      "label": "Sicily"
+     }
+    ]
+   },
+   {
+    "id": "scene-4",
+    "narration": "The pandemic lasted from 1347 to 1352. It killed up to 50 million people, roughly 30% to 60% of Europe's population.",
+    "factIds": [
+     "f17",
+     "f6"
+    ],
+    "durationSec": 11,
+    "kind": "timeline",
+    "events": [
+     {
+      "year": 1347,
+      "label": "Outbreak begins"
+     },
+     {
+      "year": 1352,
+      "label": "Outbreak ends"
+     }
+    ],
+    "focusIndex": 0
+   },
+   {
+    "id": "scene-5",
+    "narration": "Bubonic plague caused fever, vomiting, and painful swollen lymph nodes called buboes. Pneumonic plague attacked the lungs, causing severe breathing trouble.",
+    "factIds": [
+     "f11",
+     "f12",
+     "f13",
+     "f14"
+    ],
+    "durationSec": 11.3,
+    "kind": "list",
+    "items": [
+     {
+      "title": "Bubonic plague",
+      "detail": "fever, vomiting, buboes"
+     },
+     {
+      "title": "Pneumonic plague",
+      "detail": "attacks lungs, breathing trouble"
+     }
+    ]
+   },
+   {
+    "id": "scene-6",
+    "narration": "The plague was much more severe in cities than in the countryside. Serfs died in huge numbers due to poor living conditions.",
+    "factIds": [
+     "f20",
+     "f21"
+    ],
+    "durationSec": 8.3,
+    "kind": "text",
+    "lines": [
+     "Plague worse in cities",
+     "Serfs died in huge numbers",
+     "Poor conditions increased spread"
+    ]
+   },
+   {
+    "id": "scene-7",
+    "narration": "Lazarettos served as quarantine facilities to isolate the sick from the healthy. Ragusa forced healthy sailors to stay isolated for 30 days.",
+    "factIds": [
+     "f24",
+     "f25",
+     "f27"
+    ],
+    "durationSec": 9.8,
+    "kind": "steps",
+    "steps": [
+     "Lazarettos isolate sick from healthy",
+     "Ragusa isolates healthy sailors",
+     "30 days covers incubation period"
+    ]
+   },
+   {
+    "id": "scene-8",
+    "narration": "All attempts to stop the spread or cure victims failed. The massive death toll shattered the feudal socio-economic system.",
+    "factIds": [
+     "f22",
+     "f19",
+     "f43"
+    ],
+    "durationSec": 8.4,
+    "kind": "list",
+    "items": [
+     {
+      "title": "Failed attempts",
+      "detail": "Stop spread, cure victims"
+     },
+     {
+      "title": "Feudal system",
+      "detail": "Shattered by death toll"
+     }
+    ]
+   },
+   {
+    "id": "scene-9",
+    "narration": "Labor shortages gave surviving workers better wages and higher living standards. The feudal system declined and new ideas fueled the Renaissance.",
+    "factIds": [
+     "f34",
+     "f35",
+     "f37"
+    ],
+    "durationSec": 9.5,
+    "kind": "text",
+    "lines": [
+     "Labor shortages raised wages and living standards",
+     "Feudal system declined after the pandemic",
+     "New ideas and art led to the Renaissance"
+    ]
+   },
+   {
+    "id": "scene-10",
+    "narration": "The Black Death killed millions, ended feudalism, and sparked the Renaissance.",
+    "factIds": [
+     "f6",
+     "f35",
+     "f37"
+    ],
+    "durationSec": 5.3,
+    "kind": "stat",
+    "value": 50,
+    "unit": "million",
+    "label": "people killed"
+   }
+  ],
+  "sources": [
+   {
+    "id": "s1",
+    "title": "Black Death migration - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Black_Death_migration"
+   },
+   {
+    "id": "s2",
+    "title": "Black Death - Wikipedia",
+    "url": "http://en.wikipedia.org/wiki/Black_Death"
+   },
+   {
+    "id": "s3",
+    "title": "What were the symptoms of the Black Death?  | Britannica",
+    "url": "https://britannica.com/question/What-were-the-symptoms-of-the-Black-Death"
+   },
+   {
+    "id": "s4",
+    "title": "Audio Article: Effects of the Black Death on Europe",
+    "url": "https://www.worldhistory.org/audioplayer/en/2-1543"
+   },
+   {
+    "id": "s5",
+    "title": "Social Distancing and Quarantine Were Used in Medieval Times to Fight the Black Death | HISTORY",
+    "url": "https://www.history.com/articles/quarantine-black-death-medieval"
+   },
+   {
+    "id": "s6",
+    "title": "Black Death - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Black_Death"
+   },
+   {
+    "id": "s7",
+    "title": "The Black Death: A Timeline of the Gruesome Pandemic | HISTORY",
+    "url": "https://www.history.com/articles/black-death-timeline"
+   },
+   {
+    "id": "s9",
+    "title": "Effects of the Black Death on Europe - World History Encyclopedia",
+    "url": "https://www.worldhistory.org/article/1543/effects-of-the-black-death-on-europe"
+   }
+  ]
+ },
+ "words": {
+  "scene-1": [
+   {
+    "text": "In",
+    "start": 0,
+    "end": 0.151
+   },
+   {
+    "text": "the",
+    "start": 0.174,
+    "end": 0.244
+   },
+   {
+    "text": "mid-1300s,",
+    "start": 0.279,
+    "end": 1.3
+   },
+   {
+    "text": "a",
+    "start": 1.347,
+    "end": 1.416
+   },
+   {
+    "text": "deadly",
+    "start": 1.498,
+    "end": 1.8
+   },
+   {
+    "text": "disease",
+    "start": 1.858,
+    "end": 2.299
+   },
+   {
+    "text": "swept",
+    "start": 2.38,
+    "end": 2.694
+   },
+   {
+    "text": "across",
+    "start": 2.74,
+    "end": 3.019
+   },
+   {
+    "text": "Europe",
+    "start": 3.077,
+    "end": 3.402
+   },
+   {
+    "text": "and",
+    "start": 3.448,
+    "end": 3.564
+   },
+   {
+    "text": "changed",
+    "start": 3.622,
+    "end": 3.982
+   },
+   {
+    "text": "everything.",
+    "start": 4.04,
+    "end": 5.062
+   }
+  ],
+  "scene-2": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.163
+   },
+   {
+    "text": "Black",
+    "start": 0.209,
+    "end": 0.43
+   },
+   {
+    "text": "Death",
+    "start": 0.488,
+    "end": 0.731
+   },
+   {
+    "text": "was",
+    "start": 0.778,
+    "end": 0.882
+   },
+   {
+    "text": "caused",
+    "start": 0.952,
+    "end": 1.289
+   },
+   {
+    "text": "by",
+    "start": 1.335,
+    "end": 1.44
+   },
+   {
+    "text": "the",
+    "start": 1.486,
+    "end": 1.556
+   },
+   {
+    "text": "bacterium",
+    "start": 1.591,
+    "end": 2.183
+   },
+   {
+    "text": "Yersinia",
+    "start": 2.264,
+    "end": 2.786
+   },
+   {
+    "text": "pestis.",
+    "start": 2.844,
+    "end": 3.495
+   },
+   {
+    "text": "It",
+    "start": 3.936,
+    "end": 4.075
+   },
+   {
+    "text": "spreads",
+    "start": 4.122,
+    "end": 4.47
+   },
+   {
+    "text": "mainly",
+    "start": 4.54,
+    "end": 4.853
+   },
+   {
+    "text": "through",
+    "start": 4.899,
+    "end": 5.132
+   },
+   {
+    "text": "flea",
+    "start": 5.178,
+    "end": 5.387
+   },
+   {
+    "text": "bites.",
+    "start": 5.433,
+    "end": 6.362
+   }
+  ],
+  "scene-3": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.151
+   },
+   {
+    "text": "outbreak",
+    "start": 0.221,
+    "end": 0.639
+   },
+   {
+    "text": "reached",
+    "start": 0.708,
+    "end": 0.964
+   },
+   {
+    "text": "Europe",
+    "start": 1.022,
+    "end": 1.312
+   },
+   {
+    "text": "in",
+    "start": 1.347,
+    "end": 1.405
+   },
+   {
+    "text": "1347",
+    "start": 1.463,
+    "end": 2.473
+   },
+   {
+    "text": "when",
+    "start": 2.798,
+    "end": 2.984
+   },
+   {
+    "text": "Genoese",
+    "start": 3.042,
+    "end": 3.529
+   },
+   {
+    "text": "traders",
+    "start": 3.553,
+    "end": 3.936
+   },
+   {
+    "text": "fled",
+    "start": 3.994,
+    "end": 4.226
+   },
+   {
+    "text": "a",
+    "start": 4.261,
+    "end": 4.296
+   },
+   {
+    "text": "siege",
+    "start": 4.365,
+    "end": 4.714
+   },
+   {
+    "text": "in",
+    "start": 4.748,
+    "end": 4.818
+   },
+   {
+    "text": "Caffa,",
+    "start": 4.899,
+    "end": 5.364
+   },
+   {
+    "text": "Crimea.",
+    "start": 5.41,
+    "end": 6.177
+   },
+   {
+    "text": "Ships",
+    "start": 6.618,
+    "end": 6.943
+   },
+   {
+    "text": "carried",
+    "start": 7.001,
+    "end": 7.349
+   },
+   {
+    "text": "infected",
+    "start": 7.384,
+    "end": 7.848
+   },
+   {
+    "text": "rats",
+    "start": 7.918,
+    "end": 8.197
+   },
+   {
+    "text": "and",
+    "start": 8.231,
+    "end": 8.324
+   },
+   {
+    "text": "fleas",
+    "start": 8.394,
+    "end": 8.719
+   },
+   {
+    "text": "across",
+    "start": 8.812,
+    "end": 9.183
+   },
+   {
+    "text": "the",
+    "start": 9.218,
+    "end": 9.288
+   },
+   {
+    "text": "Mediterranean",
+    "start": 9.334,
+    "end": 9.973
+   },
+   {
+    "text": "Basin.",
+    "start": 10.031,
+    "end": 11.053
+   }
+  ],
+  "scene-4": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.139
+   },
+   {
+    "text": "pandemic",
+    "start": 0.186,
+    "end": 0.65
+   },
+   {
+    "text": "lasted",
+    "start": 0.72,
+    "end": 1.08
+   },
+   {
+    "text": "from",
+    "start": 1.115,
+    "end": 1.242
+   },
+   {
+    "text": "1347",
+    "start": 1.3,
+    "end": 2.287
+   },
+   {
+    "text": "to",
+    "start": 2.461,
+    "end": 2.566
+   },
+   {
+    "text": "1352.",
+    "start": 2.624,
+    "end": 3.889
+   },
+   {
+    "text": "It",
+    "start": 4.331,
+    "end": 4.47
+   },
+   {
+    "text": "killed",
+    "start": 4.528,
+    "end": 4.783
+   },
+   {
+    "text": "up",
+    "start": 4.818,
+    "end": 4.899
+   },
+   {
+    "text": "to",
+    "start": 4.946,
+    "end": 5.004
+   },
+   {
+    "text": "50",
+    "start": 5.085,
+    "end": 5.341
+   },
+   {
+    "text": "million",
+    "start": 5.41,
+    "end": 5.7
+   },
+   {
+    "text": "people,",
+    "start": 5.759,
+    "end": 6.293
+   },
+   {
+    "text": "roughly",
+    "start": 6.467,
+    "end": 6.792
+   },
+   {
+    "text": "30%",
+    "start": 6.861,
+    "end": 7.488
+   },
+   {
+    "text": "to",
+    "start": 7.639,
+    "end": 7.709
+   },
+   {
+    "text": "60%",
+    "start": 7.779,
+    "end": 8.371
+   },
+   {
+    "text": "of",
+    "start": 8.487,
+    "end": 8.557
+   },
+   {
+    "text": "Europe's",
+    "start": 8.626,
+    "end": 8.928
+   },
+   {
+    "text": "population.",
+    "start": 8.975,
+    "end": 10.356
+   }
+  ],
+  "scene-5": [
+   {
+    "text": "Bubonic",
+    "start": 0,
+    "end": 0.499
+   },
+   {
+    "text": "plague",
+    "start": 0.569,
+    "end": 0.987
+   },
+   {
+    "text": "caused",
+    "start": 1.045,
+    "end": 1.358
+   },
+   {
+    "text": "fever,",
+    "start": 1.416,
+    "end": 1.916
+   },
+   {
+    "text": "vomiting,",
+    "start": 2.032,
+    "end": 2.67
+   },
+   {
+    "text": "and",
+    "start": 2.821,
+    "end": 2.984
+   },
+   {
+    "text": "painful",
+    "start": 3.065,
+    "end": 3.46
+   },
+   {
+    "text": "swollen",
+    "start": 3.529,
+    "end": 3.947
+   },
+   {
+    "text": "lymph",
+    "start": 4.017,
+    "end": 4.272
+   },
+   {
+    "text": "nodes",
+    "start": 4.331,
+    "end": 4.632
+   },
+   {
+    "text": "called",
+    "start": 4.702,
+    "end": 5.004
+   },
+   {
+    "text": "buboes.",
+    "start": 5.074,
+    "end": 5.817
+   },
+   {
+    "text": "Pneumonic",
+    "start": 6.327,
+    "end": 6.85
+   },
+   {
+    "text": "plague",
+    "start": 6.908,
+    "end": 7.279
+   },
+   {
+    "text": "attacked",
+    "start": 7.326,
+    "end": 7.697
+   },
+   {
+    "text": "the",
+    "start": 7.721,
+    "end": 7.79
+   },
+   {
+    "text": "lungs,",
+    "start": 7.872,
+    "end": 8.382
+   },
+   {
+    "text": "causing",
+    "start": 8.51,
+    "end": 8.87
+   },
+   {
+    "text": "severe",
+    "start": 8.94,
+    "end": 9.288
+   },
+   {
+    "text": "breathing",
+    "start": 9.334,
+    "end": 9.694
+   },
+   {
+    "text": "trouble.",
+    "start": 9.752,
+    "end": 10.728
+   }
+  ],
+  "scene-6": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.174
+   },
+   {
+    "text": "plague",
+    "start": 0.232,
+    "end": 0.58
+   },
+   {
+    "text": "was",
+    "start": 0.604,
+    "end": 0.708
+   },
+   {
+    "text": "much",
+    "start": 0.778,
+    "end": 0.964
+   },
+   {
+    "text": "more",
+    "start": 1.022,
+    "end": 1.173
+   },
+   {
+    "text": "severe",
+    "start": 1.219,
+    "end": 1.567
+   },
+   {
+    "text": "in",
+    "start": 1.614,
+    "end": 1.683
+   },
+   {
+    "text": "cities",
+    "start": 1.753,
+    "end": 2.101
+   },
+   {
+    "text": "than",
+    "start": 2.136,
+    "end": 2.264
+   },
+   {
+    "text": "in",
+    "start": 2.31,
+    "end": 2.368
+   },
+   {
+    "text": "the",
+    "start": 2.403,
+    "end": 2.473
+   },
+   {
+    "text": "countryside.",
+    "start": 2.519,
+    "end": 3.332
+   },
+   {
+    "text": "Serfs",
+    "start": 3.611,
+    "end": 3.994
+   },
+   {
+    "text": "died",
+    "start": 4.04,
+    "end": 4.342
+   },
+   {
+    "text": "in",
+    "start": 4.389,
+    "end": 4.458
+   },
+   {
+    "text": "huge",
+    "start": 4.54,
+    "end": 4.841
+   },
+   {
+    "text": "numbers",
+    "start": 4.888,
+    "end": 5.248
+   },
+   {
+    "text": "due",
+    "start": 5.492,
+    "end": 5.747
+   },
+   {
+    "text": "to",
+    "start": 5.782,
+    "end": 5.84
+   },
+   {
+    "text": "poor",
+    "start": 5.909,
+    "end": 6.118
+   },
+   {
+    "text": "living",
+    "start": 6.188,
+    "end": 6.432
+   },
+   {
+    "text": "conditions.",
+    "start": 6.478,
+    "end": 7.709
+   }
+  ],
+  "scene-7": [
+   {
+    "text": "Lazarettos",
+    "start": 0,
+    "end": 0.662
+   },
+   {
+    "text": "served",
+    "start": 0.708,
+    "end": 1.033
+   },
+   {
+    "text": "as",
+    "start": 1.068,
+    "end": 1.138
+   },
+   {
+    "text": "quarantine",
+    "start": 1.219,
+    "end": 1.776
+   },
+   {
+    "text": "facilities",
+    "start": 1.811,
+    "end": 2.392
+   },
+   {
+    "text": "to",
+    "start": 2.601,
+    "end": 2.705
+   },
+   {
+    "text": "isolate",
+    "start": 2.798,
+    "end": 3.216
+   },
+   {
+    "text": "the",
+    "start": 3.251,
+    "end": 3.32
+   },
+   {
+    "text": "sick",
+    "start": 3.379,
+    "end": 3.611
+   },
+   {
+    "text": "from",
+    "start": 3.669,
+    "end": 3.796
+   },
+   {
+    "text": "the",
+    "start": 3.831,
+    "end": 3.901
+   },
+   {
+    "text": "healthy.",
+    "start": 3.959,
+    "end": 4.574
+   },
+   {
+    "text": "Ragusa",
+    "start": 5.016,
+    "end": 5.48
+   },
+   {
+    "text": "forced",
+    "start": 5.55,
+    "end": 5.84
+   },
+   {
+    "text": "healthy",
+    "start": 5.886,
+    "end": 6.177
+   },
+   {
+    "text": "sailors",
+    "start": 6.235,
+    "end": 6.606
+   },
+   {
+    "text": "to",
+    "start": 6.653,
+    "end": 6.722
+   },
+   {
+    "text": "stay",
+    "start": 6.78,
+    "end": 7.001
+   },
+   {
+    "text": "isolated",
+    "start": 7.082,
+    "end": 7.651
+   },
+   {
+    "text": "for",
+    "start": 7.697,
+    "end": 7.79
+   },
+   {
+    "text": "30",
+    "start": 7.837,
+    "end": 8.127
+   },
+   {
+    "text": "days.",
+    "start": 8.185,
+    "end": 9.195
+   }
+  ],
+  "scene-8": [
+   {
+    "text": "All",
+    "start": 0,
+    "end": 0.255
+   },
+   {
+    "text": "attempts",
+    "start": 0.302,
+    "end": 0.673
+   },
+   {
+    "text": "to",
+    "start": 0.72,
+    "end": 0.801
+   },
+   {
+    "text": "stop",
+    "start": 0.871,
+    "end": 1.103
+   },
+   {
+    "text": "the",
+    "start": 1.161,
+    "end": 1.231
+   },
+   {
+    "text": "spread",
+    "start": 1.277,
+    "end": 1.637
+   },
+   {
+    "text": "or",
+    "start": 1.695,
+    "end": 1.788
+   },
+   {
+    "text": "cure",
+    "start": 1.858,
+    "end": 2.136
+   },
+   {
+    "text": "victims",
+    "start": 2.183,
+    "end": 2.612
+   },
+   {
+    "text": "failed.",
+    "start": 2.682,
+    "end": 3.228
+   },
+   {
+    "text": "The",
+    "start": 3.669,
+    "end": 3.773
+   },
+   {
+    "text": "massive",
+    "start": 3.843,
+    "end": 4.226
+   },
+   {
+    "text": "death",
+    "start": 4.272,
+    "end": 4.505
+   },
+   {
+    "text": "toll",
+    "start": 4.551,
+    "end": 4.772
+   },
+   {
+    "text": "shattered",
+    "start": 4.865,
+    "end": 5.259
+   },
+   {
+    "text": "the",
+    "start": 5.294,
+    "end": 5.364
+   },
+   {
+    "text": "feudal",
+    "start": 5.422,
+    "end": 5.759
+   },
+   {
+    "text": "socio-economic",
+    "start": 5.84,
+    "end": 6.734
+   },
+   {
+    "text": "system.",
+    "start": 6.78,
+    "end": 7.848
+   }
+  ],
+  "scene-9": [
+   {
+    "text": "Labor",
+    "start": 0,
+    "end": 0.337
+   },
+   {
+    "text": "shortages",
+    "start": 0.383,
+    "end": 0.894
+   },
+   {
+    "text": "gave",
+    "start": 0.964,
+    "end": 1.196
+   },
+   {
+    "text": "surviving",
+    "start": 1.231,
+    "end": 1.672
+   },
+   {
+    "text": "workers",
+    "start": 1.73,
+    "end": 2.078
+   },
+   {
+    "text": "better",
+    "start": 2.136,
+    "end": 2.403
+   },
+   {
+    "text": "wages",
+    "start": 2.461,
+    "end": 2.902
+   },
+   {
+    "text": "and",
+    "start": 2.961,
+    "end": 3.088
+   },
+   {
+    "text": "higher",
+    "start": 3.17,
+    "end": 3.39
+   },
+   {
+    "text": "living",
+    "start": 3.437,
+    "end": 3.657
+   },
+   {
+    "text": "standards.",
+    "start": 3.715,
+    "end": 4.4
+   },
+   {
+    "text": "The",
+    "start": 4.841,
+    "end": 4.946
+   },
+   {
+    "text": "feudal",
+    "start": 5.004,
+    "end": 5.317
+   },
+   {
+    "text": "system",
+    "start": 5.375,
+    "end": 5.712
+   },
+   {
+    "text": "declined",
+    "start": 5.77,
+    "end": 6.281
+   },
+   {
+    "text": "and",
+    "start": 6.362,
+    "end": 6.502
+   },
+   {
+    "text": "new",
+    "start": 6.571,
+    "end": 6.711
+   },
+   {
+    "text": "ideas",
+    "start": 6.769,
+    "end": 7.152
+   },
+   {
+    "text": "fueled",
+    "start": 7.233,
+    "end": 7.581
+   },
+   {
+    "text": "the",
+    "start": 7.605,
+    "end": 7.674
+   },
+   {
+    "text": "Renaissance.",
+    "start": 7.721,
+    "end": 8.916
+   }
+  ],
+  "scene-10": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.163
+   },
+   {
+    "text": "Black",
+    "start": 0.221,
+    "end": 0.464
+   },
+   {
+    "text": "Death",
+    "start": 0.522,
+    "end": 0.789
+   },
+   {
+    "text": "killed",
+    "start": 0.848,
+    "end": 1.138
+   },
+   {
+    "text": "millions,",
+    "start": 1.196,
+    "end": 1.776
+   },
+   {
+    "text": "ended",
+    "start": 1.95,
+    "end": 2.264
+   },
+   {
+    "text": "feudalism,",
+    "start": 2.322,
+    "end": 2.984
+   },
+   {
+    "text": "and",
+    "start": 3.03,
+    "end": 3.17
+   },
+   {
+    "text": "sparked",
+    "start": 3.228,
+    "end": 3.622
+   },
+   {
+    "text": "the",
+    "start": 3.646,
+    "end": 3.715
+   },
+   {
+    "text": "Renaissance.",
+    "start": 3.762,
+    "end": 4.69
+   }
+  ]
+ },
+ "report": {
+  "checks": [
+   {
+    "sentenceId": "scene-1.1",
+    "factIds": [
+     "f17",
+     "f18"
+    ],
+    "status": "supported",
+    "original": "In the mid-1300s, a deadly disease swept across Europe and changed everything.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-2.1",
+    "factIds": [
+     "f8"
+    ],
+    "status": "supported",
+    "original": "The Black Death was caused by the bacterium Yersinia pestis.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-2.2",
+    "factIds": [
+     "f9"
+    ],
+    "status": "supported",
+    "original": "It spreads mainly through flea bites.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-3.1",
+    "factIds": [
+     "f4",
+     "f5"
+    ],
+    "status": "supported",
+    "original": "The outbreak reached Europe in 1347 when Genoese traders fled a siege in Caffa, Crimea.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-3.2",
+    "factIds": [
+     "f31"
+    ],
+    "status": "supported",
+    "original": "Ships carried infected rats and fleas across the Mediterranean Basin.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-4.1",
+    "factIds": [
+     "f17"
+    ],
+    "status": "supported",
+    "original": "The pandemic lasted from 1347 to 1352.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-4.2",
+    "factIds": [
+     "f6"
+    ],
+    "status": "supported",
+    "original": "It killed up to 50 million people, roughly 30% to 60% of Europe's population.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-5.1",
+    "factIds": [
+     "f11",
+     "f12"
+    ],
+    "status": "supported",
+    "original": "Bubonic plague caused fever, vomiting, and painful swollen lymph nodes called buboes.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-5.2",
+    "factIds": [
+     "f13",
+     "f14"
+    ],
+    "status": "supported",
+    "original": "Pneumonic plague attacked the lungs, causing severe breathing trouble.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-6.1",
+    "factIds": [
+     "f20"
+    ],
+    "status": "revised",
+    "original": "Cities suffered more than the countryside due to crowded conditions.",
+    "revised": "The plague was much more severe in cities than in the countryside.",
+    "reason": "The quote states cities suffered more but does not mention crowded conditions as the cause."
+   },
+   {
+    "sentenceId": "scene-6.2",
+    "factIds": [
+     "f21"
+    ],
+    "status": "supported",
+    "original": "Serfs died in huge numbers due to poor living conditions.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-7.1",
+    "factIds": [
+     "f24",
+     "f25"
+    ],
+    "status": "revised",
+    "original": "Italian health officials created quarantine stations called lazarettos to isolate the sick.",
+    "revised": "Lazarettos served as quarantine facilities to isolate the sick from the healthy.",
+    "reason": "The quotes describe the origin of the word lazaretto and its function as a quarantine facility, but do not state that Italian health officials created them."
+   },
+   {
+    "sentenceId": "scene-7.2",
+    "factIds": [
+     "f27"
+    ],
+    "status": "supported",
+    "original": "Ragusa forced healthy sailors to stay isolated for 30 days.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-8.1",
+    "factIds": [
+     "f22"
+    ],
+    "status": "supported",
+    "original": "All attempts to stop the spread or cure victims failed.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-8.2",
+    "factIds": [
+     "f19",
+     "f43"
+    ],
+    "status": "supported",
+    "original": "The massive death toll shattered the feudal socio-economic system.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-9.1",
+    "factIds": [
+     "f34"
+    ],
+    "status": "supported",
+    "original": "Labor shortages gave surviving workers better wages and higher living standards.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-9.2",
+    "factIds": [
+     "f35",
+     "f37"
+    ],
+    "status": "supported",
+    "original": "The feudal system declined and new ideas fueled the Renaissance.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-10.1",
+    "factIds": [
+     "f6",
+     "f35",
+     "f37"
+    ],
+    "status": "supported",
+    "original": "The Black Death killed millions, ended feudalism, and sparked the Renaissance.",
+    "revised": "",
+    "reason": ""
+   }
+  ],
+  "supported": 16,
+  "revised": 2,
+  "removed": 0
+ },
+ "facts": [
+  {
+   "id": "f1",
+   "text": "Yersinia pestis is enzootic in ground rodent populations in Central Asia.",
+   "quote": "is enzootic (commonly present) in populations of ground rodents in Central Asia",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f2",
+   "text": "Molecular studies indicate plague was present in Scandinavia 3,000 years earlier than previously thought.",
+   "quote": "molecular studies which have indicated that the plague was present in Scandinavia 3,000 years earlier",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f3",
+   "text": "The immediate origins of the Black Death remain uncertain.",
+   "quote": "the immediate origins of the Black Death are also uncertain",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f4",
+   "text": "Mongols reportedly lobbed plague-infected corpses during the siege of Caffa in Crimea in 1347.",
+   "quote": "It was reportedly first introduced to Europe when Mongols lobbed plague-infected corpses during the siege of Caffa in the Crimea in 1347",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f5",
+   "text": "Genoese traders fleeing Caffa brought the plague by ship into Sicily and Southern Europe.",
+   "quote": "The Genoese traders fled, bringing the plague by ship into Sicily and Southern Europe, whence it spread",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f6",
+   "text": "It killed up to 50 million people, around 30% to 60% of the European population.",
+   "quote": "leading to the death of up to 50 million people, around 30% to 60% of the European population",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f7",
+   "text": "It also killed approximately 33% of the Middle Eastern population.",
+   "quote": "and approximately 33% of the Middle Eastern population.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f8",
+   "text": "The disease was caused by the bacterium Yersinia pestis.",
+   "quote": "The disease was caused by the bacterium Yersinia pestis",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f9",
+   "text": "Yersinia pestis is primarily spread by flea bites.",
+   "quote": "which is primarily spread by flea bites",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f10",
+   "text": "The Black Death was the second great natural disaster in late Middle Ages Europe, after the Great Famine of 1315–1317.",
+   "quote": "The Black Death was the second great natural disaster to strike Europe during the late Middle Ages (the first one being the Great Famine of 1315–1317).",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f11",
+   "text": "Bubonic plague causes fever, fatigue, shivering, vomiting, headaches, giddiness, intolerance to light, pain in the back and limbs, sleeplessness, apathy, and delirium.",
+   "quote": "Bubonic plague causes fever, fatigue, shivering, vomiting, headaches, giddiness, intolerance to light, pain in the back and limbs, sleeplessness, apathy, and delirium.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f12",
+   "text": "Bubonic plague causes buboes: one or more lymph nodes become tender and swollen, usually in the groin or armpits.",
+   "quote": "It also causes buboes: one or more of the lymph nodes become tender and swollen, usually in the groin or armpits.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f13",
+   "text": "Pneumonic plague affects the lungs and causes symptoms similar to severe pneumonia: fever, weakness, and shortness of breath.",
+   "quote": "Pneumonic plague affects the lungs and causes symptoms similar to those of severe pneumonia: fever, weakness, and shortness of breath.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f14",
+   "text": "Fluid fills the lungs in pneumonic plague and can cause death if untreated.",
+   "quote": "Fluid fills the lungs and can cause death if untreated.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f15",
+   "text": "Pneumonic plague may also cause insomnia, stupor, a staggering gait, speech disorder, and loss of memory.",
+   "quote": "Other symptoms may include insomnia, stupor, a staggering gait, speech disorder, and loss of memory.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f16",
+   "text": "Septicemic plague is an infection of the blood with symptoms of fatigue, fever, and internal bleeding.",
+   "quote": "Septicemic plague is an infection of the blood. Its symptoms include fatigue, fever, and internal bleeding.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f17",
+   "text": "The Black Death outbreak in Europe lasted from 1347 to 1352.",
+   "quote": "The outbreak of plague in Europe between 1347 to 1352 – known as the Black Death",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f18",
+   "text": "The Black Death completely changed medieval European society.",
+   "quote": "completely changed the world of medieval Europe",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f19",
+   "text": "Severe depopulation upset the feudal socio-economic system.",
+   "quote": "Severe depopulation upset the socio-economic feudal system of the time",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f20",
+   "text": "The plague was more severe in cities than in the countryside.",
+   "quote": "The plague was much more severe in the cities than in the countryside",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f21",
+   "text": "Serfs died in widespread numbers because their living conditions increased contact.",
+   "quote": "widespread death of the serfs, those who were most susceptible as their living conditions placed them in closer contact with each other",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f22",
+   "text": "All efforts to stop the plague's spread or cure the infected failed.",
+   "quote": "all efforts to stop its spread or cure those infected failed",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f23",
+   "text": "Medieval Italian health officials implemented anti-contagion measures during the Black Death despite not understanding bacteria or viruses.",
+   "quote": "they understood enough about the Black Death to implement some of the world's first anti-contagion measures",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f24",
+   "text": "The word lazaretto comes from Nazaretto, the nickname for the lagoon island where Venice built its first permanent plague hospital.",
+   "quote": "the name lazaretto is a corruption of the word Nazaretto, the nickname for the lagoon island upon which Venice built its first permanent plague hospital",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f25",
+   "text": "Lazarettos served as both medical treatment centers and quarantine facilities to isolate the sick from the healthy.",
+   "quote": "served two functions, as a medical treatment center and a quarantine facility",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f26",
+   "text": "At lazarettos, plague patients received fresh food, clean bedding, and other treatments paid for by the state.",
+   "quote": "plague-infected patients would receive fresh food, clean bedding and other health-promoting treatments, all paid for by the state",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f27",
+   "text": "Ragusa ordered healthy sailors and traders to be isolated for 30 days to account for the plague's incubation period.",
+   "quote": "By ordering the isolation of healthy sailors and traders for 30 days, Ragusan officials showed a remarkable understanding of incubation periods",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f28",
+   "text": "Genetic analysis suggests Yersinia pestis bacteria evolved approximately 7,000 years ago, at the beginning of the Neolithic.",
+   "quote": "Genetic analysis suggests Yersinia pestis bacteria evolved approximately 7,000 years ago, at the beginning of the Neolithic",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f29",
+   "text": "Flea-mediated strains of Yersinia pestis emerged around 3,800 years ago during the late Bronze Age.",
+   "quote": "with flea-mediated strains emerging around 3,800 years ago during the late Bronze Age",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f30",
+   "text": "The Black Death was reportedly first introduced to Europe during the siege of the Genoese trading port of Caffa in Crimea by the Golden Horde army of Jani Beg in 1347.",
+   "quote": "The pandemic was reportedly first introduced to Europe during the siege of the Genoese trading port of Caffa in Crimea by the Golden Horde army of Jani Beg in 1347",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f31",
+   "text": "From Crimea, the plague was most likely carried by fleas on black rats that travelled on Genoese ships, spreading through the Mediterranean Basin.",
+   "quote": "From Crimea, it was most likely carried by fleas living on the black rats that travelled on Genoese ships, spreading through the Mediterranean Basin",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f32",
+   "text": "Researchers found the earliest known victims of the Black Death at two cemeteries in the Chüy Valley near Lake Issyk-Kul in modern Kyrgyzstan.",
+   "quote": "researchers pointed to the earliest victims of the plague found at two cemeteries in the Chüy Valley near Lake Issyk-Kul in modern Kyrgyzstan",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f33",
+   "text": "Tombstones with Syriac inscriptions at the Kara-Djigach and Burana cemeteries show a spike in deaths due to 'pestilence' in 1338–1339.",
+   "quote": "tombstones with Syriac inscription, providing the name of the deceased, year of death and often the cause of death, showing a spike due to \"pestilence\" in 1338–1339",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f34",
+   "text": "After the Black Death, labor shortages led to better wages and a higher standard of living for survivors.",
+   "quote": "It becomes easier to get work for better wages and the average standard of living rises.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f35",
+   "text": "The feudal system declined following the pandemic.",
+   "quote": "With the feudal system dying, the aristocracy tries to pass laws preventing any further rise by the peasants",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f36",
+   "text": "Aristocrats passed laws to stop peasants from gaining more power, which caused upheaval and revolution in England and France.",
+   "quote": "the aristocracy tries to pass laws preventing any further rise by the peasants, leading to upheaval and revolution in England and France.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f37",
+   "text": "Massive deaths among older intellectuals created opportunities for new ideas and art, directly leading to the Renaissance.",
+   "quote": "Significant losses within older intellectual communities brought on an unprecedented opportunity for new ideas and art concepts to take hold, directly leading to the Renaissance",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f38",
+   "text": "The pestis secunda, the second wave of the Second Plague Pandemic, struck England and Wales in 1361–62.",
+   "quote": "the pestis secunda—the second wave of the Second Plague Pandemic—which ravaged England and Wales in 1361–62",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f39",
+   "text": "The study argues that England's population on the eve of the Black Death was higher than often argued.",
+   "quote": "It argues that the population size of England on the eve of the Black Death was higher than often argued",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f40",
+   "text": "The study argues that the pestis secunda had harsher impact than often assumed.",
+   "quote": "and that the impact of the pestis secunda was harsher than often assumed",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f41",
+   "text": "The pestis secunda, not the Black Death, caused severe long-term demographic and socioeconomic repercussions.",
+   "quote": "It was the pestis secunda, rather than the Black Death, that had severe, long‐term demographic and socioeconomic repercussions for England and Wales",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f42",
+   "text": "The Black Death pandemic occurred in Europe between 1347 and 1352.",
+   "quote": "The outbreak of plague in Europe between 1347-1352 – known as the Black Death – completely changed the world of medieval Europe.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f43",
+   "text": "Severe depopulation from the plague upset the feudal socio-economic system.",
+   "quote": "Severe depopulation upset the socio-economic feudal system of the time",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f44",
+   "text": "The plague affected every aspect of people's lives.",
+   "quote": "the experience of the plague itself affected every aspect of people's lives",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f45",
+   "text": "By the mid-15th century radical changes were taking place across Europe.",
+   "quote": "by the middle of the 15th century radical changes – unimaginable only one hundred years before – were taking place throughout Europe",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f46",
+   "text": "These later changes included the Protestant Reformation, a shift from grain farming to animal husbandry, wage increases for laborers, and advances associated with the Renaissance.",
+   "quote": "notably the Protestant Reformation, the agricultural shift from large-scale grain-farming to animal husbandry, the wage increase for urban and rural laborers, and the many other advances associated with the Renaissance.",
+   "sourceId": "s9"
+  }
+ ],
+ "sources": [
+  {
+   "id": "s1",
+   "title": "Black Death migration - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Black_Death_migration"
+  },
+  {
+   "id": "s2",
+   "title": "Black Death - Wikipedia",
+   "url": "http://en.wikipedia.org/wiki/Black_Death"
+  },
+  {
+   "id": "s3",
+   "title": "What were the symptoms of the Black Death?  | Britannica",
+   "url": "https://britannica.com/question/What-were-the-symptoms-of-the-Black-Death"
+  },
+  {
+   "id": "s4",
+   "title": "Audio Article: Effects of the Black Death on Europe",
+   "url": "https://www.worldhistory.org/audioplayer/en/2-1543"
+  },
+  {
+   "id": "s5",
+   "title": "Social Distancing and Quarantine Were Used in Medieval Times to Fight the Black Death | HISTORY",
+   "url": "https://www.history.com/articles/quarantine-black-death-medieval"
+  },
+  {
+   "id": "s6",
+   "title": "Black Death - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Black_Death"
+  },
+  {
+   "id": "s7",
+   "title": "The Black Death: A Timeline of the Gruesome Pandemic | HISTORY",
+   "url": "https://www.history.com/articles/black-death-timeline"
+  },
+  {
+   "id": "s8",
+   "title": "Plague Strikes Back: The Pestis Secunda of 1361–62 and Its Demographic Consequences in England and Wales",
+   "url": "https://read.dukeupress.edu/jmems/article/54/3/457/390460/Plague-Strikes-Back-The-Pestis-Secunda-of-1361-62"
+  },
+  {
+   "id": "s9",
+   "title": "Effects of the Black Death on Europe - World History Encyclopedia",
+   "url": "https://www.worldhistory.org/article/1543/effects-of-the-black-death-on-europe"
+  }
+ ]
+}

@@ -4,6 +4,7 @@ import type { PlayerRef } from "@remotion/player";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { DirectResult } from "@/lib/direct";
+import { EXAMPLES } from "@/lib/example";
 import type { Example } from "@/lib/example";
 import type { FactCheckResult } from "@/lib/factcheck";
 import type { FactCheckReport as Report, ResearchFact, VideoRequest } from "@/lib/pipeline";
@@ -58,7 +59,6 @@ const STEPS: { id: StepId; label: string; timeoutMs: number }[] = [
 const AUDIENCES = ["Kids (8 to 12)", "High school", "Adults"];
 const SUGGESTIONS = ["The Black Death", "How vaccines work", "The fall of the Berlin Wall"];
 const LENGTHS = [60, 90, 120];
-const EXAMPLE = { json: "/examples/silk-road.json", audioFolder: "/examples/silk-road" };
 
 const waitingSteps = () =>
   Object.fromEntries(STEPS.map((step) => [step.id, { status: "waiting" }])) as Record<StepId, StepState>;
@@ -73,16 +73,17 @@ function hostname(url: string): string {
   }
 }
 
-// The saved example video, ready to play.
-async function loadExample(): Promise<Finished> {
-  const response = await fetch(EXAMPLE.json);
+// A saved example video, ready to play.
+async function loadExample(slug: string): Promise<Finished> {
+  const response = await fetch(`/examples/${slug}.json`);
+  if (!response.ok) throw new Error(`The example "${slug}" could not be loaded.`);
   const example = (await response.json()) as Example;
   return {
     storyboard: example.storyboard,
     voice: Object.fromEntries(
       example.storyboard.scenes.map((scene) => [
         scene.id,
-        { audio: `${EXAMPLE.audioFolder}/${scene.id}.mp3`, words: example.words[scene.id] ?? [] },
+        { audio: `/examples/${slug}/${scene.id}.mp3`, words: example.words[scene.id] ?? [] },
       ]),
     ),
     report: example.report,
@@ -299,17 +300,20 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
     void runFrom(failed.step, progress.current);
   }
 
-  async function watchExample() {
+  async function watchExample(slug: string) {
     if (running) return;
     setStarted(false);
     setFailed(null);
     setActiveSentence(null);
-    setFinished(await loadExample());
+    setFinished(await loadExample(slug));
   }
 
-  // A link to /?example opens the example straight away.
+  // A link to /?example opens the first example straight away, and /?example=black-death that one.
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).has("example")) void loadExample().then(setFinished);
+    const wanted = new URLSearchParams(window.location.search).get("example");
+    if (wanted === null) return;
+    const slug = EXAMPLES.some((example) => example.slug === wanted) ? wanted : EXAMPLES[0].slug;
+    void loadExample(slug).then(setFinished);
   }, []);
 
   return (
@@ -397,16 +401,19 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
             </button>
           ))}
         </p>
-        <p className="text-sm text-dim">
-          Takes under a minute.{" "}
-          <button
-            type="button"
-            onClick={watchExample}
-            disabled={running}
-            className="underline decoration-line underline-offset-4 hover:decoration-signal disabled:opacity-50"
-          >
-            Watch an example about the Silk Road
-          </button>
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-dim">
+          <span>Takes under a minute. Watch an example:</span>
+          {EXAMPLES.map((example) => (
+            <button
+              key={example.slug}
+              type="button"
+              onClick={() => void watchExample(example.slug)}
+              disabled={running}
+              className="underline decoration-line underline-offset-4 hover:decoration-signal disabled:opacity-50"
+            >
+              {example.topic}
+            </button>
+          ))}
         </p>
       </div>
 

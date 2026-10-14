@@ -1,15 +1,19 @@
-// Makes the example behind "Watch an example": runs the pipeline once and saves the finished video,
+// Makes one of the examples behind "Watch an example": runs the pipeline once and saves the finished video,
 // with one MP3 per scene, in public/examples. Source texts are left out; titles, links and the short
 // quotes behind each fact are kept.
-// Run with `npm run make-example` while the app is running (npm run dev). It makes paid API calls.
+// Run with `npm run make-example -- black-death` while the app is running (npm run dev); without a slug it makes
+// the first example. The slugs are in lib/example.ts. It makes paid API calls.
 
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { EXAMPLES } from "../lib/example.ts";
 import type { Example } from "../lib/example.ts";
 import type { VideoRequest } from "../lib/pipeline.ts";
 import { runPipeline } from "./pipeline-client.ts";
 
-const SLUG = "silk-road";
-const REQUEST: VideoRequest = { topic: "The Silk Road", audience: "High school", lengthSec: 90, language: "en" };
+const chosen = EXAMPLES.find((example) => example.slug === (process.argv[2] ?? EXAMPLES[0].slug));
+if (!chosen) throw new Error(`Unknown example. Use one of: ${EXAMPLES.map((example) => example.slug).join(", ")}`);
+const SLUG = chosen.slug;
+const REQUEST: VideoRequest = { topic: chosen.topic, audience: "High school", lengthSec: 90, language: "en" };
 
 console.log(`Making the example "${REQUEST.topic}"`);
 const run = await runPipeline(REQUEST);

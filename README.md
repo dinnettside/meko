@@ -71,7 +71,7 @@ You need Node.js 22.18 or newer and npm.
    npm run dev
    ```
 
-   To see a finished video without any API keys, click "Watch an example" or open http://localhost:3000/?example.
+   To see finished videos without any API keys, pick one of the examples under the form, or open http://localhost:3000/?example=black-death.
 
 ## Commands
 
@@ -83,7 +83,7 @@ You need Node.js 22.18 or newer and npm.
 | `npm run lint` | Runs ESLint |
 | `npm run typecheck` | Generates route types and runs the TypeScript compiler |
 | `npm run eval -- 2` | Makes videos for the first 2 of 10 test topics and writes `docs/eval.md`. Leave out the number to run all 10. Needs the app running and makes paid API calls |
-| `npm run make-example` | Remakes the example video in `public/examples`. Needs the app running and makes paid API calls |
+| `npm run make-example -- black-death` | Remakes one example video in `public/examples` (the slugs are in `lib/example.ts`). Needs the app running and makes paid API calls |
 | `npm run check-models` | Tests the NVIDIA models on Token Factory and writes `docs/model-check.md`. Makes paid API calls, capped at 1 USD |
 
 ## Deploy
