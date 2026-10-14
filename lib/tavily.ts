@@ -19,6 +19,26 @@ const SearchResponseSchema = z.object({
 
 export type SearchResult = z.infer<typeof SearchResponseSchema>["results"][number];
 
+// Sources a trustworthy explainer should rest on: encyclopedias, museums, public bodies and science organizations.
+// Tavily prefers them, but other sites can still come up.
+const PREFERRED_DOMAINS = [
+  "wikipedia.org", "en.wikipedia.org", "britannica.com", "worldhistory.org", "newworldencyclopedia.org", "encyclopedia.com",
+  "history.com", "nationalgeographic.com", "smithsonianmag.com", "si.edu", "khanacademy.org", "bbc.co.uk", "bbc.com",
+  "loc.gov", "archives.gov", "metmuseum.org", "britishmuseum.org", "unesco.org", "un.org", "nasa.gov", "nih.gov",
+  "cdc.gov", "who.int", "nature.com", "science.org", "ourworldindata.org", "pbs.org", "npr.org", "reuters.com", "apnews.com",
+];
+
+// Homework answers, essay mills, Q&A boards, social media and video sites: not sources a video should cite.
+// Subdomains are listed too, since Tavily's docs do not say whether a domain covers them.
+const EXCLUDED_DOMAINS = [
+  "brainly.com", "brainly.in", "chegg.com", "coursehero.com", "quizlet.com", "studocu.com", "study.com", "homework.study.com",
+  "numerade.com", "gauthmath.com", "essaypro.com", "samples.essaypro.com", "ivypanda.com", "gradesfixer.com",
+  "studymoose.com", "papersowl.com", "edubirdie.com", "ukessays.com", "bartleby.com", "studycorgi.com", "tutorchase.com",
+  "vaia.com", "enotes.com", "kibin.com", "phdessay.com", "123helpme.com", "cram.com", "ipl.org", "answers.com",
+  "quora.com", "reddit.com", "youtube.com", "tiktok.com", "pinterest.com", "facebook.com", "instagram.com", "x.com",
+  "twitter.com", "scribd.com",
+];
+
 function headers(): Record<string, string> {
   const apiKey = process.env.TAVILY_API_KEY;
   return apiKey
@@ -32,7 +52,15 @@ export async function searchWeb(query: string): Promise<SearchResult[]> {
   const response = await fetch(SEARCH_URL, {
     method: "POST",
     headers: headers(),
-    body: JSON.stringify({ query, search_depth: "advanced", chunks_per_source: 3, max_results: 5 }),
+    body: JSON.stringify({
+      query,
+      search_depth: "advanced",
+      chunks_per_source: 3,
+      max_results: 5,
+      include_domains: PREFERRED_DOMAINS,
+      include_domains_mode: "prefer",
+      exclude_domains: EXCLUDED_DOMAINS,
+    }),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   if (!response.ok) {

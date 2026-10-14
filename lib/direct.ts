@@ -437,7 +437,9 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
         const sameStart = Math.max(...firstWords.map((word) => firstWords.filter((other) => other === word).length));
         const wordSets = visual.steps.map((step) => new Set(contentWords(step)));
         const sameWord = Math.max(0, ...[...new Set(wordSets.flatMap((words) => [...words]))].map((word) => wordSets.filter((words) => words.has(word)).length));
-        if (visual.steps.length >= 3 && (sameStart > visual.steps.length / 2 || (sameWord >= 3 && sameWord > visual.steps.length / 2))) {
+        // "Glass, gold, horses move" lists things; a step in a chain says one thing that happens.
+        const commas = visual.steps.filter((step) => step.includes(",")).length;
+        if (commas >= 2 || (visual.steps.length >= 3 && (sameStart > visual.steps.length / 2 || (sameWord >= 3 && sameWord > visual.steps.length / 2)))) {
           problems.push("These steps are a list of similar things. Steps must each lead to the next; use another kind for a list.");
         }
       }
