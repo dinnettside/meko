@@ -1,26 +1,37 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
+import type { TimedWord } from "@/lib/elevenlabs";
 import { COLORS, FONTS, VIDEO } from "@/lib/theme";
 import { countUp } from "../format";
 import { ease } from "../motion";
+import { revealTimes } from "../spoken";
 
 // Label, bar and value must fit inside the side margins: 400 + 32 + 760 + 32 + about 220 for the value.
 const LABEL_WIDTH = 400;
 const BAR_SPACE = 760;
 
-// A bar chart: bars grow one after another, and the biggest one is amber.
+// A bar chart: bars grow one after another as the narration names them, and the biggest one is amber.
 export function CompareScene({
   title,
   unit,
   bars,
+  words,
+  durationSec,
 }: {
   title: string;
   unit?: string;
   bars: { label: string; value: number }[];
+  words: TimedWord[];
+  durationSec: number;
 }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const largest = Math.max(...bars.map((bar) => bar.value), 0);
   const titleIn = ease(frame, fps, 0.1, 0.6);
+  const starts = revealTimes(
+    bars.map((bar) => `${bar.label} ${bar.value}`),
+    words,
+    { firstSec: 0.6, spreadSec: bars.length * 0.45, gapSec: 0.3, durationSec },
+  );
 
   return (
     <AbsoluteFill style={{ justifyContent: "center", padding: `0 ${VIDEO.sideMargin}px ${VIDEO.captionSpace}px` }}>
@@ -28,7 +39,7 @@ export function CompareScene({
         {title}
       </div>
       {bars.map((bar, index) => {
-        const grow = ease(frame, fps, 0.6 + index * 0.45, 1.0);
+        const grow = ease(frame, fps, starts[index], 1.0);
         const width = largest > 0 ? (bar.value / largest) * BAR_SPACE : 0;
         const isLargest = bar.value === largest;
         return (

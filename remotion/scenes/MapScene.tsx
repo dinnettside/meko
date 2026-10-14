@@ -1,9 +1,12 @@
 import { useMemo } from "react";
 import { AbsoluteFill, interpolateColors, useCurrentFrame, useVideoConfig } from "remotion";
+import { COUNTRIES } from "@/lib/countries";
+import type { TimedWord } from "@/lib/elevenlabs";
 import type { Scene } from "@/lib/storyboard";
 import { countryContains } from "@/lib/world";
-import { layoutMap } from "../geo";
+import { cameraFrom, fitProjection, layoutMap, mapCodes } from "../geo";
 import { ease } from "../motion";
+import { revealAt } from "../spoken";
 import { COLORS, FONTS, MOTION, VIDEO } from "@/lib/theme";
 
 type MapSceneData = Extract<Scene, { kind: "map" }>;
@@ -18,6 +21,9 @@ const BOX: [[number, number], [number, number]] = [
   [WIDTH - VIDEO.mapPadding, HEIGHT - CAPTION_SPACE - 30],
 ];
 const TONES = { primary: COLORS.signal, secondary: COLORS.teal, muted: COLORS.muted };
+// Where an arrow meets a country whose middle is far from where its history mostly happened: Russia's is deep in
+// Siberia, so arrows go to the European part instead.
+const ANCHORS: Record<string, [number, number]> = { RUS: [40, 55] };
 const fontSize = (strong: boolean) => (strong ? VIDEO.fontSize.mapLabelStrong : VIDEO.fontSize.mapLabel);
 
 // Rough size of a label, since text cannot be measured here. Archivo is about 0.56 em wide per character.
@@ -47,40 +53,55 @@ function placeLabels(specs: LabelSpec[], dots: Point[]): PlacedLabel[] {
   return placed;
 }
 
-// Everything about the map that does not move: the projection, the places and where the labels go.
-function planMap(scene: MapSceneData) {
+// Everything about the map that does not move: the projection, the places, where the labels go, and when each
+// part appears. A country, city or arrow comes in as the narration names it, or one after another if it never does.
+function planMap(scene: MapSceneData, words: TimedWord[], durationSec: number) {
   const arrows = scene.arrows ?? [];
   const markers = scene.markers ?? [];
-  // Fit the camera to every country the scene mentions, not only the ones in `frame`.
-  const codes = [
-    ...new Set([...scene.frame, ...scene.highlights.map((h) => h.country), ...arrows.flatMap((a) => [a.from, a.to])]),
-  ];
-  const layout = layoutMap(codes, BOX);
+  const layout = layoutMap(mapCodes(scene), BOX);
   const markerStart = 0.6 + scene.highlights.length * 0.35;
   const arrowStart = markerStart + markers.length * 0.25 + 0.2;
+  const reveal = (text: string, fallbackSec: number) => revealAt(words, text, fallbackSec, 0.4, durationSec);
+  const fillStarts = scene.highlights.map((highlight, index) =>
+    reveal(`${highlight.label ?? ""} ${COUNTRIES[highlight.country]?.name ?? ""}`, 0.5 + index * 0.35),
+  );
+  // A city the narration does not name comes in with its country.
+  const countryStart = (marker: { lon: number; lat: number }) =>
+    fillStarts.find((_, index) => countryContains(scene.highlights[index].country, marker.lon, marker.lat));
 
-  const dots = markers.flatMap((marker) => {
+  const dots = markers.flatMap((marker, index) => {
     const point = layout.project(marker.lon, marker.lat);
-    return point ? [{ marker, point }] : [];
+    const startSec = reveal(marker.label, countryStart(marker) ?? markerStart + index * 0.25);
+    return point ? [{ marker, point, startSec }] : [];
   });
   // An arrow starts or ends at a city in that country when there is one, else in the middle of the country.
   const anchor = (code: string): Point | null =>
-    dots.find(({ marker }) => countryContains(code, marker.lon, marker.lat))?.point ?? layout.pointOf(code);
-  const curves = arrows.flatMap((arrow) => {
+    dots.find(({ marker }) => countryContains(code, marker.lon, marker.lat))?.point ??
+    (ANCHORS[code] ? layout.project(...ANCHORS[code]) : null) ??
+    layout.pointOf(code);
+  // An arrow draws once the places it joins are on the map: their countries colored and their cities marked.
+  const placeStart = (code: string) =>
+    Math.max(
+      0,
+      ...scene.highlights.flatMap((highlight, index) => (highlight.country === code ? [fillStarts[index] + 0.2] : [])),
+      ...dots.filter(({ marker }) => countryContains(code, marker.lon, marker.lat)).map((dot) => dot.startSec + 0.2),
+    );
+  const curves = arrows.flatMap((arrow, index) => {
     const from = anchor(arrow.from);
     const to = anchor(arrow.to);
     if (!from || !to || (from[0] === to[0] && from[1] === to[1])) return [];
     // Bend the line to one side by a fifth of its length.
     const control: Point = [(from[0] + to[0]) / 2 - (to[1] - from[1]) * 0.2, (from[1] + to[1]) / 2 + (to[0] - from[0]) * 0.2];
-    return [{ arrow, from, to, control }];
+    const startSec = Math.max(reveal(arrow.label ?? "", arrowStart + index * 0.6), placeStart(arrow.from), placeStart(arrow.to));
+    return [{ arrow, from, to, control, startSec }];
   });
 
-  const specs: LabelSpec[] = dots.map(({ marker, point }, index) => {
+  const specs: LabelSpec[] = dots.map(({ marker, point, startSec }) => {
     const halfWidth = labelBox(0, 0, marker.label, false).w / 2 + 24;
     return {
       text: marker.label,
       strong: false,
-      startSec: markerStart + index * 0.25 + 0.1,
+      startSec: startSec + 0.1,
       at: point,
       offsets: [[0, -40], [0, 44], [halfWidth, 0], [-halfWidth, 0]],
     };
@@ -90,7 +111,7 @@ function planMap(scene: MapSceneData) {
     const point = layout.pointOf(highlight.country);
     const hasCity = dots.some(({ marker }) => countryContains(highlight.country, marker.lon, marker.lat));
     if (highlight.tone !== "primary" || !highlight.label || !point || hasCity) return;
-    specs.push({ text: highlight.label, strong: true, startSec: 0.8 + index * 0.35, at: point, offsets: [[0, 0], [0, -56], [0, 56]] });
+    specs.push({ text: highlight.label, strong: true, startSec: fillStarts[index] + 0.3, at: point, offsets: [[0, 0], [0, -56], [0, 56]] });
   });
   // With several arrows, labels crowd the map, so only a single arrow gets one.
   const [only] = curves;
@@ -99,34 +120,61 @@ function planMap(scene: MapSceneData) {
       0.25 * only.from[0] + 0.5 * only.control[0] + 0.25 * only.to[0],
       0.25 * only.from[1] + 0.5 * only.control[1] + 0.25 * only.to[1],
     ];
-    specs.push({ text: only.arrow.label, strong: true, startSec: arrowStart + 0.9, at: middle, offsets: [[0, -36], [0, 36]] });
+    specs.push({ text: only.arrow.label, strong: true, startSec: only.startSec + 0.9, at: middle, offsets: [[0, -36], [0, 36]] });
   }
 
-  return { layout, dots, curves, labels: placeLabels(specs, dots.map((dot) => dot.point)), markerStart, arrowStart };
+  return { layout, dots, curves, fillStarts, labels: placeLabels(specs, dots.map((dot) => dot.point)) };
 }
 
 // A flat map. The camera eases in on the countries, the highlighted ones fill with color one by one,
-// cities appear as dots, and arrows draw from one place to the next.
-export function MapScene({ scene }: { scene: MapSceneData }) {
+// cities appear as dots, and arrows draw from one place to the next. When the scene before is a map too, the
+// camera flies on from where that map was and its colors change into the new ones, so it plays as one map.
+export function MapScene({
+  scene,
+  previous,
+  words,
+  durationSec,
+}: {
+  scene: MapSceneData;
+  previous?: MapSceneData;
+  words: TimedWord[];
+  durationSec: number;
+}) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const plan = useMemo(() => planMap(scene), [scene]);
+  const plan = useMemo(() => planMap(scene, words, durationSec), [scene, words, durationSec]);
+  const start = useMemo(
+    () => (previous ? cameraFrom(fitProjection(mapCodes(previous), BOX), plan.layout.projection) : null),
+    [previous, plan],
+  );
 
   const camera = ease(frame, fps, 0, MOTION.cameraMove);
-  const scale = 0.84 + 0.16 * camera;
   const centerX = WIDTH / 2;
   const centerY = (BOX[0][1] + BOX[1][1]) / 2;
+  let transform = `translate(${centerX} ${centerY}) scale(${0.84 + 0.16 * camera}) translate(${-centerX} ${-centerY})`;
+  if (start) {
+    // Zoom at an even pace, while the spot in the middle of the screen moves in a straight line.
+    const scale = Math.pow(start.scale, 1 - camera);
+    const fromX = (centerX - start.x) / start.scale;
+    const fromY = (centerY - start.y) / start.scale;
+    const middleX = fromX + (centerX - fromX) * camera;
+    const middleY = fromY + (centerY - fromY) * camera;
+    transform = `translate(${centerX - scale * middleX} ${centerY - scale * middleY}) scale(${scale})`;
+  }
+  // Countries the map before colored start in that color. Those it no longer needs fade back to land.
+  const before = new Map((previous?.highlights ?? []).map((highlight) => [highlight.country, TONES[highlight.tone]]));
   const fills = new Map(
-    scene.highlights.map((highlight, index) => {
-      const progress = ease(frame, fps, 0.5 + index * 0.35, 0.6);
-      return [highlight.country, interpolateColors(progress, [0, 1], [COLORS.land, TONES[highlight.tone]])];
-    }),
+    [...before].map(([code, color]) => [code, interpolateColors(ease(frame, fps, 0.2, 0.6), [0, 1], [color, COLORS.land])]),
   );
+  scene.highlights.forEach((highlight, index) => {
+    const progress = ease(frame, fps, plan.fillStarts[index], 0.6);
+    fills.set(highlight.country, interpolateColors(progress, [0, 1], [before.get(highlight.country) ?? COLORS.land, TONES[highlight.tone]]));
+  });
 
   return (
     <AbsoluteFill>
       <svg width={WIDTH} height={HEIGHT} viewBox={`0 0 ${WIDTH} ${HEIGHT}`}>
-        <g transform={`translate(${centerX} ${centerY}) scale(${scale}) translate(${-centerX} ${-centerY})`}>
+        <g transform={transform}>
           {plan.layout.paths.map((country, index) => (
             <path
               key={index}
@@ -138,10 +186,10 @@ export function MapScene({ scene }: { scene: MapSceneData }) {
             />
           ))}
           {plan.curves.map((curve, index) => (
-            <Arrow key={index} {...curve} progress={ease(frame, fps, plan.arrowStart + index * 0.6, 1.0)} />
+            <Arrow key={index} {...curve} progress={ease(frame, fps, curve.startSec, 1.0)} />
           ))}
-          {plan.dots.map(({ point }, index) => {
-            const appear = ease(frame, fps, plan.markerStart + index * 0.25, 0.4);
+          {plan.dots.map(({ point, startSec }, index) => {
+            const appear = ease(frame, fps, startSec, 0.4);
             return <circle key={index} cx={point[0]} cy={point[1]} r={12 * appear} fill={COLORS.paper} stroke={COLORS.ink} strokeWidth={4} />;
           })}
           {plan.labels.map((label, index) => (

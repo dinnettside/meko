@@ -1,5 +1,7 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
+import type { TimedWord } from "@/lib/elevenlabs";
 import { ease } from "../motion";
+import { revealTimes } from "../spoken";
 import { COLORS, FONTS, VIDEO } from "@/lib/theme";
 
 const { width: WIDTH, height: HEIGHT, captionSpace: CAPTION_SPACE } = VIDEO;
@@ -18,15 +20,17 @@ function wrap(label: string): string[] {
   return [words.slice(0, half).join(" "), words.slice(half).join(" ")];
 }
 
-// Events in order along a line. The axis draws from left to right, the events come in one by one over the scene,
-// an amber line follows time from event to event, and the event the scene is about stands out in amber.
+// Events in order along a line. The axis draws from left to right, the events come in one by one as the narration
+// names them, an amber line follows time from event to event, and the event the scene is about stands out in amber.
 export function TimelineScene({
   events,
   focusIndex,
+  words,
   durationSec,
 }: {
   events: { year: number; label: string }[];
   focusIndex: number;
+  words: TimedWord[];
   durationSec: number;
 }) {
   const frame = useCurrentFrame();
@@ -34,7 +38,12 @@ export function TimelineScene({
   const axis = ease(frame, fps, 0.1, 0.9);
   const step = events.length > 1 ? (RIGHT - LEFT) / (events.length - 1) : 0;
   const spacing = Math.max(0.4, Math.min(1.8, (durationSec * 0.6) / events.length));
-  const startOf = (index: number) => 0.5 + index * spacing;
+  const starts = revealTimes(
+    events.map((event) => `${Math.abs(event.year)} ${event.label}`),
+    words,
+    { firstSec: 0.5, spreadSec: spacing * events.length, gapSec: 0.4, durationSec },
+  );
+  const startOf = (index: number) => starts[index];
   // How far along the axis the amber line has come: it moves on to each event as that event appears.
   const reached = events.reduce((total, _, index) => total + (index === 0 ? 0 : ease(frame, fps, startOf(index) - 0.3, 0.5)), 0);
 

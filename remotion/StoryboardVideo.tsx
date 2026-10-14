@@ -1,7 +1,9 @@
+import { useMemo } from "react";
 import type { ReactNode } from "react";
 import { AbsoluteFill, Html5Audio, Series, interpolate, useCurrentFrame } from "remotion";
 import type { Scene, Storyboard } from "@/lib/storyboard";
 import { COLORS, FONTS, MOTION } from "@/lib/theme";
+import type { TimedWord } from "@/lib/elevenlabs";
 import type { SceneVoice } from "@/lib/voice";
 import { Caption, estimateWords } from "./Caption";
 import { CompareScene } from "./scenes/CompareScene";
@@ -37,12 +39,19 @@ export function storyboardFrames(storyboard: Storyboard): number {
   return sceneStarts(storyboard)[last] + sceneFrames(storyboard.scenes[last], storyboard.fps);
 }
 
+const NO_VOICE: Record<string, SceneVoice> = {};
+
 // `voice` holds the recorded narration by scene ID. Without it, the video plays silently with captions.
-export function StoryboardVideo({ storyboard, voice = {} }: { storyboard: Storyboard; voice?: Record<string, SceneVoice> }) {
+export function StoryboardVideo({ storyboard, voice = NO_VOICE }: { storyboard: Storyboard; voice?: Record<string, SceneVoice> }) {
   const overlap = overlapFrames(storyboard.fps);
   // The opening globe turns to the countries of the first map in the video.
   const firstMap = storyboard.scenes.find((scene) => scene.kind === "map");
   const region = firstMap?.kind === "map" ? firstMap.highlights.map((highlight) => highlight.country) : [];
+  // When each word is said, so captions and pictures can follow the voice. Estimated when there is no voice.
+  const wordsByScene = useMemo(
+    () => storyboard.scenes.map((scene) => voice[scene.id]?.words ?? estimateWords(scene.narration, scene.durationSec)),
+    [storyboard, voice],
+  );
 
   return (
     <AbsoluteFill style={{ backgroundColor: COLORS.ink, color: COLORS.paper, fontFamily: FONTS.body }}>
@@ -50,11 +59,12 @@ export function StoryboardVideo({ storyboard, voice = {} }: { storyboard: Storyb
         {storyboard.scenes.map((scene, index) => {
           const frames = sceneFrames(scene, storyboard.fps);
           const isLast = index === storyboard.scenes.length - 1;
+          const words = wordsByScene[index];
           return (
             <Series.Sequence key={scene.id} durationInFrames={frames} offset={index === 0 ? 0 : -overlap}>
               <Fade frames={frames} fade={overlap} fadeOut={isLast}>
-                <SceneView scene={scene} storyboard={storyboard} region={region} />
-                <Caption words={voice[scene.id]?.words ?? estimateWords(scene.narration, scene.durationSec)} />
+                <SceneView scene={scene} previous={storyboard.scenes[index - 1]} words={words} storyboard={storyboard} region={region} />
+                <Caption words={words} />
               </Fade>
               {voice[scene.id] ? <Html5Audio src={voice[scene.id].audio} /> : null}
             </Series.Sequence>
@@ -78,23 +88,36 @@ function Fade({ frames, fade, fadeOut, children }: { frames: number; fade: numbe
   return <AbsoluteFill style={{ opacity, backgroundColor: COLORS.ink }}>{children}</AbsoluteFill>;
 }
 
-function SceneView({ scene, storyboard, region }: { scene: Scene; storyboard: Storyboard; region: string[] }) {
+function SceneView({
+  scene,
+  previous,
+  words,
+  storyboard,
+  region,
+}: {
+  scene: Scene;
+  previous?: Scene;
+  words: TimedWord[];
+  storyboard: Storyboard;
+  region: string[];
+}) {
+  const timing = { words, durationSec: scene.durationSec };
   switch (scene.kind) {
     case "title":
       return <TitleScene heading={scene.heading} subheading={scene.subheading} region={region} />;
     case "text":
-      return <TextScene lines={scene.lines} durationSec={scene.durationSec} />;
+      return <TextScene lines={scene.lines} {...timing} />;
     case "map":
-      return <MapScene scene={scene} />;
+      return <MapScene scene={scene} previous={previous?.kind === "map" ? previous : undefined} {...timing} />;
     case "timeline":
-      return <TimelineScene events={scene.events} focusIndex={scene.focusIndex} durationSec={scene.durationSec} />;
+      return <TimelineScene events={scene.events} focusIndex={scene.focusIndex} {...timing} />;
     case "stat":
-      return <StatScene value={scene.value} unit={scene.unit} label={scene.label} total={scene.total} />;
+      return <StatScene value={scene.value} unit={scene.unit} label={scene.label} total={scene.total} {...timing} />;
     case "compare":
-      return <CompareScene title={scene.title} unit={scene.unit} bars={scene.bars} />;
+      return <CompareScene title={scene.title} unit={scene.unit} bars={scene.bars} {...timing} />;
     case "quote":
       return <QuoteScene text={scene.text} source={storyboard.sources.find((source) => source.id === scene.sourceId)} />;
     case "steps":
-      return <StepsScene steps={scene.steps} durationSec={scene.durationSec} />;
+      return <StepsScene steps={scene.steps} {...timing} />;
   }
 }
