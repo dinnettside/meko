@@ -3,6 +3,7 @@ import { addUsage, chatJson, emptyUsage } from "./nebius.ts";
 import { CheckStatusSchema, ResearchFactSchema, ScriptSchema } from "./pipeline.ts";
 import type { FactCheckReport, Script, SentenceCheck, Usage } from "./pipeline.ts";
 import { factCheckPrompt } from "./prompts/factcheck.ts";
+import { contentWords } from "./words.ts";
 import type { SentenceToCheck } from "./prompts/factcheck.ts";
 
 export const FactCheckInputSchema = z.object({
@@ -26,15 +27,14 @@ const checksSchema = (sentenceCount: number) => z.object({ checks: z.array(Check
 
 type Checks = { checks: z.infer<typeof CheckSchema>[] };
 
-// Words that join two facts into a claim of their own.
-const LINK_WORDS = /\b(after|before|when|while|because|since|until|so|then|led to|due to|thanks to)\b/gi;
-
 const plain = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 
 // "After X, A, and B" claims that A came after X and that B came after X. The model tends to check the link for
 // the last part only, so each part gets its link claim spelled out.
+const LINKS = ["after", "before", "when", "because", "once"];
+
 function linkClaims(text: string): string[] {
-  const match = text.match(/^(After|Before|When|While|Because|Since|Until|Once)\s+([^,]+),\s*(.+)$/i);
+  const match = text.match(/^(After|Before|When|Because|Once)\s+([^,]+),\s*(.+)$/i);
   if (!match) return [];
   const [, link, lead, rest] = match;
   const parts = rest.split(/,\s*and\s+|;\s*|,\s*while\s+/i).map((part) => part.trim().replace(/[.!?]$/, ""));
@@ -44,25 +44,12 @@ function linkClaims(text: string): string[] {
 // Words in a reason that say something about the sentence is not backed.
 const DOUBT = /\b(not|no|unsupported|missing|incorrect|wrong|contradict\w*|unclear|cannot|doesn't|don't|isn't|aren't)\b/i;
 
+// Problems that make a check unusable. `linkProblems` below are worth a retry, but not worth failing the step.
 function checkProblems({ checks }: Checks, sentences: SentenceToCheck[]): string[] {
   const sentenceIds = sentences.map((sentence) => sentence.id);
   const problems: string[] = [];
   const seen = new Map<string, number>();
   for (const check of checks) {
-    // Two true facts joined by a false "after" or "because" make a false sentence, and the model only catches
-    // that when it writes the link down as a claim of its own.
-    const sentence = sentences.find((candidate) => candidate.id === check.sentenceId);
-    const text = sentence?.text ?? "";
-    for (const link of new Set((text.match(LINK_WORDS) ?? []).map((word) => word.toLowerCase()))) {
-      if (!check.claims.some((claim) => claim.claim.toLowerCase().includes(link))) {
-        problems.push(`Sentence ${check.sentenceId} says "${link}". Add that link as a claim of its own, like "A happened ${link} B", and judge it against the quotes.`);
-      }
-    }
-    for (const linkClaim of sentence?.linkClaims ?? []) {
-      if (!check.claims.some((claim) => plain(claim.claim) === plain(linkClaim))) {
-        problems.push(`Sentence ${check.sentenceId}: add the claim "${linkClaim}" to its claims, word for word, and judge it.`);
-      }
-    }
     seen.set(check.sentenceId, (seen.get(check.sentenceId) ?? 0) + 1);
     if (check.status === "revised" && check.revised.trim() === "") {
       problems.push(`Sentence ${check.sentenceId} is "revised" but has no revised text.`);
@@ -84,6 +71,24 @@ function checkProblems({ checks }: Checks, sentences: SentenceToCheck[]): string
   const unknown = [...seen.keys()].filter((id) => !sentenceIds.includes(id));
   if (unknown.length > 0) problems.push(`Unknown sentence IDs: ${unknown.join(", ")}.`);
   return problems;
+}
+
+// Two true facts joined by a false "after" make a false sentence, and the model only catches that when it judges
+// the link as a claim of its own. A claim counts when it has the link word and nearly all the words of the link.
+function linkProblems({ checks }: Checks, sentences: SentenceToCheck[]): string[] {
+  return sentences.flatMap((sentence) => {
+    const check = checks.find((candidate) => candidate.sentenceId === sentence.id);
+    return (sentence.linkClaims ?? [])
+      .filter((linkClaim) => {
+        const [link] = linkClaim.split(" ").filter((word) => LINKS.includes(word)).slice(-1);
+        const wanted = contentWords(linkClaim);
+        return !check?.claims.some((claim) => {
+          const words = new Set(contentWords(claim.claim));
+          return plain(claim.claim).includes(link) && wanted.filter((word) => words.has(word)).length >= wanted.length * 0.8;
+        });
+      })
+      .map((linkClaim) => `Sentence ${sentence.id}: add the claim "${linkClaim}" to its claims and judge it.`);
+  });
 }
 
 export async function factCheck({ script, facts }: z.infer<typeof FactCheckInputSchema>): Promise<FactCheckResult> {
@@ -110,7 +115,13 @@ export async function factCheck({ script, facts }: z.infer<typeof FactCheckInput
         schema: checksSchema(sentences.length),
         messages: factCheckPrompt(sentences),
         maxTokens: 10000,
-        check: (result) => checkProblems(result, sentences),
+        check: (result) => [...checkProblems(result, sentences), ...linkProblems(result, sentences)],
+        // After the last retry, a check that only misses a link claim is still usable; a broken one is not.
+        repair: (result) => {
+          const problems = checkProblems(result, sentences);
+          if (problems.length > 0) throw new Error(`factcheck/${run}: ${problems.join("; ")}`);
+          return result;
+        },
       }),
     ),
   );

@@ -53,8 +53,9 @@ function scriptProblems(script: Script, factIds: Set<string>, targets: ReturnTyp
   const text = sentences.map((sentence) => sentence.text).join(" ");
   if (text.length < targets.minChars || text.length > targets.maxChars) {
     const wordsNow = countWords(text);
-    const advice = text.length > targets.maxChars ? "Make it shorter" : "Make it longer";
-    problems.push(`The narration does not fit the length. ${advice}: write about ${targets.words} words in total, not ${wordsNow}.`);
+    const change = Math.max(5, Math.round(Math.abs(wordsNow - targets.words) / 5) * 5);
+    const advice = text.length > targets.maxChars ? `Cut about ${change} words` : `Add about ${change} words`;
+    problems.push(`The narration does not fit the length. ${advice}, for about ${targets.words} words in total instead of ${wordsNow}.`);
   }
   script.scenes.forEach((scene, index) => {
     if (scene.sentences.length < 1 || scene.sentences.length > 3) {
@@ -86,6 +87,20 @@ export async function writeScript({ request, facts }: z.infer<typeof ScriptInput
     messages: writeScriptPrompt(request, facts, targets),
     maxTokens: 4000,
     check: (script) => scriptProblems(script, factIds, targets),
+    // After the retries, a script a little too long or too short is still better than no video. Sentences that
+    // cite no known fact go, since the fact-check could not back them.
+    repair: (script) => {
+      const scenes = script.scenes
+        .map((scene) => ({
+          ...scene,
+          sentences: scene.sentences
+            .map((sentence) => ({ ...sentence, factIds: sentence.factIds.filter((id) => factIds.has(id)) }))
+            .filter((sentence) => sentence.factIds.length > 0),
+        }))
+        .filter((scene) => scene.sentences.length > 0);
+      if (scenes.length === 0) throw new Error("script: no sentence cites a known fact.");
+      return { ...script, scenes };
+    },
   });
   // Our own scene IDs, so the fact-check can name sentences like "scene-2.1".
   const scenes = data.scenes.map((scene, index) => ({ ...scene, id: `scene-${index + 1}` }));
