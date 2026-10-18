@@ -1,6 +1,8 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
-import { COLORS, FONTS, VIDEO } from "@/lib/theme";
+import { VIDEO } from "@/lib/theme";
+import { NoteMarks, noteStyle } from "./cards";
+import { useTheme } from "./theme";
 
 type CaptionLine = { words: TimedWord[]; start: number };
 
@@ -28,8 +30,11 @@ function captionLines(words: TimedWord[]): CaptionLine[] {
   return lines;
 }
 
-// Shows the line being spoken. Words light up as the voice says them.
+// Shows the line being spoken. Words light up as the voice says them. The box has a chalk edge with corner ticks in
+// Blueprint and a thin ink edge in Field guide.
 export function Caption({ words }: { words: TimedWord[] }) {
+  const theme = useTheme();
+  const { colors, fonts } = theme;
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const time = frame / fps;
@@ -40,22 +45,25 @@ export function Caption({ words }: { words: TimedWord[] }) {
     <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: VIDEO.captionBottom }}>
       <div
         style={{
+          position: "relative",
           maxWidth: 1600,
           padding: "16px 34px",
-          backgroundColor: COLORS.captionBackground,
-          fontFamily: FONTS.body,
+          backgroundColor: colors.captionBackground,
+          fontFamily: fonts.body,
           fontSize: VIDEO.fontSize.caption,
           fontWeight: 500,
           lineHeight: 1.3,
           textAlign: "center",
+          ...noteStyle(theme),
         }}
       >
         {line.words.map((word, index) => (
-          <span key={index} style={{ color: word.start <= time ? COLORS.paper : COLORS.captionUpcoming }}>
+          <span key={index} style={{ color: word.start <= time ? colors.captionText : colors.captionUpcoming }}>
             {index > 0 ? " " : ""}
             {word.text}
           </span>
         ))}
+        <NoteMarks />
       </div>
     </AbsoluteFill>
   );

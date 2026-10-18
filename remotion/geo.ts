@@ -20,6 +20,13 @@ const PART_MARGIN = 2;
 const NEAR_OFFSETS = [-0.3, 0, 0.3];
 // A sea route is drawn along great circles with a point about every 40 km, and its corners rounded over about as far.
 const SEA_STEP = 40 / 6371;
+// The smallest area a map zooms into, in degrees of latitude, about 550 km: the coastlines are simplified (1:50m), and
+// a closer view would show their corners.
+const MIN_FOCUS_DEGREES = 5;
+// Room around the cities a map zooms into, in degrees, so their dots and labels are not on the edge.
+const FOCUS_MARGIN = 1.2;
+// A map zooms in when its cities lie within this share of its countries' width and height.
+const FOCUS_SHARE = 0.3;
 
 export type MapLayout = {
   projection: GeoProjection;
@@ -125,6 +132,55 @@ export function countryOf(codes: string[], lon: number, lat: number): string | n
   );
 }
 
+// How wide and tall a set of shapes is on the globe, in degrees, and its middle longitude.
+function extent(collection: Parameters<typeof geoBounds>[0]): { width: number; height: number; middle: number } {
+  const [[west, south], [east, north]] = geoBounds(collection);
+  const width = west <= east ? east - west : east - west + 360;
+  return { width, height: north - south, middle: west <= east ? (west + east) / 2 : (west + east + 360) / 2 };
+}
+
+// The area a map zooms into after it has shown its countries: around the cities and stops it marks, when they lie
+// close together compared with the countries, like Boston on a map of the United States. Null when they spread out,
+// when the countries are small enough to show them anyway, or when a sea route needs the open sea in view.
+export function focusArea(scene: MapSceneData): [LonLat, LonLat] | null {
+  const places: LonLat[] = [
+    ...(scene.markers ?? []).map((marker): LonLat => [marker.lon, marker.lat]),
+    ...(scene.routes ?? []).flatMap((route) => route.stops.map((stop): LonLat => [stop.lon, stop.lat])),
+  ];
+  if (places.length === 0 || (scene.routes ?? []).some((route) => route.by === "sea")) return null;
+  const shapes = mapCodes(scene)
+    .map((code) => countryFeature(code))
+    .flatMap((country) => (country ? [mainland(country)] : []))
+    .filter((shape) => shape !== null);
+  if (shapes.length === 0) return null;
+  const countries = extent({ type: "FeatureCollection", features: shapes });
+  const spot = extent({ type: "Feature", properties: {}, geometry: { type: "MultiPoint", coordinates: places } });
+  const small = spot.width <= FOCUS_SHARE * countries.width && spot.height <= FOCUS_SHARE * countries.height;
+  if (!small || countries.height < 2 * MIN_FOCUS_DEGREES) return null;
+  const lats = places.map(([, lat]) => lat);
+  const middleLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  const halfHeight = Math.max(spot.height / 2 + FOCUS_MARGIN, MIN_FOCUS_DEGREES / 2);
+  const halfWidth = Math.max(spot.width / 2 + FOCUS_MARGIN, halfHeight / Math.cos((middleLat * Math.PI) / 180));
+  return [
+    [spot.middle - halfWidth, middleLat - halfHeight],
+    [spot.middle + halfWidth, middleLat + halfHeight],
+  ];
+}
+
+// A Mercator projection that fits an area, given by two corners, inside the box.
+function fitArea(area: [LonLat, LonLat], box: Box): GeoProjection {
+  const middle = (area[0][0] + area[1][0]) / 2;
+  return geoMercator()
+    .rotate([-middle, 0])
+    .fitExtent(box, { type: "Feature", properties: {}, geometry: { type: "MultiPoint", coordinates: area } });
+}
+
+// What a map scene shows once its camera has settled: its focus area if it zooms in, else its countries and points.
+export function mapProjection(scene: MapSceneData, box: Box): GeoProjection {
+  const focus = focusArea(scene);
+  return focus ? fitArea(focus, box) : fitProjection(mapCodes(scene), box, mapPoints(scene));
+}
+
 // A Mercator projection that fits the given countries inside the box, and the area around the given points.
 export function fitProjection(frameCodes: string[], box: Box, points: LonLat[] = []): GeoProjection {
   const focus: Feature<Geometry>[] = frameCodes
@@ -160,9 +216,10 @@ export function cameraFrom(previous: GeoProjection, current: GeoProjection): { s
   };
 }
 
-// Fits a Mercator projection to the given countries and points inside the box, and projects every country.
-export function layoutMap(frameCodes: string[], box: Box, points: LonLat[] = []): MapLayout {
-  const projection = fitProjection(frameCodes, box, points);
+// Fits a Mercator projection to the given countries and points inside the box, or to the focus area when there is one,
+// and projects every country.
+export function layoutMap(frameCodes: string[], box: Box, points: LonLat[] = [], focus: [LonLat, LonLat] | null = null): MapLayout {
+  const projection = focus ? fitArea(focus, box) : fitProjection(frameCodes, box, points);
   const path = geoPath(projection);
 
   return {

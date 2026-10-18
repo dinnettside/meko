@@ -2,7 +2,8 @@ import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
-import { COLORS, FONTS, MOTION, VIDEO } from "@/lib/theme";
+import { useTheme } from "../theme";
+import { MOTION, VIDEO } from "@/lib/theme";
 
 // Up to three short lines. The first is the key point: bigger, brighter, marked in amber, and its names and
 // numbers are amber too. Each line comes in word by word as the narration gets to it, every word landing with a
@@ -26,6 +27,7 @@ const isKeyWord = (word: string, position: number) => /\d/.test(word) || (positi
 const WORD_GAP_SEC = 0.09;
 
 function Line({ text, index, startSec }: { text: string; index: number; startSec: number }) {
+  const { colors, fonts } = useTheme();
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const isKey = index === 0;
@@ -37,18 +39,18 @@ function Line({ text, index, startSec }: { text: string; index: number; startSec
         style={{
           width: 12,
           alignSelf: "stretch",
-          backgroundColor: isKey ? COLORS.signal : "transparent",
+          backgroundColor: isKey ? colors.signal : "transparent",
           transform: `scaleY(${bar})`,
           transformOrigin: "top",
         }}
       />
       <div
         style={{
-          fontFamily: isKey ? FONTS.display : FONTS.body,
-          fontSize: isKey ? VIDEO.fontSize.keyLine : VIDEO.fontSize.line,
-          fontWeight: isKey ? 700 : 500,
+          fontFamily: isKey ? fonts.display : fonts.body,
+          fontSize: isKey ? VIDEO.fontSize.keyLine * fonts.displayScale : VIDEO.fontSize.line,
+          fontWeight: isKey ? fonts.displayWeight : 500,
           lineHeight: 1.12,
-          color: isKey ? COLORS.paper : COLORS.dim,
+          color: isKey ? colors.paper : colors.dim,
         }}
       >
         {parts.map((word, position) => {
@@ -61,7 +63,7 @@ function Line({ text, index, startSec }: { text: string; index: number; startSec
                 marginRight: "0.26em",
                 opacity: land,
                 transform: `scale(${1.3 - 0.3 * land})`,
-                color: isKey && isKeyWord(word, position) ? COLORS.signal : undefined,
+                color: isKey && isKeyWord(word, position) ? colors.signal : undefined,
               }}
             >
               {word}

@@ -1,9 +1,11 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
-import { COLORS, FONTS, VIDEO } from "@/lib/theme";
+import { VIDEO } from "@/lib/theme";
+import { drawnCard } from "../cards";
 import { Icon } from "../icons";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
+import { useTheme } from "../theme";
 
 const LABEL_WIDTH = 330;
 const GAP = 28;
@@ -47,6 +49,8 @@ export function VersusScene({
   words: TimedWord[];
   durationSec: number;
 }) {
+  const theme = useTheme();
+  const { colors, fonts, drawing } = theme;
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const headersIn = ease(frame, fps, 0.2, 0.6);
@@ -75,10 +79,13 @@ export function VersusScene({
         <div style={{ display: "grid", gridTemplateColumns: columns, columnGap: GAP, opacity: headersIn, marginBottom: 28 }}>
           <div />
           {[
-            { name: left, color: COLORS.teal, icon: leftIcon },
-            { name: right, color: COLORS.signal, icon: rightIcon },
+            { name: left, color: colors.teal, icon: leftIcon },
+            { name: right, color: colors.signal, icon: rightIcon },
           ].map((side) => (
-            <div key={side.name} style={{ fontFamily: FONTS.display, fontSize: 64, fontWeight: 700, color: COLORS.paper, lineHeight: 1.05 }}>
+            <div
+              key={side.name}
+              style={{ fontFamily: fonts.display, fontSize: 64 * fonts.displayScale, fontWeight: fonts.displayWeight, color: colors.paper, lineHeight: 1.05 }}
+            >
               {side.icon ? (
                 <div style={{ marginBottom: 14 }}>
                   <Icon name={side.icon} size={84} color={side.color} />
@@ -103,24 +110,24 @@ export function VersusScene({
                 transform: `translateY(${(1 - appear) * 24}px)`,
               }}
             >
-              <div style={{ alignSelf: "center", fontFamily: FONTS.body, fontSize: 36, fontWeight: 600, lineHeight: 1.2, color: COLORS.dim }}>
+              <div style={{ alignSelf: "center", fontFamily: fonts.label, fontSize: 36, fontWeight: 600, lineHeight: 1.2, color: colors.dim }}>
                 {row.label}
               </div>
               {[
-                { text: row.left, color: COLORS.teal },
-                { text: row.right, color: COLORS.signal },
+                { text: row.left, color: colors.teal },
+                { text: row.right, color: colors.signal },
               ].map((cell, side) => (
                 <div
                   key={side}
                   style={{
                     padding: "22px 26px",
-                    backgroundColor: COLORS.land,
+                    ...(drawing.card === "solid" ? { backgroundColor: colors.land } : drawnCard(theme)),
                     borderLeft: `8px solid ${cell.color}`,
-                    fontFamily: FONTS.body,
+                    fontFamily: fonts.body,
                     fontSize: 40,
                     fontWeight: 500,
                     lineHeight: 1.15,
-                    color: COLORS.paper,
+                    color: colors.paper,
                   }}
                 >
                   {cell.text}

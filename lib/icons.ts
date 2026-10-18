@@ -24,3 +24,9 @@ export const ICON_NAMES = [
 export type IconName = (typeof ICON_NAMES)[number];
 
 export const isIconName = (name: string): name is IconName => (ICON_NAMES as readonly string[]).includes(name);
+
+// An icon name from the list, whatever its case or spaces ("Gold" is "gold"), or undefined when there is none.
+export const iconKey = (name?: string): IconName | undefined => {
+  const key = name?.trim().toLowerCase();
+  return key && isIconName(key) ? key : undefined;
+};

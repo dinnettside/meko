@@ -61,6 +61,16 @@ export const MOTION = {
   entrance: 0.6, // how long a line or label takes to appear
   stagger: 0.5, // time between lines appearing
   cameraMove: 1.8, // map camera easing in
+  // Slow moves over a scene's whole length, so no scene feels like a still screen: a push in, a pull back, drifts
+  // to the side and up. Scale is a factor, x and y are pixels, each from the start of the scene to its end. Scenes
+  // take them in turn, so two scenes in a row never move the same way.
+  sceneCamera: [
+    { scale: [1, 1.045], x: [0, 0], y: [0, 0] },
+    { scale: [1.03, 1.03], x: [16, -16], y: [0, 0] },
+    { scale: [1.045, 1], x: [0, 0], y: [0, 0] },
+    { scale: [1.03, 1.03], x: [-16, 16], y: [0, 0] },
+    { scale: [1.035, 1.035], x: [0, 0], y: [12, -12] },
+  ],
 };
 
 // The colors as CSS variables for the app. app/globals.css maps them to Tailwind classes like bg-ink.

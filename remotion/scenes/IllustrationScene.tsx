@@ -2,11 +2,12 @@ import { useMemo } from "react";
 import { AbsoluteFill, Easing, interpolate, interpolateColors, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
 import type { FigureLook } from "@/lib/storyboard";
-import { COLORS, FONTS, VIDEO } from "@/lib/theme";
+import { VIDEO } from "@/lib/theme";
 import { FIGURE_ASPECT, Figure } from "../figures";
 import { Icon } from "../icons";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
+import { useTheme } from "../theme";
 
 type ItemSize = "small" | "medium" | "large";
 type Item = { icon?: string; figure?: FigureLook; label?: string; x: number; y: number; size?: ItemSize };
@@ -66,6 +67,7 @@ export function IllustrationScene({
   words: TimedWord[];
   durationSec: number;
 }) {
+  const { colors, fonts } = useTheme();
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const time = frame / fps;
@@ -82,11 +84,11 @@ export function IllustrationScene({
             left: LEFT,
             width: RIGHT - LEFT,
             textAlign: "center",
-            fontFamily: FONTS.display,
-            fontSize: TITLE_SIZE,
-            fontWeight: 700,
+            fontFamily: fonts.display,
+            fontSize: TITLE_SIZE * fonts.displayScale,
+            fontWeight: fonts.displayWeight,
             lineHeight: LINE_HEIGHT,
-            color: COLORS.paper,
+            color: colors.paper,
             opacity: titleIn,
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -117,7 +119,7 @@ export function IllustrationScene({
         const labelIn = ease(frame, fps, startSec + 0.1, POP_SEC - 0.1);
         // Amber from when it comes in until the next named item does.
         const signal = signalUntil !== null && time >= startSec ? 1 - ease(frame, fps, signalUntil, 0.3) : 0;
-        const color = interpolateColors(signal, [0, 1], [COLORS.paper, COLORS.signal]);
+        const color = interpolateColors(signal, [0, 1], [colors.paper, colors.signal]);
         return (
           <div key={index}>
             <div
@@ -146,7 +148,7 @@ export function IllustrationScene({
                   top: y + size / 2 + LABEL_GAP,
                   textAlign: "center",
                   whiteSpace: "nowrap",
-                  fontFamily: FONTS.body,
+                  fontFamily: fonts.label,
                   fontSize: label.fontSize,
                   fontWeight: 600,
                   lineHeight: LINE_HEIGHT,
@@ -178,40 +180,40 @@ type PlannedArrow = {
 };
 
 // An arrow that draws itself from one item toward the edge of the other. The head appears as the line arrives, and
-// the label beside its middle as the line passes it. Arrows and their labels are dim, so the items stand out.
+// the label beside its middle as the line passes it. Arrows and their labels are dim, so the items stand out. In
+// Blueprint the head is an open chevron, as on a drawing.
 function LinkArrow({ d, end, angle, label, progress, labelIn }: PlannedArrow & { progress: number; labelIn: number }) {
+  const { colors, fonts, drawing } = useTheme();
   const lineHeight = (label?.fontSize ?? 0) * LINE_HEIGHT;
+  const headIn = progress > 0.9 ? (progress - 0.9) * 10 : 0;
+  const headAt = `translate(${end[0]} ${end[1]}) rotate(${angle})`;
   return (
     <g opacity={progress > 0 ? 1 : 0}>
       <path
         d={d}
         fill="none"
-        stroke={COLORS.dim}
+        stroke={colors.dim}
         strokeWidth={7}
         strokeLinecap="round"
         pathLength={1}
         strokeDasharray={1}
         strokeDashoffset={1 - progress}
       />
-      <path
-        d="M 8 0 L -22 -15 L -22 15 Z"
-        fill={COLORS.dim}
-        stroke={COLORS.dim}
-        strokeWidth={3}
-        strokeLinejoin="round"
-        transform={`translate(${end[0]} ${end[1]}) rotate(${angle})`}
-        opacity={progress > 0.9 ? (progress - 0.9) * 10 : 0}
-      />
+      {drawing.land === "outline" ? (
+        <path d="M -20 -16 L 4 0 L -20 16" fill="none" stroke={colors.dim} strokeWidth={7} strokeLinecap="round" strokeLinejoin="round" transform={headAt} opacity={headIn} />
+      ) : (
+        <path d="M 8 0 L -22 -15 L -22 15 Z" fill={colors.dim} stroke={colors.dim} strokeWidth={3} strokeLinejoin="round" transform={headAt} opacity={headIn} />
+      )}
       {label ? (
         <text
           y={label.at[1] - ((label.lines.length - 1) * lineHeight) / 2}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontFamily={FONTS.body}
+          fontFamily={fonts.label}
           fontSize={label.fontSize}
           fontWeight={600}
-          fill={COLORS.dim}
-          stroke={COLORS.ink}
+          fill={colors.dim}
+          stroke={colors.ink}
           strokeWidth={8}
           strokeLinejoin="round"
           paintOrder="stroke"

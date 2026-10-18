@@ -25,24 +25,73 @@ export function placesPrompt(title: string, places: { name: string; context: str
   ];
 }
 
+// What each of the director's own kinds shows, for the plan's menu. The templates bring their own lines.
+const OWN_KINDS: Record<string, string> = {
+  map: "places, borders, movement and routes between places on Earth",
+  timeline: "a time that other years in the video put in context",
+  stat: "one striking number",
+  compare: "two or more amounts in the same unit",
+  quote: "a source's own words say it best",
+  steps: "a process or a chain of causes, where each step leads to the next",
+  list: "2 to 4 things of one kind side by side, like types, goods or effects",
+  versus: "two sides compared point by point",
+  change: "a name, ruler or status that changed into another",
+  people: "the people the narration names, drawn as figures",
+  space: "a journey through space, or places on the Moon",
+  illustration: "a picture composed from icons and figures with labels and arrows, to show how things relate when no other kind fits",
+  text: "only when nothing else fits",
+};
+
+// The menu of kinds, one line each.
+const menu = (templates: { name: string; plan: string }[]) => [
+  ...Object.entries(OWN_KINDS).map(([kind, line]) => `- ${kind}: ${line}`),
+  ...templates.map((template) => `- ${template.name}: ${template.plan}`),
+];
+
 // Plans the kind of picture for every scene after the title, so the video has a rhythm.
 export function directPlanPrompt(
   title: string,
-  scenes: { id: string; narration: string; facts: string[]; cannot: string[] }[],
+  scenes: { id: string; narration: string; facts: string[]; fits: string[] }[],
+  templates: { name: string; plan: string }[],
 ): ChatCompletionMessageParam[] {
   return [
     {
       role: "system",
       content: [
         "You plan the pictures of a short explainer video. For every scene, in order, rank the 3 kinds of picture that would show its narration best, best first.",
-        "Kinds: map (places, borders, movement and routes between places), timeline (a time that other years in the video put in context), stat (one striking number), compare (two or more amounts in the same unit), quote (a source's own words say it best), steps (a process or a chain of causes, where each step leads to the next), list (2 to 4 things of one kind side by side, like types, goods or effects), versus (two sides compared point by point), change (a name, ruler or status that changed into another), people (the people the narration names, drawn as figures), space (a journey through space, or places on the Moon), illustration (a picture composed from icons and figures with labels and arrows, to show how things relate when no other kind fits), text (only when nothing else fits).",
-        'Each scene lists under "cannot" the kinds its facts have no data for, like a timeline without years. Never list those.',
+        "Kinds:",
+        ...menu(templates),
+        'Each scene lists under "fits" the kinds its narration and facts have what they need for. Only rank those, and only a kind whose whole picture this scene\'s own narration and facts give: a cycle needs its steps in this scene, not only the word "cycle".',
         "Use a map when the scene is about where something happens on Earth or a movement between places on Earth. Never for space, the human body or ideas.",
-        "The video should not show the same kind again and again, so the other choices matter: the best one is not always used.",
+        "Prefer the kind that shows what this scene is about over a general one: a cycle for a loop, a pyramid for a hierarchy, a myth card for a belief the narration says is wrong. Text, lists and single numbers are the fallbacks, not the first choice.",
+        "The video should not show the same kind of picture again and again, so the other choices matter: the best one is not always used.",
         "The last scene sums up the video. When it names 2 or 3 main points, a list fits it well.",
+        'Also pick the look of the whole video as "theme": "night" for history, exploration, wars, empires, politics and people of the past; "blueprint" for machines, inventions, engineering, physics, chemistry, computers, technology and space; "field" for anything about living things or the planet: the human body, medicine, disease and vaccines, health, food, animals, plants, nature, weather and climate.',
       ].join("\n"),
     },
     { role: "user", content: `Video title: ${title}\n\nScenes:\n${JSON.stringify(scenes, null, 1)}` },
+  ];
+}
+
+// A second look at the plan, by the model as a demanding editor.
+export function directCritiquePrompt(
+  title: string,
+  scenes: { id: string; narration: string; picked: string; fits: string[] }[],
+  templates: { name: string; plan: string }[],
+): ChatCompletionMessageParam[] {
+  return [
+    {
+      role: "system",
+      content: [
+        "You are the editor of a short explainer video, and you are hard to please. A planner picked a kind of picture for every scene. Challenge the plan.",
+        "Find at most 3 scenes where another kind would be clearly better: one that shows what the narration is really about, where the plan chose a general picture like text, a list or a single number, or one that breaks a run of scenes that look alike.",
+        'Only propose a kind listed under "fits" for that scene. Give the scene\'s id, the new kind and in a few words why.',
+        "Change nothing that already works. If the plan is good, return no changes.",
+        "Kinds:",
+        ...menu(templates),
+      ].join("\n"),
+    },
+    { role: "user", content: `Video title: ${title}\n\nPlan:\n${JSON.stringify(scenes, null, 1)}` },
   ];
 }
 
@@ -71,6 +120,7 @@ export function directScenePrompt(input: {
   moonPlaces: string[]; // the seas and landing sites a Moon view can show
   quotable: { factId: string; sentence: string }[]; // whole sentences of the scene's source words that a quote may show
   otherFacts: Fact[];
+  templates: string[]; // how to fill each template offered to this scene
   plannedKind?: string; // from the plan for the whole video
   avoidKinds: string[]; // kinds without data, and the kinds of the scenes next to this one
   years: string[]; // every year the facts state, like "f10: 1227"
@@ -94,6 +144,7 @@ export function directScenePrompt(input: {
         '- "space" for a journey through space or places on the Moon. "view" "journey" shows "bodies" (earth, moon, sun, mars) and an optional "craft" flying "from" one "to" another, with a short "label" in the narration\'s words. "view" "moon" shows the Moon\'s near side with up to 4 "sites" the narration names, from the Moon places listed below.',
         '- "illustration" when no other kind fits better than text: a picture you compose. 2 to 8 "items", each an "icon" or a "figure" (a look, as for people), with a short "label" in the narration\'s words, placed at "x" and "y" from 0 to 100 (left to right, top to bottom; keep items at least 15 apart), optional "size" small, medium or large, and up to 6 "links", arrows from one item to another by their position in the list (from 0). List the items in the order the narration names them, and keep other items off the straight line between two linked items. Show how things relate: a trade, a process with things, a cause and its effects.',
         '- "change" when the narration tells how a name, ruler or status changed into another, like a city renamed or a kingdom becoming a republic: "from" and "to" in at most 4 words each, in the narration\'s words, and "year" only when the narration or facts give it.',
+        ...input.templates.map((template) => `- ${template}`),
         '- "text" only when nothing else fits: 1 to 3 short lines of at most 8 words each that sum up the narration in its own words, shortened.',
         "Showing beats telling, so use text as little as possible.",
         'Also give "lines": 1 to 3 short lines of at most 8 words each that sum up the narration. They are shown if the visual cannot be used.',

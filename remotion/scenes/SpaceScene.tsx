@@ -1,15 +1,17 @@
 import { geoCircle, geoGraticule10, geoOrthographic, geoPath } from "d3-geo";
 import type { GeoPermissibleObjects } from "d3-geo";
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { AbsoluteFill, Easing, interpolate, interpolateColors, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
 import { MOON_SEAS, MOON_SITES, moonPlace, seaCircles } from "@/lib/moon";
 import type { MoonCircle, MoonPlace } from "@/lib/moon";
 import type { SpaceBody } from "@/lib/storyboard";
-import { COLORS, FONTS, VIDEO } from "@/lib/theme";
+import { VIDEO } from "@/lib/theme";
 import { globeCountries } from "../globe";
+import { Hatch } from "../hatch";
 import { ease } from "../motion";
 import { revealAt, spokenAt } from "../spoken";
+import { alpha, useTheme } from "../theme";
 
 type Point = [number, number];
 type Box = { x: number; y: number; w: number; h: number };
@@ -216,6 +218,7 @@ function JourneyView({
   words: TimedWord[];
   durationSec: number;
 }) {
+  const { colors, fonts } = useTheme();
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const time = frame / fps;
@@ -230,7 +233,7 @@ function JourneyView({
           // A body's name brightens as the narration says it, matched whole, since "Sun" is too short for the
           // usual word matching.
           const named = phraseSaidAt(words, BODY_NAME[body.kind]);
-          const nameColor = interpolateColors(named === null ? 0 : ease(frame, fps, named - 0.2, 0.4), [0, 1], [COLORS.dim, COLORS.paper]);
+          const nameColor = interpolateColors(named === null ? 0 : ease(frame, fps, named - 0.2, 0.4), [0, 1], [colors.dim, colors.paper]);
           return (
             <g key={body.kind} opacity={appear}>
               <g transform={`translate(${body.x} ${body.y}) scale(${0.9 + 0.1 * appear})`}>
@@ -240,7 +243,7 @@ function JourneyView({
                 x={body.x}
                 y={body.y + body.r * (body.kind === "sun" ? SUN_RAYS : 1) + 48}
                 textAnchor="middle"
-                fontFamily={FONTS.body}
+                fontFamily={fonts.label}
                 fontSize={34}
                 fontWeight={600}
                 fill={nameColor}
@@ -255,9 +258,9 @@ function JourneyView({
           x={FREE.right}
           y={FREE.bottom + 6}
           textAnchor="end"
-          fontFamily={FONTS.body}
+          fontFamily={fonts.label}
           fontSize={26}
-          fill={COLORS.dim}
+          fill={colors.dim}
           opacity={ease(frame, fps, 0.8, 0.6)}
         >
           Not to scale
@@ -272,6 +275,7 @@ type FlightPlan = NonNullable<ReturnType<typeof planJourney>["flight"]>;
 // The rocket waits on its body, takes off, flies the arc leaving a dashed trail, turns tail first as it comes down
 // and lands. Its label comes in beside the trail as the narration says it.
 function Flight({ flight, rocketLength, frame, fps }: { flight: FlightPlan; rocketLength: number; frame: number; fps: number }) {
+  const { colors, fonts } = useTheme();
   const { start, control, end } = flight;
   const progress = interpolate(frame, [flight.launchSec * fps, flight.arrivalSec * fps], [0, 1], {
     extrapolateLeft: "clamp",
@@ -304,10 +308,10 @@ function Flight({ flight, rocketLength, frame, fps }: { flight: FlightPlan; rock
   return (
     <g>
       {progress > 0 ? (
-        <path d={trail} fill="none" stroke={COLORS.signal} strokeWidth={6} strokeLinecap="round" strokeDasharray="2 20" />
+        <path d={trail} fill="none" stroke={colors.signal} strokeWidth={6} strokeLinecap="round" strokeDasharray="2 20" />
       ) : null}
       {flight.lands && landed > 0 && landed < 1 ? (
-        <circle cx={flight.touchdown[0]} cy={flight.touchdown[1]} r={12 + 40 * landed} fill="none" stroke={COLORS.signal} strokeWidth={4} opacity={1 - landed} />
+        <circle cx={flight.touchdown[0]} cy={flight.touchdown[1]} r={12 + 40 * landed} fill="none" stroke={colors.signal} strokeWidth={4} opacity={1 - landed} />
       ) : null}
       <g transform={`translate(${position[0]} ${position[1]}) rotate(${angle})`} opacity={appear}>
         <Rocket length={rocketLength} flame={flame} />
@@ -318,11 +322,11 @@ function Flight({ flight, rocketLength, frame, fps }: { flight: FlightPlan; rock
           y={flight.label[1] + (1 - labelIn) * 16}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontFamily={FONTS.body}
+          fontFamily={fonts.label}
           fontSize={VIDEO.fontSize.mapLabelStrong}
           fontWeight={700}
-          fill={COLORS.paper}
-          stroke={COLORS.ink}
+          fill={colors.paper}
+          stroke={colors.ink}
           strokeWidth={10}
           paintOrder="stroke"
           strokeLinejoin="round"
@@ -337,19 +341,20 @@ function Flight({ flight, rocketLength, frame, fps }: { flight: FlightPlan; rock
 
 // A rocket pointing right, centered on the origin. Drawn on a 100-unit grid and scaled to `length`.
 function Rocket({ length, flame }: { length: number; flame: number }) {
+  const { colors } = useTheme();
   return (
     <g transform={`scale(${length / 100})`}>
       {flame > 0 ? (
         <>
-          <path d={`M -42 -9 Q ${-62 - 26 * flame} -6 ${-70 - 30 * flame} 0 Q ${-62 - 26 * flame} 6 -42 9 Z`} fill={COLORS.signal} />
-          <path d={`M -42 -4 Q ${-52 - 12 * flame} -3 ${-56 - 14 * flame} 0 Q ${-52 - 12 * flame} 3 -42 4 Z`} fill={COLORS.paper} />
+          <path d={`M -42 -9 Q ${-62 - 26 * flame} -6 ${-70 - 30 * flame} 0 Q ${-62 - 26 * flame} 6 -42 9 Z`} fill={colors.signal} />
+          <path d={`M -42 -4 Q ${-52 - 12 * flame} -3 ${-56 - 14 * flame} 0 Q ${-52 - 12 * flame} 3 -42 4 Z`} fill={colors.paper} />
         </>
       ) : null}
-      <path d="M -16 -12 L -38 -30 L -46 -30 L -40 -12 Z" fill={COLORS.signal} />
-      <path d="M -16 12 L -38 30 L -46 30 L -40 12 Z" fill={COLORS.signal} />
-      <path d="M -46 -9 L -40 -11 L -40 11 L -46 9 Z" fill={COLORS.dim} />
-      <path d="M -40 -12 L 16 -12 C 32 -12 44 -7 52 0 C 44 7 32 12 16 12 L -40 12 Z" fill={COLORS.paper} />
-      <circle cx={10} cy={0} r={6.5} fill={COLORS.ink} />
+      <path d="M -16 -12 L -38 -30 L -46 -30 L -40 -12 Z" fill={colors.signal} />
+      <path d="M -16 12 L -38 30 L -46 30 L -40 12 Z" fill={colors.signal} />
+      <path d="M -46 -9 L -40 -11 L -40 11 L -46 9 Z" fill={colors.dim} />
+      <path d="M -40 -12 L 16 -12 C 32 -12 44 -7 52 0 C 44 7 32 12 16 12 L -40 12 Z" fill={colors.paper} />
+      <circle cx={10} cy={0} r={6.5} fill={colors.ink} />
     </g>
   );
 }
@@ -362,20 +367,23 @@ const MARS_PATCHES: MoonCircle[] = [
 ];
 
 // One body as a small globe: the Earth turning with its land, the Moon with its seas, Mars with a polar cap, and the
-// Sun as a warm disc with short rays.
+// Sun as a warm disc with short rays. In Blueprint the Earth's countries and the rims are drawn in chalk.
 function BodyGlobe({ kind, r, time }: { kind: SpaceBody; r: number; time: number }) {
+  const { colors, drawing } = useTheme();
+  const outlined = drawing.land === "outline";
+  const rim = outlined ? alpha(colors.paper, 0.7) : colors.border;
   if (kind === "sun") {
     return (
       <g>
         <circle
           r={r * SUN_RAYS}
           fill="none"
-          stroke={COLORS.sun}
+          stroke={colors.sun}
           strokeWidth={r * 0.07}
           strokeLinecap="round"
           strokeDasharray={`${r * 0.07} ${(2 * Math.PI * r * SUN_RAYS) / 20 - r * 0.07}`}
         />
-        <circle r={r} fill={COLORS.sun} />
+        <circle r={r} fill={colors.sun} />
       </g>
     );
   }
@@ -387,33 +395,33 @@ function BodyGlobe({ kind, r, time }: { kind: SpaceBody; r: number; time: number
   if (kind === "earth") {
     return (
       <g>
-        <circle r={r} fill={COLORS.globe} />
+        <circle r={r} fill={colors.globe} />
         {globeCountries.map(({ shape }, index) => (
-          <path key={index} d={draw(shape)} fill={COLORS.land} stroke={COLORS.land} strokeWidth={1} />
+          <path key={index} d={draw(shape)} fill={colors.land} stroke={outlined ? alpha(colors.paper, 0.5) : colors.land} strokeWidth={1} />
         ))}
-        <circle r={r} fill="none" stroke={COLORS.border} strokeWidth={3} />
+        <circle r={r} fill="none" stroke={rim} strokeWidth={3} />
       </g>
     );
   }
   if (kind === "mars") {
     return (
       <g>
-        <circle r={r} fill={COLORS.mars} />
+        <circle r={r} fill={colors.mars} />
         {MARS_PATCHES.map((patch, index) => (
-          <path key={index} d={draw(circle(patch))} fill={COLORS.marsDark} />
+          <path key={index} d={draw(circle(patch))} fill={colors.marsDark} />
         ))}
-        <path d={draw(circle([0, 90, 14]))} fill={COLORS.paper} opacity={0.9} />
-        <circle r={r} fill="none" stroke={COLORS.border} strokeWidth={3} />
+        <path d={draw(circle([0, 90, 14]))} fill={colors.paper} opacity={0.9} />
+        <circle r={r} fill="none" stroke={rim} strokeWidth={3} />
       </g>
     );
   }
   return (
     <g>
-      <circle r={r} fill={COLORS.moon} />
+      <circle r={r} fill={colors.moon} />
       {SEA_SHAPES.map((shape, index) => (
-        <path key={index} d={draw(shape)} fill={COLORS.moonSea} />
+        <path key={index} d={draw(shape)} fill={colors.moonSea} />
       ))}
-      <circle r={r} fill="none" stroke={COLORS.border} strokeWidth={3} />
+      <circle r={r} fill="none" stroke={rim} strokeWidth={3} />
     </g>
   );
 }
@@ -526,8 +534,12 @@ function planMoon(sites: string[], words: TimedWord[], durationSec: number) {
 }
 
 // The Moon's near side as a map: its seas, a faint grid, a slow move toward the places the narration names, the seas
-// it names in teal, and each landing site as an amber marker that comes in as it is named.
+// it names in teal, and each landing site as an amber marker that comes in as it is named. Blueprint hatches the
+// named seas and draws the grid and the rim in chalk.
 function MoonView({ sites, words, durationSec }: { sites: string[]; words: TimedWord[]; durationSec: number }) {
+  const { colors, fonts, drawing } = useTheme();
+  const outlined = drawing.land === "outline";
+  const hatchId = `hatch${useId().replace(/[^A-Za-z0-9]/g, "")}`;
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const plan = useMemo(() => planMoon(sites, words, durationSec), [sites, words, durationSec]);
@@ -545,22 +557,27 @@ function MoonView({ sites, words, durationSec }: { sites: string[]; words: Timed
   return (
     <AbsoluteFill>
       <svg width={VIDEO.width} height={VIDEO.height} viewBox={`0 0 ${VIDEO.width} ${VIDEO.height}`}>
-        <circle cx={cx} cy={cy} r={radius} fill={COLORS.moon} />
+        {outlined ? (
+          <defs>
+            <Hatch id={hatchId} color={colors.teal} background={colors.moonSea} />
+          </defs>
+        ) : null}
+        <circle cx={cx} cy={cy} r={radius} fill={colors.moon} />
         {SEA_SHAPES.map((shape, index) => (
-          <path key={index} d={draw(shape)} fill={COLORS.moonSea} />
+          <path key={index} d={draw(shape)} fill={colors.moonSea} />
         ))}
         {seas.map((mark) =>
           mark.shapes.map((shape, index) => (
             <path
               key={`${mark.name}-${index}`}
               d={draw(shape)}
-              fill={COLORS.teal}
+              fill={outlined ? `url(#${hatchId})` : colors.teal}
               opacity={ease(frame, fps, mark.startSec, 0.6)}
             />
           )),
         )}
-        <path d={draw(graticule)} fill="none" stroke={COLORS.border} strokeWidth={1} opacity={0.45} />
-        <circle cx={cx} cy={cy} r={radius} fill="none" stroke={COLORS.border} strokeWidth={3} />
+        <path d={draw(graticule)} fill="none" stroke={outlined ? colors.paper : colors.border} strokeWidth={1} opacity={outlined ? 0.3 : 0.45} />
+        <circle cx={cx} cy={cy} r={radius} fill="none" stroke={outlined ? alpha(colors.paper, 0.7) : colors.border} strokeWidth={3} />
         {siteMarks.map((mark) => {
           const point = projection([mark.lon, mark.lat]);
           if (!point || !facing(mark.lon, mark.lat)) return null;
@@ -568,8 +585,8 @@ function MoonView({ sites, words, durationSec }: { sites: string[]; words: Timed
           const ring = ease(frame, fps, mark.startSec, 0.9);
           return (
             <g key={mark.name}>
-              {ring > 0 && ring < 1 ? <circle cx={point[0]} cy={point[1]} r={16 + 34 * ring} fill="none" stroke={COLORS.signal} strokeWidth={4} opacity={1 - ring} /> : null}
-              <circle cx={point[0]} cy={point[1]} r={15 * pop} fill={COLORS.signal} stroke={COLORS.ink} strokeWidth={4} />
+              {ring > 0 && ring < 1 ? <circle cx={point[0]} cy={point[1]} r={16 + 34 * ring} fill="none" stroke={colors.signal} strokeWidth={4} opacity={1 - ring} /> : null}
+              <circle cx={point[0]} cy={point[1]} r={15 * pop} fill={colors.signal} stroke={colors.ink} strokeWidth={4} />
             </g>
           );
         })}
@@ -584,11 +601,11 @@ function MoonView({ sites, words, durationSec }: { sites: string[]; words: Timed
               y={point[1] + mark.label[1]}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontFamily={FONTS.body}
+              fontFamily={fonts.label}
               fontSize={site ? SITE_LABEL : SEA_LABEL}
               fontWeight={site ? 700 : 600}
-              fill={COLORS.paper}
-              stroke={COLORS.ink}
+              fill={colors.paper}
+              stroke={colors.ink}
               strokeWidth={10}
               paintOrder="stroke"
               strokeLinejoin="round"

@@ -1,7 +1,8 @@
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import type { Source } from "@/lib/storyboard";
-import { COLORS, FONTS, VIDEO } from "@/lib/theme";
+import { VIDEO } from "@/lib/theme";
 import { ease } from "../motion";
+import { useTheme } from "../theme";
 
 function hostname(url: string): string {
   try {
@@ -11,13 +12,11 @@ function hostname(url: string): string {
   }
 }
 
-// The marker behind the quote: amber at a third, blended with the ink ground. It is solid rather than see-through,
-// so where two words' marks meet there is no darker seam.
-const MARKER = "#61502B";
-
 // A source's own words, revealed a few words at a time, with the source's name under it. Then a marker sweeps
-// over the words, the way you would mark the line in a book that backs a claim.
+// over the words, the way you would mark the line in a book that backs a claim. The marker's color is solid rather
+// than see-through, so where two words' marks meet there is no darker seam.
 export function QuoteScene({ text, source, durationSec }: { text: string; source?: Source; durationSec: number }) {
+  const { colors, fonts } = useTheme();
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const words = text.split(/\s+/).filter(Boolean);
@@ -31,10 +30,19 @@ export function QuoteScene({ text, source, durationSec }: { text: string; source
 
   return (
     <AbsoluteFill style={{ justifyContent: "center", padding: `0 ${VIDEO.sideMargin + 40}px ${VIDEO.captionSpace}px` }}>
-      <div style={{ fontFamily: FONTS.display, fontSize: 280, lineHeight: 0.6, height: 120, color: COLORS.signal, opacity: markIn }}>
+      <div style={{ fontFamily: fonts.display, fontSize: 280 * fonts.displayScale, lineHeight: 0.6, height: 120, color: colors.signal, opacity: markIn }}>
         “
       </div>
-      <div style={{ maxWidth: 1400, fontFamily: FONTS.display, fontSize: 70, fontStyle: "italic", lineHeight: 1.25, color: COLORS.paper }}>
+      <div
+        style={{
+          maxWidth: 1400,
+          fontFamily: fonts.display,
+          fontSize: 70 * fonts.displayScale,
+          fontStyle: fonts.displayItalic ? "italic" : "normal",
+          lineHeight: 1.25,
+          color: colors.paper,
+        }}
+      >
         {words.map((word, index) => {
           const marked = Math.max(0, Math.min(1, sweep - index)) * 100;
           return (
@@ -42,7 +50,7 @@ export function QuoteScene({ text, source, durationSec }: { text: string; source
               key={index}
               style={{
                 opacity: ease(frame, fps, 0.4 + index * 0.06, 0.3),
-                backgroundImage: `linear-gradient(to right, ${MARKER} ${marked}%, transparent ${marked}%)`,
+                backgroundImage: `linear-gradient(to right, ${colors.marker} ${marked}%, transparent ${marked}%)`,
                 boxDecorationBreak: "clone",
                 WebkitBoxDecorationBreak: "clone",
                 // A pixel of overlap closes the hairline gaps between words.
@@ -57,8 +65,8 @@ export function QuoteScene({ text, source, durationSec }: { text: string; source
         })}
       </div>
       {source ? (
-        <div style={{ marginTop: 48, fontFamily: FONTS.body, fontSize: 42, color: COLORS.dim, opacity: sourceIn }}>
-          — {source.title} <span style={{ color: COLORS.border }}>· {hostname(source.url)}</span>
+        <div style={{ marginTop: 48, fontFamily: fonts.body, fontSize: 42, color: colors.dim, opacity: sourceIn }}>
+          — {source.title} <span style={{ color: colors.border }}>· {hostname(source.url)}</span>
         </div>
       ) : null}
     </AbsoluteFill>

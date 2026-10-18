@@ -1,9 +1,12 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
+import type { CSSProperties } from "react";
 import type { TimedWord } from "@/lib/elevenlabs";
-import { COLORS, FONTS, VIDEO } from "@/lib/theme";
+import type { Theme } from "@/lib/themes";
+import { VIDEO } from "@/lib/theme";
 import { countUp } from "../format";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
+import { alpha, mix, useTheme } from "../theme";
 
 // Label, bar and value must fit inside the side margins: 400 + 32 + 760 + 32 + about 220 for the value.
 const LABEL_WIDTH = 400;
@@ -30,6 +33,26 @@ function linesOf(text: string, fontSize: number, width: number): number {
   return lines;
 }
 
+// How a bar is painted: flat in Night atlas, hatched inside a line of its color in Blueprint, and in Field guide edged
+// in ink, the biggest in full color and the others in a pale tint, like a chart in a textbook.
+function barStyle({ colors, drawing }: Theme, isLargest: boolean): CSSProperties {
+  const color = isLargest ? colors.signal : colors.teal;
+  if (drawing.card === "outline") {
+    return {
+      backgroundImage: `repeating-linear-gradient(-45deg, ${color} 0 3px, transparent 3px 12px)`,
+      boxShadow: `inset 0 0 0 3px ${color}`,
+    };
+  }
+  if (drawing.card === "tag") {
+    return {
+      backgroundColor: isLargest ? color : mix(color, colors.ink, 0.35),
+      boxShadow: `inset 0 0 0 2px ${alpha(colors.paper, 0.6)}`,
+      borderRadius: drawing.radius,
+    };
+  }
+  return { backgroundColor: color };
+}
+
 // A bar chart: bars grow one after another as the narration names them, and the biggest one is amber.
 export function CompareScene({
   title,
@@ -44,6 +67,8 @@ export function CompareScene({
   words: TimedWord[];
   durationSec: number;
 }) {
+  const theme = useTheme();
+  const { colors, fonts } = theme;
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const largest = Math.max(...bars.map((bar) => bar.value), 0);
@@ -71,7 +96,17 @@ export function CompareScene({
   return (
     <AbsoluteFill style={{ justifyContent: "center", padding: `${VIDEO.topSpace}px ${VIDEO.sideMargin}px ${VIDEO.captionSpace}px` }}>
       <div style={{ transform: `scale(${fit})` }}>
-        <div style={{ fontFamily: FONTS.display, fontSize: 76, fontWeight: 700, lineHeight: 1.15, color: COLORS.paper, opacity: titleIn, marginBottom: 64 }}>
+        <div
+          style={{
+            fontFamily: fonts.display,
+            fontSize: 76 * fonts.displayScale,
+            fontWeight: fonts.displayWeight,
+            lineHeight: 1.15,
+            color: colors.paper,
+            opacity: titleIn,
+            marginBottom: 64,
+          }}
+        >
           {title}
         </div>
         {bars.map((bar, index) => {
@@ -84,9 +119,9 @@ export function CompareScene({
                   width: LABEL_WIDTH,
                   flexShrink: 0,
                   textAlign: "right",
-                  fontFamily: FONTS.body,
+                  fontFamily: fonts.label,
                   fontSize: 48,
-                  color: isLargest ? COLORS.paper : COLORS.dim,
+                  color: isLargest ? colors.paper : colors.dim,
                   opacity: Math.min(1, grow * 3),
                 }}
               >
@@ -97,10 +132,10 @@ export function CompareScene({
                   width: Math.max(4, barWidth(bar.value) * grow),
                   flexShrink: 0,
                   height: BAR_HEIGHT,
-                  backgroundColor: isLargest ? COLORS.signal : COLORS.teal,
+                  ...barStyle(theme, isLargest),
                 }}
               />
-              <div style={{ fontFamily: FONTS.body, fontSize: 48, fontWeight: 700, color: COLORS.paper, opacity: grow }}>
+              <div style={{ fontFamily: fonts.body, fontSize: 48, fontWeight: 700, color: colors.paper, opacity: grow }}>
                 {valueText(bar.value, grow)}
               </div>
             </div>

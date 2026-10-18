@@ -3,9 +3,8 @@ import { COUNTRIES, isKnownCountry } from "./countries.ts";
 import { addUsage, chatJson, emptyUsage, usageOf } from "./nebius.ts";
 import { CHARS_PER_SECOND, ResearchFactListSchema, ScriptSchema, SourceListSchema, VideoRequestSchema, countWords } from "./pipeline.ts";
 import type { ResearchFact, Usage } from "./pipeline.ts";
-import { directPlanPrompt, directScenePrompt, directTitlePrompt, placesPrompt } from "./prompts/direct.ts";
+import { directCritiquePrompt, directPlanPrompt, directScenePrompt, directTitlePrompt, placesPrompt } from "./prompts/direct.ts";
 import {
-  amountsIn,
   datesIn,
   isDateIn,
   isDayAndMonth,
@@ -21,9 +20,28 @@ import {
 import { isCountryName, isCountryOwnName, labelMismatch, namesAPlace, namesCity, namesCountry } from "./regions.ts";
 import { questionProblems } from "./script.ts";
 import { claimWords, contentWords, groundedWords, isSentenceOf, sameWords, sentencesOf, wholeSentencesOf } from "./words.ts";
+import {
+  amountsFor,
+  barIsStated,
+  hasPhrase,
+  isFullyGrounded,
+  isGrounded,
+  isNotAPerson,
+  isPercent,
+  isYearLike,
+  lineIsGrounded,
+  phraseWords,
+  roleOf,
+  statedTogether,
+  unitKey,
+} from "./grounding.ts";
 import { FIGURE_LOOKS, SPACE_BODIES, StoryboardSchema, storyboardProblems } from "./storyboard.ts";
-import { ICON_NAMES, isIconName } from "./icons.ts";
+import { ICON_NAMES, iconKey } from "./icons.ts";
 import { MOON_SEAS, MOON_SITES, moonPlace } from "./moon.ts";
+import { TEMPLATES, TEMPLATE_NAMES, isTemplateName, templateParams, templateSpec } from "./templates.ts";
+import type { Family, Keep, SceneData, TemplateName, TemplateVisual } from "./templates.ts";
+import { looksFor, pickLooks } from "./looks.ts";
+import { THEME_NAMES } from "./themes.ts";
 import { placeOf } from "./places.ts";
 import { geoDistance } from "d3-geo";
 import { canDraw, countryCenter, countryContains } from "./world.ts";
@@ -37,6 +55,11 @@ const SCENE_CALL_TIMEOUT_MS = 20_000;
 const DIRECT_DEADLINE_MS = 90_000;
 // The plan only helps, so a slow plan gives way and the scenes pick their own kinds.
 const PLAN_DEADLINE_MS = 30_000;
+// The critique only polishes the plan, so it gets less time, and changes at most a few scenes.
+const CRITIQUE_DEADLINE_MS = 15_000;
+const MAX_CRITIQUE_CHANGES = 3;
+// A second try for a scene that ended as text starts only with this much time left before the scene calls stop.
+const SECOND_TRY_MS = 15_000;
 // Scene calls stop this long before the deadline, to leave time for the check of map markers.
 const MARKER_CHECK_MS = 10_000;
 const EARTH_RADIUS_KM = 6371;
@@ -178,11 +201,32 @@ const SCENE_KINDS = [
   "text",
 ] as const;
 type SceneKind = (typeof SCENE_KINDS)[number];
+// A kind of scene: one of the director's own, or one of Trym's templates.
+type AnyKind = SceneKind | TemplateName;
+const ALL_KINDS = [...SCENE_KINDS, ...TEMPLATE_NAMES] as [AnyKind, ...AnyKind[]];
+
+// Which of the director's own kinds look alike on screen (see Family in lib/templates.ts).
+const FAMILIES: Record<SceneKind, Family> = {
+  map: "map",
+  timeline: "time",
+  stat: "number",
+  compare: "chart",
+  quote: "words",
+  steps: "chain",
+  list: "cards",
+  versus: "sides",
+  change: "sides",
+  people: "people",
+  space: "picture",
+  illustration: "picture",
+  text: "words",
+};
+const familyOf = (kind: AnyKind): Family => (isTemplateName(kind) ? templateSpec(kind).family : FAMILIES[kind]);
 
 // How often each kind may appear among a video's scenes. Maps are the strongest picture and follow on from each
 // other, but not every time.
-function kindLimits(scenes: number, geographic: boolean): Record<SceneKind, number> {
-  return {
+function kindLimits(scenes: number, geographic: boolean): Record<AnyKind, number> {
+  const own: Record<SceneKind, number> = {
     map: geographic ? Math.max(2, Math.round(scenes * 0.65)) : 0,
     // A second timeline mostly showed the same events again.
     timeline: 1,
@@ -199,57 +243,78 @@ function kindLimits(scenes: number, geographic: boolean): Record<SceneKind, numb
     illustration: 2,
     text: 2,
   };
+  // Each template at most once: a second cycle or myth card in one video looks like a repeat.
+  return { ...own, ...Object.fromEntries(TEMPLATE_NAMES.map((name) => [name, 1])) } as Record<AnyKind, number>;
 }
 
-// Picks one kind per scene from the model's ranked choices, keeping the rhythm: no kind twice in a row except maps,
-// no four maps in a row, each kind at most as often as `limits` allows, and no kind the scene's facts have no data
-// for. First choices are placed before second choices, so a kind goes to the scenes it suits best. Text comes last:
-// a scene gets it only when none of its other choices fits. A scene where none of its choices fits gets no plan and
-// picks its own kind.
-function pickKinds(choices: SceneKind[][], missing: SceneKind[][], limits: Record<SceneKind, number>): (SceneKind | undefined)[] {
-  const picked: (SceneKind | undefined)[] = choices.map(() => undefined);
-  const fits = (kind: SceneKind, index: number) => {
-    if (missing[index].includes(kind) || picked.filter((other) => other === kind).length >= limits[kind]) return false;
-    if (kind !== "map") return picked[index - 1] !== kind && picked[index + 1] !== kind;
+// How often scenes of one family may appear. Words on screen (text, quotes, statements, cards) are the weakest
+// pictures, so a video gets only a few of them, whatever their kind.
+const familyLimits = (scenes: number): Partial<Record<Family, number>> => ({ words: scenes >= 9 ? 3 : 2 });
+
+// What a kind must respect to go to a scene: the kinds its facts have no data for (`missing`, by scene), and how
+// often each kind and family may appear.
+type KindRules = { missing: AnyKind[][]; limits: Record<AnyKind, number>; families: Partial<Record<Family, number>> };
+
+// Whether a kind may go to scene `index`, given the kinds picked for the other scenes: not a kind its facts have no
+// data for, each kind and family at most as often as the rules allow, no kind twice in a row except maps, and no
+// four maps in a row. `strict` also keeps two scenes of one family apart, so each scene looks different from the one
+// before.
+function kindFits(kind: AnyKind, index: number, picked: (AnyKind | undefined)[], rules: KindRules, strict: boolean): boolean {
+  if (rules.missing[index].includes(kind)) return false;
+  const others = picked.filter((other, at): other is AnyKind => at !== index && other !== undefined);
+  if (others.filter((other) => other === kind).length >= rules.limits[kind]) return false;
+  const family = familyOf(kind);
+  if (others.filter((other) => familyOf(other) === family).length >= (rules.families[family] ?? Infinity)) return false;
+  if (kind === "map") {
     const isMap = (at: number) => at === index || picked[at] === "map";
     return ![index - 3, index - 2, index - 1, index].some((start) => [0, 1, 2, 3].every((offset) => isMap(start + offset)));
-  };
-  for (let rank = 0; rank < 3; rank++) {
-    choices.forEach((ranked, index) => {
-      const kind = ranked[rank];
-      if (picked[index] === undefined && kind && kind !== "text" && fits(kind, index)) picked[index] = kind;
-    });
+  }
+  const neighbors = [picked[index - 1], picked[index + 1]].filter((other): other is AnyKind => other !== undefined);
+  if (neighbors.includes(kind)) return false;
+  return !strict || !neighbors.some((other) => familyOf(other) === family);
+}
+
+// Picks one kind per scene from the model's ranked choices, keeping the rhythm (see kindFits). First choices are
+// placed before second choices, so a kind goes to the scenes it suits best, and a choice that looks like the scene
+// next to it waits until the scenes' other choices are tried. Text comes last: a scene gets it only when none of its
+// other choices fits. A scene where none of its choices fits gets no plan and picks its own kind.
+function pickKinds(choices: AnyKind[][], rules: KindRules): (AnyKind | undefined)[] {
+  const picked: (AnyKind | undefined)[] = choices.map(() => undefined);
+  for (const strict of [true, false]) {
+    for (let rank = 0; rank < 3; rank++) {
+      choices.forEach((ranked, index) => {
+        const kind = ranked[rank];
+        if (picked[index] === undefined && kind && kind !== "text" && kindFits(kind, index, picked, rules, strict)) picked[index] = kind;
+      });
+    }
   }
   choices.forEach((ranked, index) => {
-    if (picked[index] === undefined && ranked.includes("text") && fits("text", index)) picked[index] = "text";
+    if (picked[index] === undefined && ranked.includes("text") && kindFits("text", index, picked, rules, false)) picked[index] = "text";
   });
   return picked;
 }
 
-// The reply also has plain lines to show if the visual cannot be used, for example when it repeats the scene before.
-const SceneReplySchema = z.object({ visual: SceneVisualSchema, lines: z.array(z.string()).min(1).max(3) });
-
 type TitleVisual = z.infer<typeof TitleVisualSchema>;
-type SceneVisual = z.infer<typeof SceneVisualSchema>;
+type SceneVisual = z.infer<typeof SceneVisualSchema>; // the director's own kinds
+type AnyVisual = SceneVisual | TemplateVisual;
 type MapVisual = Extract<SceneVisual, { kind: "map" }>;
-type SceneReply = z.infer<typeof SceneReplySchema>;
+// The reply also has plain lines to show if the visual cannot be used, for example when it repeats the scene before.
+type SceneReply = { visual: AnyVisual; lines: string[] };
+const isTemplateVisual = (visual: AnyVisual): visual is TemplateVisual => isTemplateName(visual.kind);
+
+// The reply a scene may give: one of the director's own kinds, or one of the templates offered to it.
+function sceneReplySchema(templates: TemplateName[]): z.ZodType<SceneReply> {
+  const options = [...SceneVisualSchema.options, ...templates.map((name) => TEMPLATES[name].schema)];
+  // Typed as the director's own kinds only; a template's reply is typed loosely as TemplateVisual, and each is
+  // checked against its own schema here.
+  const visual = z.discriminatedUnion("kind", options as unknown as typeof SceneVisualSchema.options);
+  return z.object({ visual, lines: z.array(z.string()).min(1).max(3) }) as unknown as z.ZodType<SceneReply>;
+}
 type NarratedScene = { id: string; narration: string; factIds: string[] };
 type FactMap = Map<string, ResearchFact>; // by fact ID
 
 // A bar labeled with a unit instead of a thing.
 const UNIT_LABEL = /^(tonnes?|tons?|kilo(gram)?s?|kg|pounds?|lbs?|km|kilomet(er|re)s?|miles?|met(er|re)s?|feet|years?|days?|dollars?|euros?|percent|%)$/i;
-const isPercent = (unit?: string) => /^(%|percent|per cent)$/i.test(unit ?? "");
-
-// Units that mean the same: "km" and "kilometres", "%" and "per cent".
-const UNIT_NAMES: Record<string, string> = {
-  "%": "percent", "per cent": "percent", km: "kilometer", kilometre: "kilometer", kilometres: "kilometer", kilometers: "kilometer",
-  mi: "mile", m: "meter", metre: "meter", metres: "meter", meters: "meter", kg: "kilogram", kilograms: "kilogram",
-  lb: "pound", lbs: "pound", tonne: "ton", tonnes: "ton",
-};
-const unitKey = (unit: string) => {
-  const word = unit.trim().toLowerCase();
-  return (UNIT_NAMES[word] ?? word).replace(/s$/, "");
-};
 
 // Whether a range is in the stat's unit: "25 to 50 million" fits a stat in millions or of "million people", and a
 // stat without a unit whose label has the word, like "ships" in "ships sank". "4 to 5 years" does not fit a stat in
@@ -259,40 +324,6 @@ function unitFits(rangeUnit: string, stat: { unit?: string; label: string }): bo
   const key = unitKey(rangeUnit);
   const unit = stat.unit ?? "";
   return [unit, ...unit.split(/\s+/), ...claimWords(stat.label)].some((word) => word !== "" && unitKey(word) === key);
-}
-
-// The amounts a text gives: not the day of a date like "9 November", and not a number in a name like "Apollo 11".
-const amountsFor = (text: string) =>
-  amountsIn(text).filter((amount) => {
-    const value = Number.parseFloat(amount);
-    return !isDateIn(value, text) && !isNameNumber(value, text);
-  });
-
-// Measure words a chart's numbers come with. A bar whose sentence gives its number in another of these, like "50
-// percent" in a chart of millions, says something else.
-const MEASURES = new Set(["percent", "million", "billion", "thousand", "hundred", "kilometer", "mile", "meter", "ton", "kilogram", "pound", "dollar", "euro", "year", "month", "day", "hour"]);
-
-// Whether one sentence of the scene gives a bar's number for its thing. The label uses the sentence's words, every
-// place it names is in the sentence, the number shares a clause with a word of the label, so "17,000 were executed
-// and 10,000 died in prison" cannot pair 10,000 with "executed", and the number does not come in another measure
-// than the chart's.
-function barIsStated(bar: { label: string; value: number }, unit: string | undefined, source: string): boolean {
-  const value = String(bar.value);
-  const chartUnit = unitKey((unit ?? "").split(/\s+/)[0] ?? "");
-  return sentencesOf(source).some((sentence) => {
-    const places = claimWords(bar.label).filter((word) => namesAPlace(word));
-    if (!isGrounded(bar.label, sentence) || places.some((word) => groundedWords(word, sentence).matched === 0)) return false;
-    // Clauses end at commas (not those in "17,000"), semicolons and words like "and".
-    return sentence.split(/(?<!\d),|,(?!\d)|[;:]|\b(?:and|but|while|whereas)\b/).some((clause) => {
-      const tokens = clause.match(/-?\d[\d,]*(?:\.\d+)?|%|\p{L}+/gu) ?? [];
-      return tokens.some((token, index) => {
-        if (numbersIn(token)[0] !== value) return false;
-        const next = unitKey(tokens[index + 1] ?? "");
-        const otherMeasure = unit !== undefined && MEASURES.has(next) && next !== chartUnit;
-        return !otherMeasure && groundedWords(bar.label, clause).matched > 0;
-      });
-    });
-  });
 }
 
 // Whether a label is only a date or a time, like "July 20, 1969" or "After 4:00 PM EDT", with nothing that happens.
@@ -305,7 +336,6 @@ const maxEventLabelChars = (events: number) => (events <= 3 ? 40 : events === 4 
 
 // Dates are not amounts: "14th century" or "700 CE" in a stat or a chart means the model should have used a timeline.
 const DATE_WORDS = /\b(\d+(st|nd|rd|th)|century|centuries|ce|bce|bc|ad)\b|\bc\.$/i;
-const isYearLike = (value: number) => Number.isInteger(value) && value >= 1000 && value <= 2100;
 
 // Markers are for cities, so a marker named after a country or a region is a mistake.
 const countryNames = new Set(Object.values(COUNTRIES).map((country) => country.name.toLowerCase()));
@@ -314,6 +344,9 @@ const CITY_WORDS = /\b(port|city|town|capital|harbou?r|village)\b/i;
 const isPlaceLabel = (label: string) => !countryNames.has(label.trim().toLowerCase()) && !REGION_WORDS.test(label);
 // A country code a map can draw: a real one, and not Antarctica.
 const isMapCountry = (code: string) => isKnownCountry(code) && canDraw(code);
+
+// An amount in percent, like "45%" or "12.5 percent".
+const PERCENT_AMOUNT = /\d(?:[\d,.]*\d)?\s*(?:%|percent\b|per cent\b)/gi;
 
 // Estimated from the word count until the voice-over sets the real length.
 export function sceneDuration(narration: string): number {
@@ -399,17 +432,20 @@ const CHANGE_WORDS =
 // and another year somewhere in the video, a stat one amount, a chart two, a quote a source quote, steps a narration
 // where one thing leads to another, a scoreboard a narration that compares two things, and a change a narration
 // where a name or status changes.
-function kindsWithoutData(scene: NarratedScene, facts: FactMap, videoYears: number): SceneKind[] {
+function kindsWithoutData(scene: NarratedScene, facts: FactMap, videoYears: number, data: SceneData): AnyKind[] {
   const factTexts = scene.factIds.map((id) => facts.get(id)?.text ?? "");
   const amounts = amountsFor([scene.narration, ...factTexts].join(" ")).length;
-  const missing: SceneKind[] = [];
+  // A template fits only a scene with what it shows, like a loop for a cycle or a range for an uncertain number.
+  const missing: AnyKind[] = TEMPLATE_NAMES.filter((name) => !templateSpec(name).fits(data));
   if (factTexts.every((text) => yearsIn(text).length === 0) || videoYears < 2) missing.push("timeline");
   if (amounts < 1) missing.push("stat");
   if (amounts < 2) missing.push("compare");
   if (!scene.factIds.some((id) => hasWholeSentence(facts.get(id)?.quote ?? ""))) missing.push("quote");
   if (!SEQUENCE_WORDS.test(scene.narration)) missing.push("steps");
   if (!VERSUS_WORDS.test(scene.narration)) missing.push("versus");
-  if (!SPACE_WORDS.test(scene.narration)) missing.push("space");
+  // A space scene shows a journey between bodies or places on the Moon, so it needs a body besides the Earth: a scene
+  // about a satellite in orbit around the Earth has nothing to show there.
+  if (!SPACE_WORDS.test(scene.narration) || !/\b(moon|lunar|mars|martian|sun|solar)\b/i.test(scene.narration)) missing.push("space");
   if (!namesAPerson([scene.narration, ...factTexts].join(" "))) missing.push("people");
   if (!CHANGE_WORDS.test(scene.narration)) missing.push("change");
   return missing;
@@ -525,12 +561,6 @@ const BODY_WORDS: Record<(typeof SPACE_BODIES)[number], RegExp> = {
   mars: /\b(mars|martian)\b/i,
 };
 
-// An icon name from lib/icons.ts, whatever its case or spaces ("Gold" is "gold"), or undefined when there is none.
-const iconKey = (name?: string) => {
-  const key = name?.trim().toLowerCase();
-  return key && isIconName(key) ? key : undefined;
-};
-
 // Words that tell of a journey along a way: a voyage, a trade route, a march. Such a map draws a route.
 const TRAVEL_WORDS =
   /\b(sail(s|ed|ing)?|voyages?|routes?|roads?|caravans?|journey(s|ed)?|travell?(ed|ing)?|march(es|ed|ing)?|shipped)\b/i;
@@ -568,25 +598,6 @@ const stopName = (stop: string) => stop.replace(/\s*\([^)]*\)/g, "").split(",")[
 // Words of the sea, without which a route is not a sea route.
 const SEA_WORDS = /\b(sail(s|ed|ing|ors?)?|ships?|fleets?|voyages?|seas?|ocean|ports?|navy|naval|boats?|maritime|harbou?rs?|coasts?|galleons?)\b/i;
 
-// The clauses of a text, split at commas (not those in "17,000"), semicolons and words like "and", so a role or a
-// label is tied to the person or thing it is said about.
-const clausesOf = (text: string) => sentencesOf(text).flatMap((sentence) => sentence.split(/(?<!\d),|,(?!\d)|[;:]|\b(?:and|but|while|whereas)\b/));
-const statedTogether = (name: string, words: string, source: string) =>
-  clausesOf(source).some((clause) => groundedWords(name, clause).matched > 0 && isGrounded(words, clause));
-// A person's role, word for word in a clause that names them: "Commander" under Michael Collins is not "Command
-// Module Pilot", though the two share a stem.
-const roleOf = (name: string, role: string, source: string) =>
-  clausesOf(source).some((clause) => groundedWords(name, clause).matched > 0 && hasPhrase(role, clause));
-
-// Whether a name or phrase appears as a whole in a text, word for word, ignoring case, punctuation and small words
-// like "the", "landing" or "site": "Sea of Tranquility" needs all of it, not only "Sea".
-const phraseWords = (text: string) =>
-  text.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter((word) => word && !["the", "landing", "site", "area"].includes(word));
-function hasPhrase(phrase: string, text: string): boolean {
-  const wanted = phraseWords(phrase).join(" ");
-  return wanted !== "" && ` ${phraseWords(text).join(" ")} `.includes(` ${wanted} `);
-}
-
 // Words that show a figure's look is right for the person it stands for: a crown only for a king, queen or emperor,
 // and not for Martin Luther King, a spacesuit only in a story about space. A plain figure needs nothing.
 const LOOK_WORDS: Record<(typeof FIGURE_LOOKS)[number], RegExp | null> = {
@@ -613,13 +624,6 @@ function lookFits(look: (typeof FIGURE_LOOKS)[number], name: string, role: strin
   // A spacesuit fits anyone in a story about space; other looks need their words next to the person.
   return words.test(`${aboutPerson(name, source)} ${role ?? ""}`) || (look === "astronaut" && words.test(source));
 }
-
-// Words that tell a name is an animal's or a thing's, like "the dog Laika" or "Columbia, the command module".
-const NOT_PEOPLE = "dogs?|monkeys?|chimpanzees?|chimps?|apes?|sheep|cats?|horses?|mice|mouse|rats?|ships?|probes?|satellites?|rockets?|spacecraft|modules?|capsules?|landers?|rovers?";
-const isNotAPerson = (name: string, source: string) => {
-  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`\\b(?:${NOT_PEOPLE})\\s+${escaped}\\b|\\b${escaped},?\\s+(?:the|a|an|our)\\s+(?:${NOT_PEOPLE})\\b`, "i").test(source);
-};
 
 // Where a text is first named in the narration (then the facts), so things can come in the order they are spoken.
 const firstMention = (text: string, narration: string, source: string) => {
@@ -650,27 +654,6 @@ function stopProblems(visual: MapVisual, stop: string, source: string, facts: Fa
     return [`"${stop}" is placed in ${COUNTRIES[place.country]?.name ?? place.country}, which this map does not show. Add that country to the frame if it is right, or give the city as a marker.`];
   }
   return [];
-}
-
-// Labels that state something (steps, stats, charts, timeline events) need more than half their words backed by the
-// narration and facts. A short label may have one other word, like "occurred" in "94 deaths occurred", but never
-// only other words. This keeps the director from adding claims on screen that the narration does not make.
-function isGrounded(text: string, source: string): boolean {
-  const loose = groundedWords(text, source);
-  // A label of small words only, like "Before" or "After", must use the narration's own small words.
-  const { matched, total } = loose.total > 0 ? loose : groundedWords(text, source, { strict: true });
-  return total <= 3 ? matched >= Math.max(1, total - 1) : matched / total > 0.5;
-}
-// A scoreboard answer or a struck-out name is a claim in a word or two, so every word of it must be backed, small
-// words like "more" or "only" too: no "No", no "More soldiers" and no "Louis XV" that the narration does not say.
-function isFullyGrounded(text: string, source: string): boolean {
-  const { matched, total } = groundedWords(text, source, { strict: true });
-  return total > 0 && matched === total;
-}
-// Summary lines may say things in other words, so a third is enough for them.
-function lineIsGrounded(text: string, source: string): boolean {
-  const { matched, total } = groundedWords(text, source);
-  return total === 0 || matched / total >= 1 / 3;
 }
 
 const lineIsSafe = (line: string, allowed: Set<string>, source: string) =>
@@ -1039,24 +1022,48 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
   return problems;
 }
 
-// `avoid` names the kinds this scene should not switch to, and `blocked` the kinds it may not use at all.
+// What is wrong with a template's reply: each text it shows must be short, backed and use only numbers from the
+// narration or facts, and the template's own rules must hold.
+function templateProblems(visual: TemplateVisual, allowed: Set<string>, source: string, narration: string): string[] {
+  const spec = templateSpec(visual.kind);
+  const problems = spec.shown(visual).flatMap(({ text, words, chars, exact }) => {
+    if (!text) return [];
+    const found: string[] = [];
+    if (countWords(text) > words || (chars !== undefined && text.length > chars)) {
+      found.push(`"${text}" is too long. Use at most ${words} words${chars !== undefined ? ` and ${chars} letters` : ""}.`);
+    }
+    for (const number of numbersIn(text)) {
+      if (!allowed.has(number)) found.push(`It shows "${number}", which is not in the narration or facts. Write it as they do.`);
+    }
+    if (!(exact ? isFullyGrounded(text, source) : isGrounded(text, source))) {
+      found.push(`"${text}" says something the narration does not. Use ${exact ? "its exact words" : "the narration's own words"}.`);
+    }
+    return found;
+  });
+  return [...problems, ...(spec.check?.(visual, { narration, source }) ?? [])];
+}
+
+// `avoid` names the kinds this scene should not switch to, `blocked` the kinds it may not use at all, and `offered`
+// the templates it may use.
 function sceneProblems(
   { visual, lines }: SceneReply,
   allowed: Set<string>,
   facts: FactMap,
   source: string,
-  avoid: SceneKind[],
-  blocked: SceneKind[],
+  narration: string,
+  avoid: AnyKind[],
+  blocked: AnyKind[],
+  offered: TemplateName[],
 ): string[] {
   // The lines are only shown if the visual cannot be used, so they are worth a retry only when none of them works.
   const lineProblems = lines.some((line) => lineIsSafe(line, allowed, source)) ? [] : linesProblems(lines, allowed, source);
   // A model that keeps failing at one kind is better off switching to another than giving up to text.
-  const others = SCENE_KINDS.filter((kind) => kind !== visual.kind && kind !== "text" && !avoid.includes(kind));
+  const others = [...SCENE_KINDS, ...offered].filter((kind) => kind !== visual.kind && kind !== "text" && !avoid.includes(kind));
   if (blocked.includes(visual.kind)) {
     const why = visual.kind === "map" ? ": its narration names no place a map can show" : "";
     return [`A ${visual.kind} does not fit this scene${why}. Use ${others.join(" or ") || "text"} instead.`, ...lineProblems];
   }
-  const problems = visualProblems(visual, allowed, facts, source);
+  const problems = isTemplateVisual(visual) ? templateProblems(visual, allowed, source, narration) : visualProblems(visual, allowed, facts, source);
   const hint =
     problems.length > 0 && visual.kind !== "text" && others.length > 0
       ? [`Fix the problems below. If a ${visual.kind} cannot work with these facts, use ${others.join(" or ")} instead.`]
@@ -1066,7 +1073,8 @@ function sceneProblems(
 
 // The scene's plain lines, or the start of its narration if none of them is safe.
 function textVisual(lines: string[], scene: NarratedScene, allowed: Set<string>): SceneVisual {
-  const safeLines = lines.filter((line) => lineIsSafe(line, allowed, scene.narration));
+  // A line cut off at a comma, like "The water cycle, also known as the hydrologic cycle,", ends without it.
+  const safeLines = lines.filter((line) => lineIsSafe(line, allowed, scene.narration)).map((line) => line.trim().replace(/[,;:]+$/, ""));
   return { kind: "text", lines: safeLines.length > 0 ? safeLines : [scene.narration.split(/\s+/).slice(0, 7).join(" ") + "…"] };
 }
 
@@ -1079,12 +1087,20 @@ function repairScene(
   allowed: Set<string>,
   facts: FactMap,
   source: string,
-  blocked: SceneKind[],
-): SceneVisual {
+  blocked: AnyKind[],
+): AnyVisual {
   const safe = (text: string) => numbersIn(text).every((number) => allowed.has(number));
   const safeLabel = (label?: string) => (label && safe(label) && countWords(label) <= MAX_LABEL_WORDS ? label : undefined);
   const fallback = textVisual(lines, scene, allowed);
   if (blocked.includes(visual.kind)) return fallback;
+  if (isTemplateVisual(visual)) {
+    // A template keeps what passes the checks, if its own repair leaves enough of it.
+    if (templateProblems(visual, allowed, source, scene.narration).length === 0) return visual;
+    const keep: Keep = (text, words, exact) =>
+      !text || (countWords(text) <= words && safe(text) && (exact ? isFullyGrounded(text, source) : isGrounded(text, source)));
+    const repaired = templateSpec(visual.kind).repair?.(visual, keep, { narration: scene.narration, source });
+    return repaired && templateProblems(repaired, allowed, source, scene.narration).length === 0 ? repaired : fallback;
+  }
 
   switch (visual.kind) {
     case "text":
@@ -1227,7 +1243,7 @@ function repairScene(
 }
 
 // Same kind and the same content: the viewer would see the same picture twice.
-function sameAs(a: SceneVisual, b: SceneVisual): boolean {
+function sameAs(a: AnyVisual, b: AnyVisual): boolean {
   if (a.kind === "map" && b.kind === "map") {
     const countries = (visual: typeof a) => visual.highlights.map((h) => h.country).sort().join(",");
     return countries(a) === countries(b) && a.arrows.length + a.routes.length === 0 && b.arrows.length + b.routes.length === 0;
@@ -1252,7 +1268,7 @@ function countryIsNamed(visual: MapVisual, highlight: MapVisual["highlights"][nu
 // and does not color a country the narration says nothing about. An arrow joins two places the scene names: an
 // arrow to a country it does not name, or to a city whose marker was dropped, goes. So does an arrow that repeats
 // another, from the same place to the same place, which would be drawn right on top of it.
-function tidyMap(visual: SceneVisual, source: string): SceneVisual {
+function tidyMap(visual: AnyVisual, source: string): AnyVisual {
   if (visual.kind !== "map") return visual;
   const named = (code: string | null) =>
     code !== null &&
@@ -1276,7 +1292,7 @@ function tidyMap(visual: SceneVisual, source: string): SceneVisual {
 // each as it is spoken. A figure wears a look only when its words are said about that person (no crown for a
 // president), and holds a thing only when it is spoken of with them: three astronauts each holding a rocket say
 // nothing.
-function tidyPeople(visual: SceneVisual, narration: string, source: string): SceneVisual {
+function tidyPeople(visual: AnyVisual, narration: string, source: string): AnyVisual {
   if (visual.kind === "people") {
     const people = visual.people
       .map((person) => ({
@@ -1347,10 +1363,10 @@ function recapMap(maps: MapVisual[]): MapVisual {
 // own wrong coordinates, and mix-ups like the city of Karakorum and the Karakoram mountains.
 async function verifyMarkers(
   title: string,
-  visuals: SceneVisual[],
+  visuals: AnyVisual[],
   narrations: string[], // the narration of the scene each visual belongs to
   deadline: number,
-): Promise<{ visuals: SceneVisual[]; usage: Usage }> {
+): Promise<{ visuals: AnyVisual[]; usage: Usage }> {
   // Each place once, with the narration of the first scene that shows it, to tell apart similar names.
   const contextOf = new Map<string, string>();
   visuals.forEach((visual, index) => {
@@ -1425,7 +1441,8 @@ function routeIcon(by: "land" | "sea", source: string): string | undefined {
   return undefined;
 }
 
-function forStoryboard(visual: SceneVisual, facts: FactMap, source: string) {
+function forStoryboard(visual: AnyVisual, facts: FactMap, source: string, sourceTitle?: string) {
+  if (isTemplateVisual(visual)) return { kind: "template" as const, template: visual.kind, params: templateParams(visual, { sourceTitle }) };
   // An empty detail would draw an empty line under a card's title, and an unknown icon would draw a dot.
   if (visual.kind === "list") {
     return {
@@ -1561,18 +1578,36 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     return !SPACE_WORDS.test(scene.narration) && (namesAPlace(scene.narration) || placeInFacts);
   });
   const limits = kindLimits(rest.length, geographic);
+  // What each scene offers the templates to decide whether they fit.
+  const sceneData = (scene: NarratedScene): SceneData => {
+    const source = sourceFor(scene);
+    return {
+      narration: scene.narration,
+      source,
+      amounts: amountsFor(source),
+      years: yearsIn(source),
+      dates: datesIn(source),
+      percents: (source.match(PERCENT_AMOUNT) ?? []).length,
+      namesPerson: namesAPerson(source),
+    };
+  };
   // The kinds each scene cannot use: those its facts have no data for, and a map where it names no place.
-  const missing = rest.map((scene, index): SceneKind[] => [
-    ...kindsWithoutData(scene, factMap, videoYears),
+  const missing = rest.map((scene, index): AnyKind[] => [
+    ...kindsWithoutData(scene, factMap, videoYears, sceneData(scene)),
     ...(geographic && mapFits[index] ? [] : ["map" as const]),
   ]);
+  const rules: KindRules = { missing, limits, families: familyLimits(rest.length) };
+  // The kinds a scene can use at all, for the plan and the critique.
+  const fitsFor = (index: number) => ALL_KINDS.filter((kind) => !missing[index].includes(kind) && limits[kind] > 0);
+  const templateMenu = TEMPLATE_NAMES.map((name) => ({ name, plan: templateSpec(name).plan }));
   // One call ranks the kinds that fit each scene, and the code picks from them so the video gets a rhythm.
   // If the call fails, each scene picks on its own.
   const plan = await chatJson({
     step: "direct/plan",
     schemaName: "plan",
     schema: z.object({
-      scenes: z.array(z.object({ kinds: z.array(z.enum(SCENE_KINDS)).min(2).max(3) })).length(rest.length),
+      theme: z.enum(THEME_NAMES),
+      scenes: z.array(z.object({ kinds: z.array(z.enum(ALL_KINDS)).min(2).max(3) })).length(rest.length),
     }),
     messages: directPlanPrompt(
       script.title,
@@ -1580,39 +1615,86 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
         id: scene.id,
         narration: scene.narration,
         facts: scene.factIds.map((id) => factMap.get(id)?.text ?? ""),
-        cannot: missing[index],
+        fits: fitsFor(index),
       })),
+      templateMenu,
     ),
-    maxTokens: 600,
+    maxTokens: 700,
     timeoutMs: SCENE_CALL_TIMEOUT_MS,
     deadline: Math.min(deadline - MARKER_CHECK_MS, Date.now() + PLAN_DEADLINE_MS),
   }).catch((error) => {
     console.warn(`[direct/plan] No plan, scenes pick their own kind: ${error}`);
     return { data: null, usage: usageOf(error) };
   });
-  const plannedKinds = plan.data ? pickKinds(plan.data.scenes.map((scene) => scene.kinds), missing, limits) : rest.map(() => undefined);
-  if (plan.data) console.log(`[direct/plan] ${plannedKinds.map((kind) => kind ?? "free").join(", ")}`);
+  const plannedKinds = plan.data ? pickKinds(plan.data.scenes.map((scene) => scene.kinds), rules) : rest.map(() => undefined);
+  if (plan.data) console.log(`[direct/plan] ${plan.data.theme}: ${plannedKinds.map((kind) => kind ?? "free").join(", ")}`);
+  // A second look at the plan by the model, as a demanding editor who wants each scene to show what its narration is
+  // about, and not look like the scenes around it. It may swap a few scenes; a swap follows the same rules.
+  const critique = plan.data
+    ? await chatJson({
+        step: "direct/critique",
+        schemaName: "critique",
+        schema: z.object({
+          changes: z.array(z.object({ scene: z.string(), kind: z.enum(ALL_KINDS), why: z.string() })).max(MAX_CRITIQUE_CHANGES),
+        }),
+        messages: directCritiquePrompt(
+          script.title,
+          rest.map((scene, index) => ({ id: scene.id, narration: scene.narration, picked: plannedKinds[index] ?? "free", fits: fitsFor(index) })),
+          templateMenu,
+        ),
+        maxTokens: 500,
+        timeoutMs: SCENE_CALL_TIMEOUT_MS,
+        deadline: Math.min(deadline - MARKER_CHECK_MS, Date.now() + CRITIQUE_DEADLINE_MS),
+      }).catch((error) => {
+        console.warn(`[direct/critique] No critique, keeping the plan: ${error}`);
+        return { data: null, usage: usageOf(error) };
+      })
+    : { data: null, usage: emptyUsage() };
+  for (const change of critique.data?.changes ?? []) {
+    const index = rest.findIndex((scene) => scene.id === change.scene);
+    if (index < 0 || plannedKinds[index] === change.kind) continue;
+    const fits = kindFits(change.kind, index, plannedKinds, rules, false);
+    console.log(`[direct/critique] ${change.scene}: ${plannedKinds[index] ?? "free"} to ${change.kind}${fits ? "" : " does not fit, kept"} (${change.why})`);
+    if (fits) plannedKinds[index] = change.kind;
+  }
+  // The templates a scene may use: those the plan ranked for it and `kind`, the kind it is asked for, unless another
+  // scene is to use them.
+  const offeredFor = (index: number, kind: AnyKind | undefined): TemplateName[] =>
+    [...new Set([kind, ...(plan.data?.scenes[index]?.kinds ?? [])])].filter(
+      (other): other is TemplateName =>
+        other !== undefined && isTemplateName(other) && !missing[index].includes(other) && !plannedKinds.some((planned, at) => at !== index && planned === other),
+    );
   // The kinds a scene may not use at all: those it has no data for, and those the other scenes already use as often
-  // as `limits` allows.
-  const blockedFor = (index: number): SceneKind[] => {
-    const others = plannedKinds.filter((_, other) => other !== index);
-    const usedUp = SCENE_KINDS.filter((kind) => others.filter((other) => other === kind).length >= limits[kind]);
-    return [...new Set([...missing[index], ...usedUp])].filter((kind) => kind !== "text" && kind !== plannedKinds[index]);
+  // as the rules allow, by kind or by family, so a scene without a plan does not add a third quote or statement.
+  const blockedFor = (index: number, kind: AnyKind | undefined): AnyKind[] => {
+    const others = plannedKinds.filter((other, at): other is AnyKind => at !== index && other !== undefined);
+    const usedUp = ALL_KINDS.filter(
+      (other) =>
+        others.filter((planned) => planned === other).length >= limits[other] ||
+        others.filter((planned) => familyOf(planned) === familyOf(other)).length >= (rules.families[familyOf(other)] ?? Infinity),
+    );
+    return [...new Set([...missing[index], ...usedUp])].filter((other) => other !== "text" && other !== kind);
   };
   // The kinds a scene should not switch to: the blocked ones, and those of the scenes next to it (maps may repeat).
-  const avoidFor = (index: number): SceneKind[] => {
+  const avoidFor = (index: number, kind: AnyKind | undefined): AnyKind[] => {
     const neighbors = [plannedKinds[index - 1], plannedKinds[index + 1]].filter(
-      (kind): kind is SceneKind => kind !== undefined && kind !== "map" && kind !== "text" && kind !== plannedKinds[index],
+      (other): other is AnyKind => other !== undefined && other !== "map" && other !== "text" && other !== kind,
     );
-    return [...new Set([...blockedFor(index), ...neighbors])];
+    return [...new Set([...blockedFor(index, kind), ...neighbors])];
   };
+  // Of those, the ones worth naming in a scene's prompt: its schema has no other templates anyway.
+  const avoidInPrompt = (index: number, kind: AnyKind | undefined) =>
+    avoidFor(index, kind).filter((other) => !isTemplateName(other) || offeredFor(index, kind).includes(other));
 
-  const sceneCalls = rest.map((scene, index) =>
-    orFallback(
+  // One scene's call, asking for `kind`, or leaving the kind to the model when the plan has none for it.
+  const sceneCall = (index: number, kind: AnyKind | undefined) => {
+    const scene = rest[index];
+    const offered = offeredFor(index, kind);
+    return orFallback<SceneReply>(
       chatJson({
         step: `direct/${scene.id}`,
         schemaName: "scene",
-        schema: SceneReplySchema,
+        schema: sceneReplySchema(offered),
         messages: directScenePrompt({
           title: script.title,
           position: `scene ${index + 2} of ${narrated.length}`,
@@ -1623,8 +1705,9 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
           // The Moon's places only matter to a scene about space.
           moonPlaces: SPACE_WORDS.test(scene.narration) ? [...MOON_SEAS, ...MOON_SITES].map((place) => place.name) : [],
           otherFacts: factList(videoFactIds.filter((id) => !scene.factIds.includes(id))),
-          plannedKind: plannedKinds[index],
-          avoidKinds: avoidFor(index),
+          templates: offered.map((name) => templateSpec(name).prompt),
+          plannedKind: kind,
+          avoidKinds: avoidInPrompt(index, kind),
           years: yearList,
           amounts: amountsFor(sourceFor(scene)),
         }),
@@ -1632,20 +1715,35 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
         timeoutMs: SCENE_CALL_TIMEOUT_MS,
         deadline: deadline - MARKER_CHECK_MS,
         check: (reply) => [
-          ...(reply.visual.kind === "text" && plannedKinds[index] && plannedKinds[index] !== "text"
-            ? [`Show a ${plannedKinds[index]} or another picture, not text.`]
-            : []),
-          ...sceneProblems(reply, allowedFor(scene), videoFacts, sourceFor(scene), avoidFor(index), blockedFor(index)),
+          ...(reply.visual.kind === "text" && kind && kind !== "text" ? [`Show a ${kind} or another picture, not text.`] : []),
+          ...sceneProblems(reply, allowedFor(scene), videoFacts, sourceFor(scene), scene.narration, avoidFor(index, kind), blockedFor(index, kind), offered),
         ],
         repair: (reply) => ({
-          visual: repairScene(reply, scene, allowedFor(scene), videoFacts, sourceFor(scene), blockedFor(index)),
+          visual: repairScene(reply, scene, allowedFor(scene), videoFacts, sourceFor(scene), blockedFor(index, kind)),
           lines: reply.lines,
         }),
       }),
       { visual: textVisual([], scene, allowedFor(scene)), lines: [] },
-    ),
+    );
+  };
+  const [title, ...firstTries] = await Promise.all([titleCall, ...rest.map((_, index) => sceneCall(index, plannedKinds[index]))]);
+  // A scene whose picture still broke a rule after the retries shows its lines. If the plan ranked another kind for it
+  // that fits among the scenes around it, and there is time, it gets one more call with that kind, all such scenes at
+  // once, so fewer scenes end as plain text.
+  const shownKinds = firstTries.map(({ data }) => data.visual.kind);
+  const scenes = await Promise.all(
+    firstTries.map(async (first, index) => {
+      const planned = plannedKinds[index];
+      if (first.data.visual.kind !== "text" || planned === undefined || planned === "text") return first;
+      if (Date.now() > deadline - MARKER_CHECK_MS - SECOND_TRY_MS) return first;
+      const next = (plan.data?.scenes[index]?.kinds ?? []).find((kind) => kind !== planned && kind !== "text" && kindFits(kind, index, shownKinds, rules, false));
+      if (!next) return first;
+      console.log(`[direct] ${rest[index].id} tries a ${next}, since its ${planned} did not work`);
+      const second = await sceneCall(index, next);
+      const usage = addUsage(first.usage, second.usage);
+      return second.data.visual.kind === "text" ? { ...first, usage } : { ...second, usage };
+    }),
   );
-  const [title, ...scenes] = await Promise.all([titleCall, ...sceneCalls]);
   // Markers are checked before the maps are tidied, so a country kept bright only by a wrong marker is muted too.
   const checked = await verifyMarkers(
     script.title,
@@ -1654,12 +1752,12 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     deadline,
   );
   const tidied = checked.visuals.map((visual, index) => tidyPeople(tidyMap(visual, sourceFor(rest[index])), rest[index].narration, sourceFor(rest[index])));
-  const usage = [title, ...scenes, checked, plan].reduce((total, call) => addUsage(total, call.usage), emptyUsage());
+  const usage = [title, ...scenes, checked, plan, critique].reduce((total, call) => addUsage(total, call.usage), emptyUsage());
 
   // The calls ran apart, so a map or timeline can repeat the one before, the same kind can come too often in a row,
   // or a kind can come more often than `limits` allows. Then the later scene shows its lines instead, to keep some
   // rhythm.
-  const visuals: SceneVisual[] = [];
+  const visuals: AnyVisual[] = [];
   const noRecap: boolean[] = []; // scenes whose own map was just turned down, so no map may take their place
   scenes.forEach(({ data }, index) => {
     const visual = tidied[index];
@@ -1705,19 +1803,30 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
   const question = script.question && questionProblems(script.question, narration).length === 0 ? script.question : undefined;
   if (script.question && !question) console.warn(`[direct] Leaving out the question "${script.question}": the narration does not back it`);
 
+  // The source a template names, like a fact card's: the source of the scene's fact that shares most words with
+  // what the template shows.
+  const sourceTitleFor = (scene: NarratedScene, visual: AnyVisual) => {
+    if (!isTemplateVisual(visual)) return undefined;
+    const shown = templateSpec(visual.kind).shown(visual).map((item) => item.text ?? "").join(" ");
+    const [best] = scene.factIds
+      .flatMap((id) => factMap.get(id) ?? [])
+      .sort((a, b) => groundedWords(shown, b.text).matched - groundedWords(shown, a.text).matched);
+    return sources.find((source) => source.id === best?.sourceId)?.title;
+  };
   const usedSourceIds = new Set(
     facts.filter((fact) => videoFactIds.includes(fact.id)).map((fact) => fact.sourceId),
   );
   const storyboard = StoryboardSchema.parse({
     title: script.title,
     language: request.language,
+    theme: plan.data?.theme ?? "night",
     fps: 30,
     width: 1920,
     height: 1080,
     scenes: narrated.map((scene, index) => ({
       ...(index === 0
         ? { kind: "title", heading: title.data.heading, subheading: question || title.data.subheading }
-        : forStoryboard(visuals[index - 1], videoFacts, sourceFor(rest[index - 1]))),
+        : forStoryboard(visuals[index - 1], videoFacts, sourceFor(rest[index - 1]), sourceTitleFor(rest[index - 1], visuals[index - 1]))),
       id: scene.id,
       narration: scene.narration,
       factIds: scene.factIds,
@@ -1727,6 +1836,24 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
       .filter((source) => usedSourceIds.has(source.id))
       .map(({ id, title: sourceTitle, url }) => ({ id, title: sourceTitle, url })),
   });
+
+  // Some scenes are drawn with one of Trym's templates instead of their own drawing, so videos look less alike. A
+  // quote's look may show the source words around it.
+  const lookOptions = storyboard.scenes.map((scene, index) => {
+    const visual = visuals[index - 1];
+    const quoteFact = visual?.kind === "quote" ? factMap.get(visual.factId) : undefined;
+    return looksFor(scene, {
+      isLast: index === storyboard.scenes.length - 1,
+      sourceTitle: scene.kind === "quote" ? storyboard.sources.find((source) => source.id === scene.sourceId)?.title : undefined,
+      excerpt: quoteFact?.quote.trim(),
+    });
+  });
+  const templatesShown = storyboard.scenes.flatMap((scene) => (scene.kind === "template" ? [scene.template] : []));
+  const looks = pickLooks(lookOptions, script.title, templatesShown);
+  storyboard.scenes.forEach((scene, index) => {
+    if (looks[index]) scene.look = looks[index];
+  });
+  console.log(`[direct] looks: ${storyboard.scenes.map((scene) => scene.look?.template ?? (scene.kind === "template" ? scene.template : scene.kind)).join(", ")}`);
 
   const problems = storyboardProblems(storyboard, facts.map((fact) => fact.id));
   if (problems.length > 0) throw new Error(`The storyboard is not valid: ${problems.join("; ")}`);

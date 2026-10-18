@@ -1,7 +1,8 @@
 import type { ResearchFact } from "@/lib/pipeline";
 import type { Storyboard } from "@/lib/storyboard";
-import { COLORS, FONTS } from "@/lib/theme";
+import { NoteMarks, noteStyle } from "./cards";
 import { useEase } from "./motion";
+import { useTheme } from "./theme";
 
 const MAX_SITES = 2;
 
@@ -27,6 +28,8 @@ export function sceneSites(storyboard: Storyboard, facts: Pick<ResearchFact, "id
 
 // A small, calm note in the top right corner: where what the narration says comes from.
 export function SourceChip({ sites }: { sites: string[] }) {
+  const theme = useTheme();
+  const { colors, fonts } = theme;
   const appear = useEase(0.8, 0.6);
   if (sites.length === 0) return null;
   return (
@@ -36,14 +39,16 @@ export function SourceChip({ sites }: { sites: string[] }) {
         top: 48,
         right: 56,
         padding: "10px 20px",
-        backgroundColor: COLORS.captionBackground,
-        fontFamily: FONTS.body,
+        backgroundColor: colors.captionBackground,
+        fontFamily: fonts.label,
         fontSize: 28,
-        color: COLORS.dim,
+        color: colors.dim,
         opacity: appear,
+        ...noteStyle(theme),
       }}
     >
-      {sites.length > 1 ? "Sources" : "Source"}: <span style={{ color: COLORS.paper }}>{sites.join(" · ")}</span>
+      {sites.length > 1 ? "Sources" : "Source"}: <span style={{ color: colors.captionText }}>{sites.join(" · ")}</span>
+      <NoteMarks />
     </div>
   );
 }

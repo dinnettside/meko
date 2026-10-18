@@ -1,15 +1,18 @@
-import { useMemo } from "react";
-import { AbsoluteFill, interpolateColors, useCurrentFrame, useVideoConfig } from "remotion";
+import { useId, useMemo } from "react";
+import { AbsoluteFill, Html5Audio, Sequence, interpolateColors, useCurrentFrame, useVideoConfig } from "remotion";
 import { COUNTRIES } from "@/lib/countries";
 import type { TimedWord } from "@/lib/elevenlabs";
 import { partPoint } from "@/lib/regions";
 import type { Scene } from "@/lib/storyboard";
-import { cameraFrom, countryOf, fitProjection, layoutMap, mapCodes, mapPoints, routeLegs, sceneYear } from "../geo";
+import { cameraFrom, countryOf, fitProjection, focusArea, layoutMap, mapCodes, mapPoints, mapProjection, routeLegs, sceneYear } from "../geo";
 import type { MapLayout } from "../geo";
+import { Hatch } from "../hatch";
 import { Icon } from "../icons";
 import { ease } from "../motion";
+import { sounds } from "../sfx";
 import { revealAt, revealTimes } from "../spoken";
-import { COLORS, FONTS, MOTION, VIDEO } from "@/lib/theme";
+import { alpha, useTheme } from "../theme";
+import { MOTION, VIDEO } from "@/lib/theme";
 
 type MapSceneData = Extract<Scene, { kind: "map" }>;
 type Route = NonNullable<MapSceneData["routes"]>[number];
@@ -23,7 +26,6 @@ const BOX: [[number, number], [number, number]] = [
   [VIDEO.mapPadding, 110],
   [WIDTH - VIDEO.mapPadding, HEIGHT - CAPTION_SPACE - 30],
 ];
-const TONES = { primary: COLORS.signal, secondary: COLORS.teal, muted: COLORS.muted };
 // An arrow draws in a second, or faster when it starts late. It and its label must be done this long before the next
 // scene starts to dissolve in over this one, so there is time to read them.
 const ARROW_SEC = 1.0;
@@ -32,8 +34,6 @@ const READ_SEC = 0.8;
 // Where an arrow meets a country whose middle is far from where its history mostly happened: Russia's is deep in
 // Siberia, so arrows go to the European part instead.
 const ANCHORS: Record<string, [number, number]> = { RUS: [40, 55] };
-// A route is the main route in amber, the second in teal.
-const ROUTE_COLORS = [COLORS.signal, COLORS.teal];
 // A route reaches each stop as the narration names it. A leg takes this long, depending on its length on screen,
 // or less when the next stop is named sooner; between legs the route waits at the stop it reached.
 const ROUTE_PX_PER_SEC = 420;
@@ -47,6 +47,31 @@ const HEAD_ICONS = { sea: "ship", land: undefined } as const;
 // Which way each head icon faces as drawn in remotion/icons.tsx, so it can be turned to face the way it travels.
 const FACES_LEFT: Record<string, boolean> = { ship: false, camel: true, horse: true, train: false, car: false };
 const fontSize = (strong: boolean) => (strong ? VIDEO.fontSize.mapLabelStrong : VIDEO.fontSize.mapLabel);
+// A map that zooms into its cities flies in over this long. A shorter scene has no time to show the countries first.
+const ZOOM_SEC = 1.6;
+const FLIGHT_VOLUME = 0.14;
+const MIN_ZOOM_SCENE_SEC = 5.5;
+const CENTER_X = WIDTH / 2;
+const CENTER_Y = (BOX[0][1] + BOX[1][1]) / 2;
+
+// Where the camera is: a point of the map's layout is drawn at scale * point + (x, y) on screen.
+type Camera = { scale: number; x: number; y: number };
+const SETTLED: Camera = { scale: 1, x: 0, y: 0 };
+// Between two cameras: the zoom changes at an even pace, and the spot in the middle of the screen moves in a straight
+// line.
+function between(from: Camera, to: Camera, t: number): Camera {
+  const scale = from.scale * Math.pow(to.scale / from.scale, t);
+  const [fromX, fromY] = [(CENTER_X - from.x) / from.scale, (CENTER_Y - from.y) / from.scale];
+  const [toX, toY] = [(CENTER_X - to.x) / to.scale, (CENTER_Y - to.y) / to.scale];
+  const [middleX, middleY] = [fromX + (toX - fromX) * t, fromY + (toY - fromY) * t];
+  return { scale, x: CENTER_X - scale * middleX, y: CENTER_Y - scale * middleY };
+}
+// A camera pulled back by a factor below 1, around the middle of the screen.
+const pulledBack = (camera: Camera, factor: number): Camera => ({
+  scale: factor * camera.scale,
+  x: factor * camera.x + (1 - factor) * CENTER_X,
+  y: factor * camera.y + (1 - factor) * CENTER_Y,
+});
 
 // Rough size of a label, since text cannot be measured here. Archivo is about 0.56 em wide per character.
 function labelBox(x: number, y: number, text: string, strong: boolean): Box {
@@ -209,11 +234,13 @@ function drawnLength(plan: RoutePlan, sec: number): number {
 
 // Everything about the map that does not move: the projection, the places, where the labels go, and when each
 // part appears. A country, city or arrow comes in as the narration names it, or one after another if it never does.
-function planMap(scene: MapSceneData, words: TimedWord[], durationSec: number) {
+// The routes take the colors in `routeColors` in turn: the main route in amber, the second in teal.
+function planMap(scene: MapSceneData, words: TimedWord[], durationSec: number, routeColors: string[]) {
   const arrows = scene.arrows ?? [];
   const markers = scene.markers ?? [];
   const codes = mapCodes(scene);
-  const layout = layoutMap(codes, BOX, mapPoints(scene));
+  const focus = durationSec >= MIN_ZOOM_SCENE_SEC ? focusArea(scene) : null;
+  const layout = layoutMap(codes, BOX, mapPoints(scene), focus);
   const markerStart = 0.6 + scene.highlights.length * 0.35;
   const arrowStart = markerStart + markers.length * 0.25 + 0.2;
   const reveal = (text: string, fallbackSec: number) => revealAt(words, text, fallbackSec, 0.4, durationSec);
@@ -309,7 +336,7 @@ function planMap(scene: MapSceneData, words: TimedWord[], durationSec: number) {
   // reaches it, unless a city dot is already there. A route's own name goes near its middle, wherever there is room
   // left, and comes in as the route passes the middle.
   const routes = (scene.routes ?? []).flatMap((route, index) => {
-    const plan = planRoute(route, ROUTE_COLORS[index % ROUTE_COLORS.length], layout, words, arrowStart, durationSec, route.year ?? sceneYear(scene));
+    const plan = planRoute(route, routeColors[index % routeColors.length], layout, words, arrowStart, durationSec, route.year ?? sceneYear(scene));
     return plan ? [{ route, plan }] : [];
   });
   const stopDots: { point: Point; startSec: number }[] = [];
@@ -349,13 +376,23 @@ function planMap(scene: MapSceneData, words: TimedWord[], durationSec: number) {
     specs.push({ text: route.label, strong: true, startSec, at: middle, offsets });
   }
   const allDots = [...dots.map((dot) => dot.point), ...stopDots.map((dot) => dot.point)];
-  return { layout, dots, curves, routes: routes.map(({ plan }) => plan), stopDots, fillStarts, labels: placeLabels(specs, allDots) };
+  // A map that zooms in shows its countries first, and flies into its cities as the first of them is named, so the
+  // viewer sees where they are before seeing them up close.
+  const firstPlaceSec = Math.min(...dots.map((dot) => dot.startSec), ...routes.map(({ plan }) => plan.stops[0]?.atSec ?? Infinity));
+  const zoom = focus
+    ? {
+        from: cameraFrom(fitProjection(codes, BOX, mapPoints(scene)), layout.projection),
+        startSec: Math.min(Math.max(firstPlaceSec - 0.4, MOTION.cameraMove + 0.2), durationSec - ZOOM_SEC - READ_SEC - MOTION.sceneFade),
+      }
+    : null;
+  return { layout, zoom, dots, curves, routes: routes.map(({ plan }) => plan), stopDots, fillStarts, labels: placeLabels(specs, allDots) };
 }
 
 // A flat map. The camera eases in on the countries, the highlighted ones fill with color one by one,
 // cities appear as dots, arrows draw from one place to the next, and routes draw along their way by land or sea with a
 // camel or a ship at their head. When the scene before is a map too, the camera flies on from where that map was and
-// its colors change into the new ones, so it plays as one map.
+// its colors change into the new ones, so it plays as one map. In Blueprint the map is a plan: countries are chalk
+// outlines, highlighted ones are hatched in their color, and arrows and routes are dashed.
 export function MapScene({
   scene,
   previous,
@@ -367,56 +404,73 @@ export function MapScene({
   words: TimedWord[];
   durationSec: number;
 }) {
+  const { colors, drawing } = useTheme();
+  const outlined = drawing.land === "outline";
+  const hatchId = `hatch${useId().replace(/[^A-Za-z0-9]/g, "")}`;
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const plan = useMemo(() => planMap(scene, words, durationSec), [scene, words, durationSec]);
-  const start = useMemo(
-    () => (previous ? cameraFrom(fitProjection(mapCodes(previous), BOX, mapPoints(previous)), plan.layout.projection) : null),
-    [previous, plan],
-  );
+  const tones = { primary: colors.signal, secondary: colors.teal, muted: colors.muted };
+  const routeColors = useMemo(() => [colors.signal, colors.teal], [colors]);
+  const plan = useMemo(() => planMap(scene, words, durationSec, routeColors), [scene, words, durationSec, routeColors]);
+  // Where the map before left its camera, seen from this map, so the camera can fly on from there.
+  const start = useMemo(() => (previous ? cameraFrom(mapProjection(previous, BOX), plan.layout.projection) : null), [previous, plan]);
   const homePaths = useMemo(() => {
     const codes = new Set([...scene.highlights, ...(previous?.highlights ?? [])].map((highlight) => highlight.country));
     return new Map([...codes].map((code) => [code, plan.layout.homePathOf(code)]));
   }, [scene, previous, plan]);
 
+  // The camera eases in on the countries, or flies on from the map before. A map that zooms in settles first on the
+  // wide view of its countries, then flies into its cities; after another map, which already showed where they are,
+  // it flies straight to them.
   const camera = ease(frame, fps, 0, MOTION.cameraMove);
-  const centerX = WIDTH / 2;
-  const centerY = (BOX[0][1] + BOX[1][1]) / 2;
-  let transform = `translate(${centerX} ${centerY}) scale(${0.84 + 0.16 * camera}) translate(${-centerX} ${-centerY})`;
-  if (start) {
-    // Zoom at an even pace, while the spot in the middle of the screen moves in a straight line.
-    const scale = Math.pow(start.scale, 1 - camera);
-    const fromX = (centerX - start.x) / start.scale;
-    const fromY = (centerY - start.y) / start.scale;
-    const middleX = fromX + (centerX - fromX) * camera;
-    const middleY = fromY + (centerY - fromY) * camera;
-    transform = `translate(${centerX - scale * middleX} ${centerY - scale * middleY}) scale(${scale})`;
-  }
-  // Countries the map before colored start in that color. Those it no longer needs fade back to land.
-  const before = new Map((previous?.highlights ?? []).map((highlight) => [highlight.country, TONES[highlight.tone]]));
-  const fills = new Map(
-    [...before].map(([code, color]) => [code, interpolateColors(ease(frame, fps, 0.2, 0.6), [0, 1], [color, COLORS.land])]),
-  );
+  const zoom = start ? null : plan.zoom;
+  let view = start ? between(start, SETTLED, camera) : pulledBack(zoom ? zoom.from : SETTLED, 0.84 + 0.16 * camera);
+  if (zoom) view = between(view, SETTLED, ease(frame, fps, zoom.startSec, ZOOM_SEC));
+  const transform = `translate(${view.x} ${view.y}) scale(${view.scale})`;
+  // Countries the map before colored start in that color. Those it no longer needs fade back to land. In Blueprint a
+  // country's outline changes from chalk to its color along with its hatching.
+  const chalk = alpha(colors.paper, 0.55);
+  const edgeOf = (color: string) => (color === colors.land ? chalk : color);
+  const tint = (progress: number, from: string, to: string) => ({
+    fill: interpolateColors(progress, [0, 1], [from, to]),
+    edge: interpolateColors(progress, [0, 1], [edgeOf(from), edgeOf(to)]),
+  });
+  const before = new Map((previous?.highlights ?? []).map((highlight) => [highlight.country, tones[highlight.tone]]));
+  const fills = new Map([...before].map(([code, color]) => [code, tint(ease(frame, fps, 0.2, 0.6), color, colors.land)]));
   scene.highlights.forEach((highlight, index) => {
     const progress = ease(frame, fps, plan.fillStarts[index], 0.6);
-    fills.set(highlight.country, interpolateColors(progress, [0, 1], [before.get(highlight.country) ?? COLORS.land, TONES[highlight.tone]]));
+    fills.set(highlight.country, tint(progress, before.get(highlight.country) ?? colors.land, tones[highlight.tone]));
   });
 
   return (
     <AbsoluteFill>
       <svg width={WIDTH} height={HEIGHT} viewBox={`0 0 ${WIDTH} ${HEIGHT}`}>
+        {outlined ? (
+          <defs>
+            {[...fills].map(([code, { fill }]) => (
+              <Hatch key={code} id={`${hatchId}${code}`} color={fill} background={colors.land} zoom={view.scale} />
+            ))}
+          </defs>
+        ) : null}
         <g transform={transform}>
           {plan.layout.paths.map((country, index) => (
-            <path key={index} d={country.d} fill={COLORS.land} stroke={COLORS.border} strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
+            <path
+              key={index}
+              d={country.d}
+              fill={colors.land}
+              stroke={outlined ? chalk : colors.border}
+              strokeWidth={outlined ? 1.4 : 1.2}
+              vectorEffect="non-scaling-stroke"
+            />
           ))}
           {/* Colored countries on top, without their overseas territories. */}
-          {[...fills].map(([code, color]) => (
+          {[...fills].map(([code, { fill, edge }]) => (
             <path
               key={code}
               d={homePaths.get(code) ?? ""}
-              fill={color}
-              stroke={COLORS.border}
-              strokeWidth={1.2}
+              fill={outlined ? `url(#${hatchId}${code})` : fill}
+              stroke={outlined ? edge : colors.border}
+              strokeWidth={outlined ? 2.5 : 1.2}
               vectorEffect="non-scaling-stroke"
             />
           ))}
@@ -426,9 +480,20 @@ export function MapScene({
           {plan.routes.map((route, index) => (
             <RouteLine key={index} plan={route} length={drawnLength(route, frame / fps)} />
           ))}
+          {/* Cities are dots, or rings in Blueprint, like the points on a plan. */}
           {[...plan.dots, ...plan.stopDots].map(({ point, startSec }, index) => {
             const appear = ease(frame, fps, startSec, 0.4);
-            return <circle key={index} cx={point[0]} cy={point[1]} r={12 * appear} fill={COLORS.paper} stroke={COLORS.ink} strokeWidth={4} />;
+            return (
+              <circle
+                key={index}
+                cx={point[0]}
+                cy={point[1]}
+                r={12 * appear}
+                fill={outlined ? colors.ink : colors.paper}
+                stroke={outlined ? colors.paper : colors.ink}
+                strokeWidth={4}
+              />
+            );
           })}
           {plan.routes.map((route, index) => (
             <RouteHead key={index} plan={route} sec={frame / fps} fps={fps} />
@@ -438,27 +503,62 @@ export function MapScene({
           ))}
         </g>
       </svg>
+      {/* A rush of air as the camera flies on from the map before, or zooms into the cities. */}
+      {start ? <Html5Audio src={sounds().flight} volume={FLIGHT_VOLUME} /> : null}
+      {zoom ? (
+        <Sequence from={Math.round(zoom.startSec * fps)} layout="none">
+          <Html5Audio src={sounds().flight} volume={FLIGHT_VOLUME} />
+        </Sequence>
+      ) : null}
     </AbsoluteFill>
   );
 }
 
+// An open arrowhead, as on a plan, pointing right from the origin.
+const CHEVRON = "M -26 -15 L 0 0 L -26 15";
+
 // A curved arrow that draws itself. The head appears when the line arrives.
 function Arrow({ from, to, control, progress }: { from: Point; to: Point; control: Point; progress: number }) {
+  const { colors, drawing } = useTheme();
   const angle = (Math.atan2(to[1] - control[1], to[0] - control[0]) * 180) / Math.PI;
   const d = `M ${from[0]} ${from[1]} Q ${control[0]} ${control[1]} ${to[0]} ${to[1]}`;
   const head = { opacity: progress > 0.9 ? (progress - 0.9) * 10 : 0, transform: `translate(${to[0]} ${to[1]}) rotate(${angle})` };
-  // A dark edge under the amber line keeps the arrow visible over an amber country.
+  if (drawing.land === "outline") {
+    // A dashed line with an open head. It is drawn as the part of the curve flown so far, so the dashes stay put
+    // instead of crawling along it.
+    if (progress <= 0) return null;
+    const middle: Point = [from[0] + (control[0] - from[0]) * progress, from[1] + (control[1] - from[1]) * progress];
+    const end: Point = [
+      (1 - progress) ** 2 * from[0] + 2 * (1 - progress) * progress * control[0] + progress ** 2 * to[0],
+      (1 - progress) ** 2 * from[1] + 2 * (1 - progress) * progress * control[1] + progress ** 2 * to[1],
+    ];
+    const part = `M ${from[0]} ${from[1]} Q ${middle[0]} ${middle[1]} ${end[0]} ${end[1]}`;
+    const line = { fill: "none", strokeLinecap: "round", strokeLinejoin: "round" } as const;
+    return (
+      <g>
+        <path d={part} {...line} stroke={colors.ink} strokeWidth={14} />
+        <path d={part} {...line} stroke={colors.signal} strokeWidth={6} strokeDasharray="20 14" />
+        <path d={CHEVRON} {...line} stroke={colors.ink} strokeWidth={14} {...head} />
+        <path d={CHEVRON} {...line} stroke={colors.signal} strokeWidth={6} {...head} />
+      </g>
+    );
+  }
+  // A dark edge under the amber line keeps the arrow visible over an amber country. Before it starts, nothing is
+  // drawn: a round line cap would leave a dot at its start.
+  if (progress <= 0) return null;
   return (
     <g>
-      <path d={d} fill="none" stroke={COLORS.ink} strokeWidth={16} strokeLinecap="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - progress} />
-      <path d={d} fill="none" stroke={COLORS.signal} strokeWidth={8} strokeLinecap="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - progress} />
-      <path d="M 0 0 L -30 -16 L -30 16 Z" fill={COLORS.signal} stroke={COLORS.ink} strokeWidth={4} strokeLinejoin="round" {...head} />
+      <path d={d} fill="none" stroke={colors.ink} strokeWidth={16} strokeLinecap="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - progress} />
+      <path d={d} fill="none" stroke={colors.signal} strokeWidth={8} strokeLinecap="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - progress} />
+      <path d="M 0 0 L -30 -16 L -30 16 Z" fill={colors.signal} stroke={colors.ink} strokeWidth={4} strokeLinejoin="round" {...head} />
     </g>
   );
 }
 
 // A route as drawn so far: a strong rounded line in the route's color on a dark edge, so it reads on sea and land.
+// Dashed in Blueprint, like a way drawn on a plan.
 function RouteLine({ plan, length }: { plan: RoutePlan; length: number }) {
+  const { colors, drawing } = useTheme();
   if (length <= 0) return null;
   const end = plan.lengths.findIndex((each) => each >= length);
   const points = [...plan.line.slice(0, end === -1 ? plan.line.length : end), pointAlong(plan.line, plan.lengths, length)];
@@ -466,15 +566,17 @@ function RouteLine({ plan, length }: { plan: RoutePlan; length: number }) {
   const style = { fill: "none", strokeLinecap: "round", strokeLinejoin: "round" } as const;
   return (
     <g>
-      <path d={d} {...style} stroke={COLORS.ink} strokeWidth={18} />
-      <path d={d} {...style} stroke={plan.color} strokeWidth={10} />
+      <path d={d} {...style} stroke={colors.ink} strokeWidth={18} />
+      <path d={d} {...style} stroke={plan.color} strokeWidth={10} strokeDasharray={drawing.land === "outline" ? "24 16" : undefined} />
     </g>
   );
 }
 
 // The ship or camel at the head of a route, on a disc in the route's color. It pops in at the first stop, faces the
-// way it travels, and fades once it has reached the last stop, so the stop's dot and name show.
+// way it travels, and fades once it has reached the last stop, so the stop's dot and name show. Where icons are drawn
+// as outlines, the disc is the ground with a ring in the route's color, and the icon is drawn in that color.
 function RouteHead({ plan, sec, fps }: { plan: RoutePlan; sec: number; fps: number }) {
+  const { colors, drawing } = useTheme();
   const length = drawnLength(plan, sec);
   if (length < 0) return null;
   const arrived = plan.legs[plan.legs.length - 1].endSec;
@@ -490,33 +592,35 @@ function RouteHead({ plan, sec, fps }: { plan: RoutePlan; sec: number; fps: numb
     const angle = (Math.atan2(ahead[1] - behind[1], ahead[0] - behind[0]) * 180) / Math.PI;
     return (
       <g transform={`translate(${x} ${y}) rotate(${angle}) scale(${scale})`} opacity={opacity}>
-        <path d="M 20 0 L -14 -16 L -6 0 L -14 16 Z" fill={plan.color} stroke={COLORS.ink} strokeWidth={4} strokeLinejoin="round" />
+        <path d="M 20 0 L -14 -16 L -6 0 L -14 16 Z" fill={plan.color} stroke={colors.ink} strokeWidth={4} strokeLinejoin="round" />
       </g>
     );
   }
   const turned = ahead[0] < behind[0] !== (FACES_LEFT[plan.icon] ?? false);
+  const flat = drawing.icon === "solid";
   return (
     <g transform={`translate(${x} ${y}) scale(${scale})`} opacity={opacity}>
-      <circle r={HEAD_DISC / 2} fill={plan.color} stroke={COLORS.ink} strokeWidth={5} />
+      <circle r={HEAD_DISC / 2} fill={flat ? plan.color : colors.ink} stroke={flat ? colors.ink : plan.color} strokeWidth={5} />
       <g transform={`scale(${turned ? -1 : 1} 1) translate(${-HEAD_ICON / 2} ${-HEAD_ICON / 2})`}>
-        <Icon name={plan.icon} size={HEAD_ICON} color={COLORS.ink} cut={plan.color} />
+        <Icon name={plan.icon} size={HEAD_ICON} color={flat ? colors.ink : plan.color} cut={flat ? plan.color : colors.ink} />
       </g>
     </g>
   );
 }
 
 function MapLabel({ x, y, text, opacity, strong }: { x: number; y: number; text: string; opacity: number; strong: boolean }) {
+  const { colors, fonts } = useTheme();
   return (
     <text
       x={x}
       y={y}
       textAnchor="middle"
       dominantBaseline="middle"
-      fontFamily={FONTS.body}
+      fontFamily={fonts.label}
       fontSize={fontSize(strong)}
       fontWeight={strong ? 700 : 500}
-      fill={COLORS.paper}
-      stroke={COLORS.ink}
+      fill={colors.paper}
+      stroke={colors.ink}
       strokeWidth={10}
       paintOrder="stroke"
       strokeLinejoin="round"

@@ -4,7 +4,9 @@ import { timeKey } from "@/lib/numbers";
 import { formatYear, formatYears } from "../format";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
-import { COLORS, FONTS, VIDEO } from "@/lib/theme";
+import { cardEdge, cardFill } from "../cards";
+import { alpha, useTheme } from "../theme";
+import { VIDEO } from "@/lib/theme";
 
 const { width: WIDTH, height: HEIGHT, captionSpace: CAPTION_SPACE } = VIDEO;
 const LEFT = 260;
@@ -37,7 +39,9 @@ const ERA_GAP = 40; // between periods on the same row
 
 // Events in order along a line. The axis draws from left to right, the events come in one by one as the narration
 // names them, an amber line follows time from event to event, and the event the scene is about stands out in amber.
-// Periods, like a dynasty or a war, lie as bands under the events, from their start to their end.
+// Periods, like a dynasty or a war, lie as bands under the events, from their start to their end. In Blueprint the axis
+// is a chalk line, the events are rings, and the bands are outlined like boxes on a drawing; in Field guide the bands
+// are paper tags.
 export function TimelineScene({
   events,
   focusIndex,
@@ -51,6 +55,9 @@ export function TimelineScene({
   words: TimedWord[];
   durationSec: number;
 }) {
+  const theme = useTheme();
+  const { colors, fonts, drawing } = theme;
+  const outlined = drawing.land === "outline";
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const axis = ease(frame, fps, 0.1, 0.9);
@@ -120,27 +127,39 @@ export function TimelineScene({
           y1={AXIS_Y}
           x2={AXIS_START + (AXIS_END - AXIS_START) * axis}
           y2={AXIS_Y}
-          stroke={COLORS.border}
+          stroke={outlined ? alpha(colors.paper, 0.55) : colors.border}
           strokeWidth={6}
           strokeLinecap="round"
         />
         {events.length > 1 ? (
-          <line x1={LEFT} y1={AXIS_Y} x2={LEFT + step * reached} y2={AXIS_Y} stroke={COLORS.signal} strokeWidth={6} strokeLinecap="round" />
+          <line x1={LEFT} y1={AXIS_Y} x2={LEFT + step * reached} y2={AXIS_Y} stroke={colors.signal} strokeWidth={6} strokeLinecap="round" />
         ) : null}
         {placedEras.map((era, index) => {
           const grow = ease(frame, fps, 0.3 + index * 0.25, 0.9);
           return (
             <g key={`era-${index}`} opacity={grow}>
-              <rect x={era.x1} y={era.y} width={(era.x2 - era.x1) * grow} height={ERA_HEIGHT} fill={COLORS.land} stroke={COLORS.border} strokeWidth={2} />
-              <rect x={era.x1} y={era.y} width={8} height={ERA_HEIGHT} fill={COLORS.teal} />
+              <rect
+                x={era.x1}
+                y={era.y}
+                width={(era.x2 - era.x1) * grow}
+                height={ERA_HEIGHT}
+                rx={drawing.card === "solid" ? 0 : drawing.radius}
+                fill={cardFill(theme)}
+                stroke={drawing.card === "solid" ? colors.border : cardEdge(theme).color}
+                strokeWidth={2}
+              />
+              <rect x={era.x1} y={era.y} width={8} height={ERA_HEIGHT} fill={colors.teal} />
+              {/* A label that runs on past its band keeps the band's edge from cutting through its letters, where
+                  the edge is drawn strong enough to. */}
               <text
                 x={era.textX}
                 y={era.y + ERA_HEIGHT / 2}
                 dominantBaseline="middle"
-                fontFamily={FONTS.body}
+                fontFamily={fonts.label}
                 fontSize={VIDEO.fontSize.eraLabel}
                 fontWeight={600}
-                fill={COLORS.paper}
+                fill={colors.paper}
+                {...(drawing.card === "solid" ? {} : { stroke: cardFill(theme), strokeWidth: 8, strokeLinejoin: "round", paintOrder: "stroke" })}
               >
                 {era.text}
               </text>
@@ -152,10 +171,10 @@ export function TimelineScene({
             x={WIDTH / 2}
             y={AXIS_Y - 230}
             textAnchor="middle"
-            fontFamily={FONTS.display}
-            fontSize={VIDEO.fontSize.year}
-            fontWeight={700}
-            fill={COLORS.dim}
+            fontFamily={fonts.display}
+            fontSize={VIDEO.fontSize.year * fonts.displayScale}
+            fontWeight={fonts.displayWeight}
+            fill={colors.dim}
             opacity={axis}
           >
             {formatYear(events[0].year)}
@@ -167,15 +186,23 @@ export function TimelineScene({
           const appear = ease(frame, fps, startOf(index), 0.5);
           return (
             <g key={index} opacity={appear} transform={`translate(0 ${(1 - appear) * 20})`}>
-              <circle cx={x} cy={AXIS_Y} r={isFocus ? 24 : 14} fill={isFocus ? COLORS.signal : COLORS.paper} />
+              {outlined ? (
+                // A ring on the chalk line, with a dot in the middle of the one the scene is about.
+                <g>
+                  <circle cx={x} cy={AXIS_Y} r={isFocus ? 22 : 13} fill={colors.ink} stroke={isFocus ? colors.signal : colors.paper} strokeWidth={5} />
+                  {isFocus ? <circle cx={x} cy={AXIS_Y} r={9} fill={colors.signal} /> : null}
+                </g>
+              ) : (
+                <circle cx={x} cy={AXIS_Y} r={isFocus ? 24 : 14} fill={isFocus ? colors.signal : colors.paper} />
+              )}
               <text
                 x={x}
                 y={AXIS_Y - 70}
                 textAnchor="middle"
-                fontFamily={FONTS.display}
-                fontSize={(isFocus ? VIDEO.fontSize.focusYear : VIDEO.fontSize.year) * (longHeadings ? 0.62 : 1)}
-                fontWeight={700}
-                fill={isFocus ? COLORS.signal : COLORS.paper}
+                fontFamily={fonts.display}
+                fontSize={(isFocus ? VIDEO.fontSize.focusYear : VIDEO.fontSize.year) * (longHeadings ? 0.62 : 1) * fonts.displayScale}
+                fontWeight={fonts.displayWeight}
+                fill={isFocus ? colors.signal : colors.paper}
               >
                 {heading(event)}
               </text>
@@ -183,10 +210,10 @@ export function TimelineScene({
                 x={x}
                 y={AXIS_Y + 90}
                 textAnchor="middle"
-                fontFamily={FONTS.body}
+                fontFamily={fonts.label}
                 fontSize={labelSize}
                 fontWeight={isFocus ? 700 : 500}
-                fill={isFocus ? COLORS.paper : COLORS.dim}
+                fill={isFocus ? colors.paper : colors.dim}
               >
                 {wrap(event.label, labelSize, labelSpace).map((line, lineIndex) => (
                   <tspan key={lineIndex} x={x} dy={lineIndex === 0 ? 0 : labelSize * 1.25}>

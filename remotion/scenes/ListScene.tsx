@@ -1,9 +1,11 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
-import { COLORS, FONTS, VIDEO } from "@/lib/theme";
+import { VIDEO } from "@/lib/theme";
+import { CardMarks, cardFill, drawnCard } from "../cards";
 import { Icon } from "../icons";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
+import { useTheme } from "../theme";
 
 const GAP = 40;
 const CARD_HEIGHT = 300;
@@ -13,7 +15,8 @@ const CARD_HEIGHT = 300;
 // to each other: that is what steps are for.
 //
 // As the last scene, the list sums up the video, and each card gets a check mark as it comes in. A card can show an
-// icon above its title, like gold bars for "Gold".
+// icon above its title, like gold bars for "Gold". In Blueprint the newest card's chalk frame turns yellow instead of
+// getting a rule; in Field guide the cards are tags with a punched hole.
 export function ListScene({
   items,
   words,
@@ -25,6 +28,8 @@ export function ListScene({
   durationSec: number;
   summary?: boolean;
 }) {
+  const theme = useTheme();
+  const { colors, fonts, drawing } = theme;
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const usable = VIDEO.width - 2 * VIDEO.sideMargin;
@@ -51,6 +56,7 @@ export function ListScene({
           const rule = ease(frame, fps, starts[index] + 0.1, 0.5);
           const check = ease(frame, fps, starts[index] + 0.35, 0.3);
           const isNewest = index === newest;
+          const edgeColor = isNewest ? colors.signal : undefined;
           return (
             <div
               key={index}
@@ -58,22 +64,25 @@ export function ListScene({
                 width: cardWidth,
                 minHeight: CARD_HEIGHT,
                 padding: "40px 32px",
-                backgroundColor: COLORS.land,
+                ...(drawing.card === "solid" ? { backgroundColor: colors.land } : drawnCard(theme, edgeColor)),
                 opacity: appear,
                 transform: `translateY(${(1 - appear) * 30}px)`,
                 position: "relative",
               }}
             >
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  height: 10,
-                  width: `${rule * 100}%`,
-                  backgroundColor: isNewest ? COLORS.signal : COLORS.border,
-                }}
-              />
+              {drawing.card !== "outline" ? (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    height: 10,
+                    width: `${rule * 100}%`,
+                    backgroundColor: isNewest ? colors.signal : colors.border,
+                  }}
+                />
+              ) : null}
+              <CardMarks edgeColor={edgeColor} hole />
               {summary ? (
                 <div
                   style={{
@@ -83,8 +92,8 @@ export function ListScene({
                     width: 56,
                     height: 56,
                     borderRadius: 28,
-                    backgroundColor: COLORS.teal,
-                    color: COLORS.ink,
+                    backgroundColor: colors.teal,
+                    color: colors.onSignal,
                     fontSize: 38,
                     fontWeight: 700,
                     display: "flex",
@@ -99,23 +108,23 @@ export function ListScene({
               ) : null}
               {item.icon ? (
                 <div style={{ marginBottom: 22, transform: `scale(${0.8 + 0.2 * appear})`, transformOrigin: "left bottom" }}>
-                  <Icon name={item.icon} size={iconSize} color={isNewest ? COLORS.signal : COLORS.paper} cut={COLORS.land} />
+                  <Icon name={item.icon} size={iconSize} color={isNewest ? colors.signal : colors.paper} cut={cardFill(theme)} />
                 </div>
               ) : null}
               <div
                 style={{
-                  fontFamily: FONTS.display,
-                  fontSize: titleSize,
-                  fontWeight: 700,
+                  fontFamily: fonts.display,
+                  fontSize: titleSize * fonts.displayScale,
+                  fontWeight: fonts.displayWeight,
                   lineHeight: 1.05,
                   paddingRight: summary ? 64 : 0,
-                  color: isNewest ? COLORS.signal : COLORS.paper,
+                  color: isNewest ? colors.signal : colors.paper,
                 }}
               >
                 {item.title}
               </div>
               {item.detail ? (
-                <div style={{ marginTop: 24, fontFamily: FONTS.body, fontSize: 40, lineHeight: 1.2, color: COLORS.dim }}>
+                <div style={{ marginTop: 24, fontFamily: fonts.body, fontSize: 40, lineHeight: 1.2, color: colors.dim }}>
                   {item.detail}
                 </div>
               ) : null}

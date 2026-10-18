@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { THEME_NAMES } from "./themes.ts";
 
 // Zod version of the storyboard contract in CLAUDE.md. Change only with Trym's OK.
 
@@ -25,6 +26,9 @@ const sceneBase = {
   narration: z.string(),
   factIds: z.array(z.string()),
   durationSec: z.number(),
+  // A template from remotion/filmmotor that draws this scene instead of its own scene, with the params it is drawn
+  // with, picked for variety. The scene's own fields still hold what it shows, checked as usual.
+  look: z.object({ template: z.string(), params: z.record(z.string(), z.unknown()) }).optional(),
 };
 
 const TitleSceneSchema = z.object({
@@ -188,6 +192,15 @@ const ChangeSceneSchema = z.object({
   year: z.number().optional(),
 });
 
+// One of Trym's filmmotor templates (remotion/filmmotor), like a cycle, a pyramid or a myth card, with the params it
+// is drawn with. The director checks every text and number in them against the narration and facts.
+const TemplateSceneSchema = z.object({
+  ...sceneBase,
+  kind: z.literal("template"),
+  template: z.string(),
+  params: z.record(z.string(), z.unknown()),
+});
+
 export const SceneSchema = z.discriminatedUnion("kind", [
   TitleSceneSchema,
   TextSceneSchema,
@@ -203,11 +216,14 @@ export const SceneSchema = z.discriminatedUnion("kind", [
   PeopleSceneSchema,
   SpaceSceneSchema,
   IllustrationSceneSchema,
+  TemplateSceneSchema,
 ]);
 
 export const StoryboardSchema = z.object({
   title: z.string(),
   language: z.enum(["en", "no"]),
+  // The look of the whole video (lib/themes.ts), picked by the director from the topic. Night atlas when left out.
+  theme: z.enum(THEME_NAMES).optional(),
   fps: z.literal(30),
   width: z.literal(1920),
   height: z.literal(1080),

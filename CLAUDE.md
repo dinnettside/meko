@@ -78,6 +78,7 @@ type SceneBase = {
   narration: string;   // what the voice says
   factIds: string[];   // facts that back this scene
   durationSec: number; // estimated from word count until voice exists
+  look?: { template: string; params: Record<string, unknown> }; // added Oct 18, 2026 with Trym's OK: a template from remotion/filmmotor that draws this scene instead of its own scene, picked for variety
 };
 
 type Scene =
@@ -103,11 +104,13 @@ type Scene =
   // Added Oct 15, 2026 with Trym's OK:
   | (SceneBase & { kind: "people"; people: { name: string; role?: string; look: FigureLook; prop?: string }[] }) // the people the narration names, as simple figures; FigureLook = "person" | "astronaut" | "scientist" | "soldier" | "ruler" | "worker" | "explorer" | "doctor", by role, never by gender or skin color
   | (SceneBase & { kind: "space"; view: "journey" | "moon"; bodies?: SpaceBody[]; craft?: { from: SpaceBody; to: SpaceBody; label?: string }; sites?: string[] }) // a craft flying between bodies, or the Moon with its seas and named sites; SpaceBody = "earth" | "moon" | "sun" | "mars"
-  | (SceneBase & { kind: "illustration"; title?: string; items: { icon?: string; figure?: FigureLook; label?: string; x: number; y: number; size?: "small" | "medium" | "large" }[]; links?: { from: number; to: number; label?: string }[] }); // a free picture of icons and figures on a 0-100 grid, with arrows
+  | (SceneBase & { kind: "illustration"; title?: string; items: { icon?: string; figure?: FigureLook; label?: string; x: number; y: number; size?: "small" | "medium" | "large" }[]; links?: { from: number; to: number; label?: string }[] }) // a free picture of icons and figures on a 0-100 grid, with arrows
+  | (SceneBase & { kind: "template"; template: string; params: Record<string, unknown> }); // added Oct 18, 2026 with Trym's OK: one of Trym's filmmotor templates (remotion/filmmotor), like a cycle or a myth card, with params the director checked against the narration and facts
 
 type Storyboard = {
   title: string;
   language: "en" | "no";
+  theme?: "night" | "blueprint" | "field"; // added Oct 18, 2026 with Trym's OK (he picked all three looks): the look of the whole video, picked by the director from the topic; Night atlas when left out
   fps: 30;
   width: 1920;
   height: 1080;
@@ -116,7 +119,7 @@ type Storyboard = {
 };
 ```
 
-Phase 1 renders only `title` and `text`. `map` and `timeline` come in Phase 2. `stat`, `compare`, `quote`, `steps`, `list`, `versus` and `change` were added after Phase 2 so the videos feel less like slides. Icons, `people`, `space`, `illustration` and map `routes` were added on Oct 15, 2026, after Trym asked for pictures instead of text boxes and for less template-bound videos. Icon names come from a fixed list in `lib/icons.ts`; all of it is drawn in code.
+Phase 1 renders only `title` and `text`. `map` and `timeline` come in Phase 2. `stat`, `compare`, `quote`, `steps`, `list`, `versus` and `change` were added after Phase 2 so the videos feel less like slides. Icons, `people`, `space`, `illustration` and map `routes` were added on Oct 15, 2026, after Trym asked for pictures instead of text boxes and for less template-bound videos. Icon names come from a fixed list in `lib/icons.ts`; all of it is drawn in code. On Oct 18, 2026 Trym's own filmmotor templates came in as the `template` kind and as `look`s for the other kinds, so videos vary more; each template the director may pick has its checks in `lib/templates.ts`.
 Known limitation: the map data has modern borders. Historical borders are out of scope (say so in the README).
 
 ## Phases

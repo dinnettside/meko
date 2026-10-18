@@ -1,10 +1,11 @@
 import { AbsoluteFill, Easing, interpolate, interpolateColors, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
 import type { FigureLook } from "@/lib/storyboard";
-import { COLORS, FONTS, VIDEO } from "@/lib/theme";
+import { VIDEO } from "@/lib/theme";
 import { FIGURE_ASPECT, Figure } from "../figures";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
+import { useTheme } from "../theme";
 
 const GAP = 56; // between two people
 // The free room between the notes in the top corners and the captions, inside the side margins.
@@ -68,6 +69,7 @@ export function PeopleScene({
   words: TimedWord[];
   durationSec: number;
 }) {
+  const { colors, fonts } = useTheme();
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const time = frame / fps;
@@ -118,7 +120,7 @@ export function PeopleScene({
           // Amber while this is the newest person, then calm once the next one is named.
           const next = starts[index + 1];
           const highlight = next === undefined ? 1 : 1 - ease(frame, fps, next, 0.35);
-          const color = interpolateColors(highlight, [0, 1], [COLORS.paper, COLORS.signal]);
+          const color = interpolateColors(highlight, [0, 1], [colors.paper, colors.signal]);
           return (
             <div key={index} style={{ width: slotWidth, display: "flex", flexDirection: "column", alignItems: "center" }}>
               <div style={{ opacity: appear, transform: `scale(${0.5 + 0.5 * pop})`, transformOrigin: "50% 100%" }}>
@@ -134,9 +136,11 @@ export function PeopleScene({
                   transform: `translateY(${(1 - nameIn) * 16}px)`,
                 }}
               >
-                <div style={{ fontFamily: FONTS.display, fontSize: nameSize, fontWeight: 700, lineHeight: 1.05, color }}>{person.name}</div>
+                <div style={{ fontFamily: fonts.display, fontSize: nameSize * fonts.displayScale, fontWeight: fonts.displayWeight, lineHeight: 1.05, color }}>
+                  {person.name}
+                </div>
                 {person.role ? (
-                  <div style={{ marginTop: ROLE_GAP, fontFamily: FONTS.body, fontSize: roleSize, fontWeight: 500, lineHeight: 1.2, color: COLORS.dim }}>
+                  <div style={{ marginTop: ROLE_GAP, fontFamily: fonts.body, fontSize: roleSize, fontWeight: 500, lineHeight: 1.2, color: colors.dim }}>
                     {person.role}
                   </div>
                 ) : null}
