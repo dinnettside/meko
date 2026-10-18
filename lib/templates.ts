@@ -200,6 +200,10 @@ const kitIcon = (name: string | undefined, label?: string) =>
     .map((word) => iconKey(word))
     .find((key) => key !== undefined);
 
+// Whether a phrase is, word for word, inside something the text puts in quotes.
+const quotedIn = (phrase: string, text: string) =>
+  [...text.matchAll(/["“”'‘’]([^"“”'‘’]{1,120})["“”'‘’]/g)].some(([, quoted]) => hasPhrase(phrase, quoted));
+
 // What is wrong with the icons of a template: names the video cannot draw, even through an alias (lib/icons.ts). The
 // kit pictures leave this out: there an unknown icon is drawn as a plain disc beside its label.
 const iconProblems = (names: (string | undefined)[]) =>
@@ -1372,11 +1376,11 @@ export const TEMPLATES = {
     }),
     fits: (scene) => /\b(language models?|LLMs?|chatbots?|next word|predict\w* (the )?(next )?(word|token)s?|tokens?)\b/i.test(scene.source),
     shown: (visual) => Object.values(visual.labels).map((text) => ({ text, words: 3, optional: true })),
-    // The tiles are an example the narration or facts give, so the text so far is one phrase of theirs and each
-    // candidate one of their words.
+    // The tiles are an example the narration or facts give in quotes, like after "The cat sat on the" it picks "mat":
+    // chopping one of their own sentences into tiles would show the model writing that sentence.
     check: (visual, { source }) => [
-      ...(visual.words.length > 0 && !hasPhrase(visual.words.join(" "), source) ? ["The words so far must be an example the narration or facts give, word for word. Else leave them empty."] : []),
-      ...visual.candidates.filter((word) => !hasPhrase(word, source)).map((word) => `"${word}" is not in the narration or facts. Take the candidates from their example, or leave them empty.`),
+      ...(visual.words.length > 0 && !quotedIn(visual.words.join(" "), source) ? ["The words so far must be an example the narration or facts give in quotes, word for word. Else leave them empty."] : []),
+      ...visual.candidates.filter((word) => !quotedIn(word, source)).map((word) => `"${word}" is not a quoted example in the narration or facts. Take the candidates from their example, or leave them empty.`),
       ...(visual.candidates.length === 1 ? ["Give 2 to 4 candidates, or none."] : []),
       // The longest bar is picked, so the narration must say the model picks the likeliest word.
       ...(visual.candidates.length > 0 && !/\b(likel\w*|probab\w*|most common|best guess|predicts?)\b/i.test(source) ? ["The narration does not say the model picks the likeliest word. Leave the candidates empty."] : []),
@@ -1391,8 +1395,8 @@ export const TEMPLATES = {
     ),
     repair: (visual, keep, { source }) => ({
       ...visual,
-      words: visual.words.length > 0 && hasPhrase(visual.words.join(" "), source) ? visual.words : [],
-      candidates: visual.candidates.length >= 2 && visual.candidates.every((word) => hasPhrase(word, source)) && /\b(likel\w*|probab\w*|most common|best guess|predicts?)\b/i.test(source) ? visual.candidates : [],
+      words: visual.words.length > 0 && quotedIn(visual.words.join(" "), source) ? visual.words : [],
+      candidates: visual.candidates.length >= 2 && visual.candidates.every((word) => quotedIn(word, source)) && /\b(likel\w*|probab\w*|most common|best guess|predicts?)\b/i.test(source) ? visual.candidates : [],
       labels: Object.fromEntries(Object.entries(visual.labels).filter(([, text]) => keep(text, 3))),
     }),
   }),

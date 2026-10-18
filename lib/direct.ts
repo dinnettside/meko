@@ -232,6 +232,9 @@ type SceneKind = (typeof SCENE_KINDS)[number];
 type AnyKind = SceneKind | TemplateName;
 const ALL_KINDS = [...SCENE_KINDS, ...TEMPLATE_NAMES] as [AnyKind, ...AnyKind[]];
 
+// Icons that are signs, not things, so a free picture does not use them as items.
+const SIGN_ICONS = new Set(["arrowup", "arrowdown", "plus", "minus", "check", "cross"]);
+
 // Kinds that tell more than they show; a drawing made for the topic replaces these first.
 const PLAIN_KINDS: AnyKind[] = ["text", "list", "steps", "quote", "illustration", "drawing", "big_statement", "kinetic_words", "definition_card"];
 
@@ -1062,6 +1065,8 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
       visual.items.forEach((item, index) => {
         if (!item.icon && !item.figure) problems.push(`Item ${index} needs an icon or a figure.`);
         if (item.icon && !iconKey(item.icon)) problems.push(`"${item.icon}" is not an icon. Use one from the list.`);
+        // Arrows and signs are not things: as items they read as forces or movement the picture does not show.
+        if (SIGN_ICONS.has(iconKey(item.icon) ?? "")) problems.push(`"${item.icon}" is a sign, not a thing. Show movement with links, and things with icons of things.`);
         if (item.label && tooLong(item.label, MAX_LABEL_WORDS)) problems.push(`The label "${item.label}" is too long. Use at most 4 words.`);
         // A figure stands for people, so its label is held to the people rule: every word in the narration or facts.
         if (item.label && !(item.figure ? isFullyGrounded(item.label, source) : isGrounded(item.label, source))) problems.push(ungrounded(item.label));
@@ -1315,8 +1320,11 @@ function repairScene(
       // Labels and links the narration does not back go; the picture stays if it still says something.
       const labelOk = (label: string | undefined, strict: boolean) =>
         label && countWords(label) <= MAX_LABEL_WORDS && (strict ? isFullyGrounded(label, source) : isGrounded(label, source)) && safe(label);
-      const items = visual.items.map((item) => (labelOk(item.label, item.figure !== undefined) ? item : { ...item, label: undefined }));
+      // An item drawn as a sign (an arrow, a plus) goes, with its links.
+      const things = visual.items.filter((item) => !SIGN_ICONS.has(iconKey(item.icon) ?? ""));
+      const items = things.map((item) => (labelOk(item.label, item.figure !== undefined) ? item : { ...item, label: undefined }));
       const links = visual.links
+        .map((link) => ({ ...link, from: things.indexOf(visual.items[link.from]), to: things.indexOf(visual.items[link.to]) }))
         .filter((link) => items[link.from] && items[link.to] && link.from !== link.to)
         .map((link) => {
           const ends = [items[link.from].label ?? "", items[link.to].label ?? ""].filter(Boolean);

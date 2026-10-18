@@ -42,3 +42,10 @@ From running 10 topics through the pipeline (Oct 14):
 - Ultra used the "total" of a number scene to show two unrelated numbers as a share: 70,000 marchers "out of" a later crowd of 320,000, and "4 out of 5 million" for "4 to 5 million". It also charted days of the month as amounts, and one amount in two units (130 tonnes against 143 tons) as if they were two things.
 - When the script missed its length, Ultra often missed again after the retry message, three times in a row, which failed 2 of 10 videos. Saying how many words to cut or add, and keeping the closest script after the last try, fixed it.
 - Most source quotes Ultra copies are parts of sentences, not whole ones, so a quote scene from them often failed. We now only plan a quote where a whole sentence exists.
+
+From adding drawings and a kit of pictures for any topic (Oct 18):
+
+- Ultra is weak at geometry. Asked to draw a diagram from shapes on a 0 to 100 grid, it stacked every label in one column, crammed the drawing into a corner and once gave every coordinate as a fraction from 0 to 1. Letting it name only what is in a picture and which part a label belongs to, and doing the layout in code, fixed it.
+- Ultra often gives icon names that are not in the list it was given ("data", "signal", "pipe", "hole"), even with the list in the prompt and a retry message naming the problem; it then tends to invent another. A free-text field with an allowed list does not hold it, and a 266-name enum in every icon field would make the schema very large. We map common invented names to real icons in code instead.
+- Even when the menu offered a drawing made for exactly the topic, like a neural network diagram for a video about neural networks, the plan sometimes picked a general picture. The code now puts such a drawing in when its narrow checks pass.
+- Sending the description of every kind of picture to each scene's call cost about 7,000 input tokens a call. Sending only the kinds the scene may use cut it to about 4,500 without hurting the results.

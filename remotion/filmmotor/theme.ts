@@ -33,8 +33,10 @@ export function filmTheme(theme: Theme): FilmTheme {
     upper: false,
     radius: theme.name === "night" ? 6 : theme.drawing.radius,
     // How wide the look's fonts are next to Fraunces and Archivo, which the engine's text widths were measured on:
-    // Big Shoulders is condensed, Young Serif and Work Sans run a little wide.
-    widthScale: theme.name === "blueprint" ? { display: 0.78, text: 1 } : light ? { display: 1.1, text: 1.04 } : { display: 1, text: 1 },
+    // Big Shoulders is condensed, Young Serif and Work Sans run wide. Measured in the browser at 84 px on Oct 18, 2026
+    // (Big Shoulders 0.82 to 0.89 of Fraunces, Young Serif 1.14 to 1.19, Work Sans 1.09 to 1.16 of Archivo) and set at
+    // the wide end, since a width guessed too small runs words into each other.
+    widthScale: theme.name === "blueprint" ? { display: 0.9, text: 1.04 } : light ? { display: 1.2, text: 1.16 } : { display: 1, text: 1 },
     // Cards as the look draws its own: chalk-edged boxes on the drawing in Blueprint, lichen tags with a thin ink edge
     // in Field guide, flat panels in Night atlas.
     card:
