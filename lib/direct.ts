@@ -1142,6 +1142,11 @@ function sceneProblems(
     return [`A ${visual.kind} does not fit this scene${why}. Use ${others.join(" or ") || "text"} instead.`, ...lineProblems];
   }
   const problems = isTemplateVisual(visual) ? templateProblems(visual, allowed, source, narration, quotable) : visualProblems(visual, allowed, facts, source);
+  // A quote is read while the scene's narration is spoken: 22 words under a 4-second sentence could not be read.
+  if (visual.kind === "quote") {
+    const most = Math.max(12, Math.ceil(countWords(narration) * 1.5));
+    if (countWords(visual.text) > most) problems.push(`The quote is too long to read while this scene is spoken. Pick a sentence of at most ${most} words, or another kind.`);
+  }
   const hint =
     problems.length > 0 && visual.kind !== "text" && others.length > 0
       ? [`Fix the problems below. If a ${visual.kind} cannot work with these facts, use ${others.join(" or ")} instead.`]
@@ -1348,6 +1353,14 @@ function repairScene(
     default:
       return visualProblems(visual, allowed, facts, source).length === 0 ? visual : fallback;
   }
+}
+
+// The title card shows the video's title, or its main part before a colon, when that is short. The model's own heading
+// is used only for a long title: the fast model once made "How Volcanoes Erupt: From Deep Earth to Explosive Power"
+// into "Volcanoes Deep Earth".
+function headingOf(title: string, fallback: string): string {
+  const main = title.split(/:\s/)[0].trim();
+  return countWords(main) <= 6 ? main : fallback;
 }
 
 // Same kind and the same content: the viewer would see the same picture twice.
@@ -2056,7 +2069,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     height: 1080,
     scenes: narrated.map((scene, index) => ({
       ...(index === 0
-        ? { kind: "title", heading: title.data.heading, subheading: question || title.data.subheading, icon: iconKey(title.data.icon) }
+        ? { kind: "title", heading: headingOf(script.title, title.data.heading), subheading: question || title.data.subheading, icon: iconKey(title.data.icon) }
         : forStoryboard(visuals[index - 1], videoFacts, sourceFor(rest[index - 1]), sourceTitleFor(rest[index - 1], visuals[index - 1]), rest[index - 1].narration)),
       id: scene.id,
       narration: scene.narration,
