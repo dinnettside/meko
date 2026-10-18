@@ -26,10 +26,12 @@ The browser calls five API routes in order and shows live progress for each:
 1. **Research** (`/api/research`). Nemotron plans 3 to 6 web searches. [Tavily](https://tavily.com) runs them in parallel, preferring encyclopedias, museums and public bodies and leaving out homework-help, essay and Q&A sites. Meko picks the best new page for each search, and Nemotron extracts up to 6 facts from each page, with quotes, all at once. If the model finds an important gap, there is one more round of searches.
 2. **Script** (`/api/script`). Nemotron writes the narration, split into short scenes, with the fact IDs behind every sentence, and the question the video answers, which opens the video on the title card. The length follows the voice's measured pace of about 15 characters per second, counting numbers as the words the voice says ("1347" is "thirteen forty-seven") and leaving time for the credits; a script that is still too long loses sentences from its middle scenes.
 3. **Fact-check** (`/api/factcheck`). Nemotron checks every claim in every sentence against the quotes, twice at the same time, and the stricter verdict counts. Sentences are kept, revised or removed.
-4. **Direct** (`/api/direct`). One Nemotron call picks the look of the video from its topic (Night atlas for history and politics, Blueprint for science and technology, Field guide for nature and the body) and ranks the kinds of picture that fit each scene. The code picks a varied order from them, using only kinds the facts have data for: no timeline without years, no chart without numbers, no maps in a video that names no countries or regions, and no two scenes in a row that look alike. A second call, as a demanding editor, challenges the plan and may swap up to three scenes for a picture that shows the narration better. Then every scene is directed in its own small call, all in parallel. Besides maps, timelines, big numbers, charts, quotes, chains of causes, cards, scoreboards and figures, a scene can use one of more than 40 animated templates from Meko's own template library (`remotion/filmmotor`), like a cycle, a pyramid, a Venn diagram, pros and cons, a myth and the fact that busts it, a definition card, a year that rolls, a calendar page, a donut chart, a line chart, a document, a letter in its writer's own words, a formula or a funnel, each with its own checks against the sources. The opening varies too: a globe for a video about places, a big icon for its topic, the question it answers, or the years it spans rolling by. Some scenes are then drawn with another template for the same content, like a cause chain or a page of the source with the quote marked, so two videos rarely look alike.
+4. **Direct** (`/api/direct`). One Nemotron call picks the look of the video from its topic (Night atlas for history and politics, Blueprint for science and technology, Field guide for nature and the body) and ranks the kinds of picture that fit each scene. The code picks a varied order from them, using only kinds the facts have data for: no timeline without years, no chart without numbers, no maps in a video that names no countries or regions, and no two scenes in a row that look alike. A second call, as a demanding editor, challenges the plan and may swap up to three scenes for a picture that shows the narration better. Then every scene is directed in its own small call, all in parallel. Besides maps, timelines, big numbers, charts, quotes, chains of causes, cards, scoreboards and figures, a scene can use one of more than 40 animated templates from Meko's own template library (`remotion/filmmotor`), like a cycle, a pyramid, a Venn diagram, pros and cons, a myth and the fact that busts it, a definition card, a year that rolls, a calendar page, a donut chart, a line chart, a document, a letter in its writer's own words, a formula or a funnel, each with its own checks against the sources. A video about how something works gets a scene drawn for it: ready-made, animated drawings show a volcano erupting, two tectonic plates meeting, an earthquake, the layers of the Earth, the heart pumping, the lungs breathing, a nerve signal, photosynthesis, the body fighting germs, a rocket reaching orbit, a four-stroke engine, lightning, the tides and a wind turbine. When none fits, the model draws its own diagram from simple parts (layers, shapes, cones, tubes, arrows and flowing dots), with labels in the narration's words, and the code rejects drawings that are crowded, unlabeled or off the grid. The opening varies too: a globe for a video about places, a big icon for its topic, the question it answers, or the years it spans rolling by. Some scenes are then drawn with another template for the same content, like a cause chain or a page of the source with the quote marked, so two videos rarely look alike.
 5. **Voice** (`/api/voice`). [ElevenLabs](https://elevenlabs.io) reads each scene, with the text before and after for a natural flow. Its word timings set the length of each scene, drive captions that light up word by word, and time the pictures: a country lights up, a city appears or an arrow draws as the voice names it. A scene that names a year shows it in the corner. When two maps follow each other, the camera flies from one to the next; a map about a city first shows its country, then zooms in; and a video with maps that would end on plain text ends on a map of every place it showed instead. Every scene moves slowly, so no picture stands still, and soft sound effects made in code (a thud when a number lands, a rush of air when a map zooms in, a bell at the start and the end) sit under the voice.
 
 The result is a storyboard (plain JSON, see `lib/storyboard.ts`) that [Remotion](https://www.remotion.dev) plays in the browser. All visuals and sounds are made in code: no stock footage, images, music or recorded sounds.
+
+**The library.** Every finished video is saved in [Vercel Blob](https://vercel.com/docs/vercel-blob): the storyboard, the voice, the facts, the sources and the fact-check report. When someone asks for the same topic, audience and length again, the saved video plays at once and costs nothing, with a note saying when it was made and a button to make a new one. The diagrams the model draws are saved too, and a later scene about something similar gets the closest ones as examples, so the drawings improve as the library grows.
 
 A 90-second video takes about 35 seconds to make and costs about $0.09 in Token Factory calls. On 10 test topics, every video finished and 91% of the sentences were supported as written (see `docs/eval.md`).
 
@@ -64,6 +66,7 @@ You need Node.js 22.18 or newer and npm.
    | `ELEVENLABS_API_KEY` | API key for ElevenLabs text-to-speech. Without it, videos play silently with captions |
    | `ELEVENLABS_VOICE_ID` | The ElevenLabs voice. Meko uses the default voice George, `JBFqnCBsd6RMkjVDRZzb` |
    | `DEMO_CODE` | Needed on Vercel: making a video asks for this code, so strangers cannot spend your API credits. Without it, the deployed app makes no new videos. Use a long random code. Leave it empty locally |
+   | `BLOB_READ_WRITE_TOKEN` | Optional. The read-write token of a public Vercel Blob store, for the library of finished videos. Without it, every video is made fresh and nothing is saved |
 
 3. Start the dev server and open http://localhost:3000:
 
@@ -92,7 +95,8 @@ Meko runs on [Vercel](https://vercel.com) with no extra configuration:
 
 1. In Vercel, choose Add New, then Project, and import the GitHub repository.
 2. Add the environment variables from the table above, including `DEMO_CODE`. The example video plays for everyone; making a new video asks for the code. A long random code is what stops people from guessing it, and a rate-limit rule on `/api/*` in the Vercel Firewall adds more protection. If you add or change a variable later, deploy again, since Vercel only applies it to new deployments.
-3. Deploy. Every push to `main` deploys again.
+3. For the library, open the project's Storage tab, create a Blob store with public access and connect it to the project. Vercel then connects the app to it on its own.
+4. Deploy. Every push to `main` deploys again.
 
 Each API route sets its own `maxDuration`, at most 180 seconds, which is within Vercel's 300-second limit on every plan.
 
@@ -100,11 +104,11 @@ Each API route sets its own `maxDuration`, at most 180 seconds, which is within 
 
 | Folder | What is in it |
 | --- | --- |
-| `app/` | The page and the five API routes |
+| `app/` | The page, the five API routes and the library's routes |
 | `components/` | The topic form, the player and the fact-check report |
 | `lib/` | One file per pipeline step, the Token Factory, Tavily and ElevenLabs clients, the storyboard contract and the theme |
 | `lib/prompts/` | One file per prompt |
-| `remotion/` | The video: scenes for titles, text, maps and timelines, and the captions |
+| `remotion/` | The video: its scenes, the captions and the template library with its drawings (`remotion/filmmotor`) |
 | `scripts/` | The model check, the eval and the example maker |
 | `docs/` | The model check and eval reports |
 

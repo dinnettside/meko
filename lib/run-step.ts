@@ -18,13 +18,8 @@ function isJson(request: Request): boolean {
   return type.split(";")[0].trim().toLowerCase() === "application/json";
 }
 
-// Shared by the pipeline API routes: check the JSON body, run the step and return its result as JSON.
-export async function runStep<I, O extends object>(
-  request: Request,
-  schema: z.ZodType<I>,
-  step: (input: I) => Promise<O>,
-): Promise<Response> {
-  // Checked before anything else, so a request without the code never reaches a paid API.
+// The demo code's answer when it is missing or wrong, or null when the request may go on.
+export async function demoCodeRefusal(request: Request): Promise<Response | null> {
   const code = checkDemoCode(request);
   if (code === "unset") {
     console.error("[demo-code] DEMO_CODE is not set and VERCEL is, so every request is refused. Set DEMO_CODE and deploy again.");
@@ -38,27 +33,47 @@ export async function runStep<I, O extends object>(
     await wait(WRONG_CODE_DELAY_MS);
     return Response.json({ error: "Making a video needs the right demo code." }, { status: 401 });
   }
+  return null;
+}
+
+// The body of a JSON request, checked against the schema, or the answer that says what is wrong with it.
+export async function readJson<I>(request: Request, schema: z.ZodType<I>, maxChars = MAX_BODY_CHARS): Promise<{ data: I } | { refusal: Response }> {
   if (!isJson(request)) {
-    return Response.json({ error: "The request must be JSON, sent with Content-Type: application/json." }, { status: 415 });
+    return { refusal: Response.json({ error: "The request must be JSON, sent with Content-Type: application/json." }, { status: 415 }) };
   }
   const body = await request.text();
-  if (body.length > MAX_BODY_CHARS) {
-    return Response.json({ error: "The request is too large." }, { status: 413 });
+  if (body.length > maxChars) {
+    return { refusal: Response.json({ error: "The request is too large." }, { status: 413 }) };
   }
   let json: unknown;
   try {
     json = JSON.parse(body);
   } catch {
-    return Response.json({ error: "The request is not valid JSON." }, { status: 400 });
+    return { refusal: Response.json({ error: "The request is not valid JSON." }, { status: 400 }) };
   }
   const parsed = schema.safeParse(json);
   if (!parsed.success) {
-    return Response.json({ error: `The request is not valid: ${z.prettifyError(parsed.error)}` }, { status: 400 });
+    return { refusal: Response.json({ error: `The request is not valid: ${z.prettifyError(parsed.error)}` }, { status: 400 }) };
   }
+  return { data: parsed.data };
+}
+
+// Shared by the pipeline API routes: check the demo code and the JSON body, run the step and return its result as JSON.
+export async function runStep<I, O extends object>(
+  request: Request,
+  schema: z.ZodType<I>,
+  step: (input: I) => Promise<O>,
+  maxChars = MAX_BODY_CHARS,
+): Promise<Response> {
+  // Checked before anything else, so a request without the code never reaches a paid API.
+  const refusal = await demoCodeRefusal(request);
+  if (refusal) return refusal;
+  const body = await readJson(request, schema, maxChars);
+  if ("refusal" in body) return body.refusal;
 
   const started = performance.now();
   try {
-    const result = await step(parsed.data);
+    const result = await step(body.data);
     return Response.json({ ...result, ms: Math.round(performance.now() - started) });
   } catch (error) {
     console.error(error);

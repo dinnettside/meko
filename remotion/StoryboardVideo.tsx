@@ -27,6 +27,7 @@ import { QuoteScene } from "./scenes/QuoteScene";
 import { StatScene } from "./scenes/StatScene";
 import { StepsScene } from "./scenes/StepsScene";
 import { TemplateScene } from "./scenes/TemplateScene";
+import { DrawingScene } from "./scenes/DrawingScene";
 import { TextScene } from "./scenes/TextScene";
 import { TimelineScene } from "./scenes/TimelineScene";
 import { TitleScene } from "./scenes/TitleScene";
@@ -252,5 +253,7 @@ function SceneView({
       return <IllustrationScene title={scene.title} items={scene.items} links={scene.links} backdrop={scene.backdrop} {...timing} />;
     case "template":
       return <TemplateScene template={scene.template} params={scene.params} {...timing} />;
+    case "drawing":
+      return <DrawingScene title={scene.title} parts={scene.parts} labels={scene.labels} {...timing} />;
   }
 }

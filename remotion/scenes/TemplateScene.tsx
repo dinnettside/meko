@@ -39,8 +39,9 @@ const ITEM_LISTS: Record<string, { list: string; text?: string }> = {
 const FREE = { left: 40, top: VIDEO.topSpace, right: VIDEO.width - 40, bottom: VIDEO.height - VIDEO.captionSpace };
 // How much bigger than its settled size an element gets at the top of the engine's pop animation.
 const POP_OVERSHOOT = 1.1;
-// The moments (progress through the scene) a template with its own render hook is measured at.
-const MOTION_SAMPLES = [0.2, 0.4, 0.6, 0.8, 1];
+// The moments (progress through the scene) a template with its own render hook is measured at, close enough together
+// that a part swinging out between two of them (an orbiting Moon) is not missed.
+const MOTION_SAMPLES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
 type Box = { left: number; top: number; right: number; bottom: number };
 type Built = { template: Template; params: TemplateParams; ctx: TemplateContext; markup: string };

@@ -25,7 +25,8 @@ export type SceneData = {
 
 // A text a template shows, with the most words it may have, and the most characters where the template has room for
 // only one short line. Exact texts, like names, need every word in the narration or facts; others need more than half.
-export type Shown = { text: string | undefined; words: number; chars?: number; exact?: boolean };
+// An optional text, like a label on a drawing, is left out when it breaks a rule, instead of costing another try.
+export type Shown = { text: string | undefined; words: number; chars?: number; exact?: boolean; optional?: boolean };
 
 // Whether a text passes the checks for shown texts: backed, not too long and only with numbers from the narration.
 export type Keep = (text: string | undefined, words: number, exact?: boolean) => boolean;
@@ -43,8 +44,11 @@ type Template<S extends z.ZodObject> = {
   // The visual without the parts that break a rule, or null when too little is left. Without it, a visual with a
   // problem after the retries shows the scene's lines instead.
   repair?(visual: z.infer<S>, keep: Keep, context: CheckContext): z.infer<S> | null;
-  params?(visual: z.infer<S>, extra: { sourceTitle?: string }): Record<string, unknown>;
+  params?(visual: z.infer<S>, extra: Extra): Record<string, unknown>;
 };
+
+// What the params may use besides the reply: the title of the scene's source and the narration.
+type Extra = { sourceTitle?: string; narration?: string };
 
 const template = <S extends z.ZodObject>(spec: Template<S>) => spec;
 
@@ -134,6 +138,54 @@ const LETTER_WORDS = /\b(letters?|wrote|writes|diar(?:y|ies)|journal|telegram|po
 const SCALE_WORDS_2 = /\b(scale|ph|decibels?|db|richter|magnitude|degrees?|temperature|°[cf]?)\b/i;
 const PLANET_WORDS = /\b(mercury|venus|mars|jupiter|saturn|uranus|neptune)\b/gi;
 const SEAT_WORDS = /\b(seats?|parliament\w*|mandates?|majority|coalition|assembly|congress|senate|chamber)\b/i;
+
+// A drawn diagram from the library (remotion/filmmotor/templates/diagrams-*.js) whose words are all optional labels,
+// one per part, under `labels`. Each label is at most 3 words, mostly the narration's; a part without one, or with one
+// that breaks a rule, is drawn without a label. `options` are the diagram's other params, like which kind of plate
+// boundary it shows.
+function labelDiagram<N extends string, P extends string, O extends z.ZodRawShape>(spec: {
+  name: N;
+  plan: string;
+  prompt: string;
+  parts: readonly P[];
+  fits: (scene: SceneData) => boolean;
+  options: O;
+  check?: (visual: Record<string, unknown>, context: CheckContext) => string[];
+  params?: (visual: Record<string, unknown>) => Record<string, unknown>;
+  cue?: RegExp; // the word for the moment the drawing turns on, like "erupts"; it then happens as the narration says it
+}) {
+  const labels = z.object(Object.fromEntries(spec.parts.map((part) => [part, z.string().optional()])) as Record<P, z.ZodOptional<z.ZodString>>);
+  const labelsOf = (visual: unknown) => (visual as { labels: Record<string, string | undefined> }).labels;
+  const textsOf = (visual: unknown) => Object.values(labelsOf(visual)).filter((text): text is string => Boolean(text));
+  return template({
+    family: "picture",
+    plan: spec.plan,
+    prompt: `${spec.prompt} Every label is optional, at most 3 words in the narration's words; give only labels for parts the narration or facts name, and leave the others out.`,
+    schema: z.object({ kind: z.literal(spec.name), labels, ...spec.options }),
+    fits: spec.fits,
+    shown: (visual) => textsOf(visual).map((text) => ({ text, words: 3, optional: true })),
+    check: spec.check,
+    repair: (visual, keep, context) => {
+      const repaired = { ...visual, labels: Object.fromEntries(Object.entries(labelsOf(visual)).filter(([, text]) => text && keep(text, 3))) };
+      return (spec.check?.(repaired, context) ?? []).length === 0 ? repaired : null;
+    },
+    params: (visual, { narration }) => {
+      const { kind, labels, ...params } = visual as Record<string, unknown>;
+      void kind;
+      // Labels are names on a drawing, so they start with a capital, like "Right ventricle".
+      const named = Object.fromEntries(Object.entries(labels as Record<string, string>).map(([part, text]) => [part, text.charAt(0).toUpperCase() + text.slice(1)]));
+      const all = { ...params, labels: named };
+      return { ...cueAt(narration, spec.cue), ...(spec.params ? spec.params(all) : all) };
+    },
+  });
+}
+
+// The word of the narration that marks the moment a drawing turns on, as its "at" param, so the template plays that
+// moment as the word is said (see TemplateScene). Without such a word, the template keeps its own timing.
+function cueAt(narration: string | undefined, cue: RegExp | undefined): { at?: string } {
+  const word = cue && narration?.match(cue)?.[0];
+  return word ? { at: word } : {};
+}
 
 export const TEMPLATES = {
   cycle: template({
@@ -724,7 +776,7 @@ export const TEMPLATES = {
         ? []
         : [`No sentence of this scene gives ${visual.bpm} as a heart rate.`],
   }),
-  // Added on Oct 19, 2026, so the director has more to choose from.
+  // Added on Oct 18, 2026, so the director has more to choose from.
   funnel: template({
     family: "chart",
     plan: "a group that shrinks step by step, like how many of 1,000 applicants were hired, when the scene gives each number",
@@ -908,6 +960,199 @@ export const TEMPLATES = {
     ],
     params: (visual) => ({ title: visual.title, people: visual.people.map(({ name, keyword }) => ({ name, keyword })) }),
   }),
+  // Drawn diagrams of how things work, from the library (added on Oct 18, 2026).
+  volcano_cutaway: labelDiagram({
+    name: "volcano_cutaway",
+    cue: /\b(erupt\w*|burst\w*|explod\w*|blast\w*)\b/i,
+    plan: "a cutaway of a volcano: magma rising from its chamber up the vent and erupting, when the scene explains an eruption or what is inside a volcano",
+    prompt: '"volcano_cutaway" when the narration explains how a volcano erupts or what is inside it: a cutaway with the crust, the magma chamber, the conduit up to the crater, and the eruption with ash and lava. "labels" names the parts: chamber, conduit, crater, ash, lava, crust. "erupts" is false when the scene is only about magma gathering below, else true.',
+    parts: ["chamber", "conduit", "crater", "ash", "lava", "crust"],
+    fits: (scene) => /\b(magma|volcano\w*|erupt\w*|lava|crater)\b/i.test(scene.narration),
+    options: { erupts: z.boolean() },
+  }),
+  plate_boundary: labelDiagram({
+    name: "plate_boundary",
+    cue: /\b(earthquakes?|quakes?|slips?|slipped|jolts?)\b/i,
+    plan: "two tectonic plates meeting, moving apart, colliding with one sliding under, or sliding past each other, when the scene explains plate tectonics",
+    prompt: '"plate_boundary" when the narration explains how two tectonic plates move at their boundary: "boundary" is "divergent" (moving apart, magma rising between), "convergent" (one sliding under the other, with a volcano or mountains above) or "transform" (sliding past each other, with an earthquake), as the narration says. "labels" names the parts: left and right (the two plates; in convergent, left slides under), mantle, magma, crust, trench, volcano, mountains, fault, quake. "forms" is "volcano" or "mountains" for convergent.',
+    parts: ["left", "right", "mantle", "magma", "crust", "trench", "volcano", "mountains", "fault", "quake"],
+    fits: (scene) => /\b(tectonic\w*|plates?|subduct\w*|rift\w*|fault\w*)\b/i.test(scene.narration),
+    options: { boundary: z.enum(["divergent", "convergent", "transform"]), forms: z.enum(["volcano", "mountains"]) },
+    // The kind of boundary is a claim: the narration must say how the plates move.
+    check: (visual, { source }) => {
+      const words = {
+        divergent: /\b(apart|spread\w*|rift\w*|diverg\w*|separat\w*|pull\w* away)\b/i,
+        convergent: /\b(collid\w*|collision|converg\w*|subduct\w*|under|beneath|toward|crash\w*|push\w* together)\b/i,
+        transform: /\b(past each other|slide\w* past|transform|sideways|grind\w*|horizontal\w*)\b/i,
+      } as const;
+      const boundary = visual.boundary as keyof typeof words;
+      if (!words[boundary].test(source)) return [`The narration does not say the plates move as at a ${boundary} boundary. Pick the boundary it describes.`];
+      // Above a convergent boundary rise volcanoes or mountains, as the narration says; either fits when it says neither.
+      const volcanoes = /\bvolcan\w*/i.test(source);
+      const mountains = /\b(mountains?|himalaya\w*|alps|andes|ranges?)\b/i.test(source);
+      if (boundary === "convergent" && visual.forms === "volcano" && mountains && !volcanoes) return ['The narration speaks of mountains, not volcanoes. Give "forms" "mountains".'];
+      if (boundary === "convergent" && visual.forms === "mountains" && volcanoes && !mountains) return ['The narration speaks of volcanoes, not mountains. Give "forms" "volcano".'];
+      return [];
+    },
+    // The template calls the kind of boundary "kind".
+    params: ({ boundary, ...params }) => ({ ...params, kind: boundary }),
+  }),
+  earthquake: labelDiagram({
+    name: "earthquake",
+    cue: /\b(slip\w*|snap\w*|break\w*|broke|ruptur\w*|jerk\w*|lurch\w*)\b/i,
+    plan: "an earthquake: the ground slipping along a fault, with the focus underground, the epicenter above it and waves spreading out",
+    prompt: '"earthquake" when the narration explains how an earthquake happens: a block of ground slipping along a fault, the focus below, the epicenter above it and the seismic waves spreading. "labels" names the parts: fault, focus, epicenter, waves.',
+    parts: ["fault", "focus", "epicenter", "waves"],
+    fits: (scene) => /\b(earthquake\w*|seismic|epicent\w*|tremors?|fault)\b/i.test(scene.narration),
+    options: {},
+  }),
+  heart_pump: labelDiagram({
+    name: "heart_pump",
+    plan: "the heart beating, with blood flowing through its four chambers to the lungs and the body",
+    prompt: '"heart_pump" when the narration explains how the heart pumps blood: the four chambers beating, blood without oxygen to the lungs and blood with oxygen out to the body. "labels" names the parts: rightAtrium, rightVentricle, leftAtrium, leftVentricle, lungs, body, and the two kinds of blood, withOxygen and withoutOxygen.',
+    parts: ["rightAtrium", "rightVentricle", "leftAtrium", "leftVentricle", "lungs", "body", "withOxygen", "withoutOxygen"],
+    // The drawing shows both loops, to the lungs and to the body.
+    fits: (scene) => /\bhearts?\b/i.test(scene.narration) && /\bblood\b/i.test(scene.narration) && /\b(lungs?|oxygen)\b/i.test(scene.source),
+    options: {},
+  }),
+  lungs_breathing: labelDiagram({
+    name: "lungs_breathing",
+    plan: "the lungs breathing in and out, with the windpipe and the diaphragm, and oxygen in and carbon dioxide out",
+    prompt: '"lungs_breathing" when the narration explains breathing: the lungs filling and emptying with the windpipe and the diaphragm. "labels" names the parts: windpipe, lungs, diaphragm, oxygen, carbonDioxide, breatheIn, breatheOut; the dots of oxygen and carbon dioxide show only when both are labeled.',
+    parts: ["windpipe", "lungs", "diaphragm", "oxygen", "carbonDioxide", "breatheIn", "breatheOut"],
+    fits: (scene) => /\blungs?\b/i.test(scene.narration) && /\b(breath\w*|inhal\w*|exhal\w*)\b/i.test(scene.narration),
+    options: {},
+  }),
+  neuron_signal: labelDiagram({
+    name: "neuron_signal",
+    cue: /\b(signals?|impulses?|fires?|fired)\b/i,
+    plan: "a nerve cell passing a signal along its axon to the next cell",
+    prompt: '"neuron_signal" when the narration explains how nerve cells send signals: a neuron with dendrites, cell body and axon, and a signal travelling to the next cell. "labels" names the parts: dendrites, cellBody, axon, myelin, axonEndings, signal, synapse, messengers, nextCell. "myelin" is true only when the narration speaks of myelin.',
+    parts: ["dendrites", "cellBody", "axon", "myelin", "axonEndings", "signal", "synapse", "messengers", "nextCell"],
+    // The drawing shows a signal passing on to the next cell.
+    fits: (scene) => /\b(neurons?|nerves?|nerve cells?)\b/i.test(scene.narration) && /\b(signals?|impulses?|messages?)\b/i.test(scene.narration),
+    options: { myelin: z.boolean() },
+    check: (visual, { source }) => (visual.myelin === true && !/\bmyelin\b/i.test(source) ? ["The narration does not speak of myelin. Give false."] : []),
+  }),
+  leaf_photosynthesis: labelDiagram({
+    name: "leaf_photosynthesis",
+    plan: "a leaf making sugar from sunlight, water and carbon dioxide, and giving off oxygen",
+    prompt: '"leaf_photosynthesis" when the narration explains photosynthesis: sunlight, water and carbon dioxide going into a leaf, sugar made inside and oxygen going out. "labels" names the parts: sunlight, water, carbonDioxide, oxygen, sugar.',
+    parts: ["sunlight", "water", "carbonDioxide", "oxygen", "sugar"],
+    // Water, carbon dioxide, oxygen and sugar are always drawn, so the narration or its facts must speak of all four.
+    fits: (scene) =>
+      /\b(photosynthes\w*|leaf|leaves|plants?)\b/i.test(scene.narration) &&
+      /\b(sun\w*|light)\b/i.test(scene.narration) &&
+      [/\bwater\b/i, /\b(carbon dioxide|co2)\b/i, /\boxygen\b/i, /\b(sugars?|glucose|food)\b/i].every((words) => words.test(scene.source)),
+    options: {},
+  }),
+  lightning_storm: labelDiagram({
+    name: "lightning_storm",
+    cue: /\b(strikes?|struck|bolts?|discharg\w*|flash\w*)\b/i,
+    plan: "a storm cloud separating charges and a lightning bolt striking down, followed by thunder",
+    prompt: '"lightning_storm" when the narration explains lightning: charges separating in a storm cloud, a bolt striking the ground and thunder spreading. "labels" names the parts: cloud, positive, negative, ground, lightning, thunder.',
+    parts: ["cloud", "positive", "negative", "ground", "lightning", "thunder"],
+    fits: (scene) => /\blightning\b/i.test(scene.narration) && /\b(charges?|charged|clouds?|electric\w*)\b/i.test(scene.narration),
+    options: {},
+    params: ({ labels, ...params }) => ({ ...params, ...(labels as object) }),
+  }),
+  ocean_tides: labelDiagram({
+    name: "ocean_tides",
+    plan: "the Moon pulling the oceans into bulges on the Earth, which follow it round as the tides",
+    prompt: '"ocean_tides" when the narration explains the tides: the Moon going round the Earth with the oceans bulging toward it and on the far side. "labels" names the parts: earth, moon, highTide, lowTide.',
+    parts: ["earth", "moon", "highTide", "lowTide"],
+    fits: (scene) => /\btides?\b/i.test(scene.narration) && /\bmoon\b/i.test(scene.narration),
+    options: {},
+    params: ({ labels, ...params }) => ({ ...params, ...(labels as object) }),
+  }),
+  wind_turbine: labelDiagram({
+    name: "wind_turbine",
+    plan: "the wind turning a wind turbine, its generator making electricity that runs along a line to homes",
+    prompt: '"wind_turbine" when the narration explains how wind power works: the wind turning the blades, the generator inside and the electricity running to homes. "labels" names the parts: wind, blades, generator, electricity, homes.',
+    parts: ["wind", "blades", "generator", "electricity", "homes"],
+    fits: (scene) => /\bwind\s?(turbines?|power|farms?|energy)\b/i.test(scene.narration) && /\b(electric\w*|power|energy)\b/i.test(scene.narration),
+    options: {},
+    params: ({ labels, ...params }) => ({ ...params, ...(labels as object) }),
+  }),
+  layers_of_earth_cutaway: labelDiagram({
+    name: "layers_of_earth_cutaway",
+    plan: "the Earth with a quarter cut away, showing the crust, the mantle, the outer core and the inner core",
+    prompt: '"layers_of_earth_cutaway" when the narration names the layers inside the Earth: the Earth cut open to show them from the outside in. "labels" names the layers: crust, mantle, outerCore, innerCore. "focus" is the layer the scene is about, or "none".',
+    parts: ["crust", "mantle", "outerCore", "innerCore"],
+    fits: (scene) => /\b(mantle|inner core|outer core|earth's core)\b/i.test(scene.narration),
+    options: { focus: z.enum(["none", "crust", "mantle", "outerCore", "innerCore"]) },
+    params: ({ focus, ...params }) => (focus === "none" ? params : { ...params, focus }),
+  }),
+  immune_response: labelDiagram({
+    name: "immune_response",
+    plan: "germs coming in, antibodies latching onto them and a white blood cell taking them in",
+    prompt: '"immune_response" when the narration explains how the body fights germs: germs drifting in, antibodies latching onto them and a white blood cell taking them in. "labels" names the parts: germs, antibodies, whiteBloodCell.',
+    parts: ["germs", "antibodies", "whiteBloodCell"],
+    // The drawing shows antibodies latching on and a white blood cell taking the germs in.
+    fits: (scene) =>
+      /\b(germs?|bacteri\w*|virus\w*|pathogens?|microbes?)\b/i.test(scene.source) && /\bantibod\w*/i.test(scene.source) && /\bwhite blood cells?\b/i.test(scene.source),
+    options: {},
+  }),
+  rocket_launch: template({
+    family: "picture",
+    plan: "a rocket lifting off, turning over toward orbit and dropping its first stage",
+    prompt: '"rocket_launch" when the narration explains how a rocket reaches orbit: liftoff, the turn toward orbit and the stages separating. "stages" is how many stages the narration speaks of (1 to 3). Optional labels in the narration\'s words, each at most 4 words: "stageLabels" (a name for each stage, bottom first, or empty), "liftoff", "separation" and "orbit".',
+    schema: z.object({
+      kind: z.literal("rocket_launch"),
+      stages: z.number().int(),
+      stageLabels: z.array(z.string()).max(3),
+      liftoff: z.string().optional(),
+      separation: z.string().optional(),
+      orbit: z.string().optional(),
+    }),
+    fits: (scene) => /\brockets?\b/i.test(scene.narration) && /\borbit\w*/i.test(scene.narration),
+    shown: (visual) => [...visual.stageLabels, visual.liftoff, visual.separation, visual.orbit].map((text) => ({ text, words: 4, optional: true })),
+    check: (visual, { source }) => [
+      ...(visual.stages >= 1 && visual.stages <= 3 ? [] : ["A rocket here has 1 to 3 stages."]),
+      ...(visual.stages > 1 && !/\bstages?\b/i.test(source) ? ["The narration does not speak of stages. Give 1 stage."] : []),
+    ],
+    repair: (visual, keep) => ({
+      ...visual,
+      stages: Math.max(1, Math.min(3, visual.stages)),
+      // The names go bottom stage first, so they are kept only all together.
+      stageLabels: visual.stageLabels.every((text) => keep(text, 4)) ? visual.stageLabels : [],
+      liftoff: keep(visual.liftoff, 4) ? visual.liftoff : undefined,
+      separation: keep(visual.separation, 4) ? visual.separation : undefined,
+      orbit: keep(visual.orbit, 4) ? visual.orbit : undefined,
+    }),
+    params: ({ kind, ...params }, { narration }) => {
+      void kind;
+      return { ...cueAt(narration, /\b(separat\w*|jettison\w*|detach\w*)\b/i), ...params };
+    },
+  }),
+  engine_cycle: template({
+    family: "picture",
+    plan: "a four-stroke petrol engine: the piston moving, the valves opening, the spark and the exhaust, one stroke after another",
+    prompt: '"engine_cycle" when the narration explains how a piston engine works: "strokes" are the names of its four strokes in order (intake, compression, power, exhaust) as the narration names them, or empty; optional "parts" labels in its words, each at most 4 words: intakeValve, exhaustValve, sparkPlug, piston, rod, crankshaft, fuelAir, exhaustGas.',
+    schema: z.object({
+      kind: z.literal("engine_cycle"),
+      strokes: z.array(z.string()).max(4),
+      parts: z.object({
+        intakeValve: z.string().optional(),
+        exhaustValve: z.string().optional(),
+        sparkPlug: z.string().optional(),
+        piston: z.string().optional(),
+        rod: z.string().optional(),
+        crankshaft: z.string().optional(),
+        fuelAir: z.string().optional(),
+        exhaustGas: z.string().optional(),
+      }),
+    }),
+    fits: (scene) =>
+      /\bpistons?\b/i.test(scene.narration) && /\b(strokes?|four-stroke|spark\w*)\b/i.test(scene.narration) && !/\b(steam|diesel)\b/i.test(scene.narration),
+    shown: (visual) => [...visual.strokes, ...Object.values(visual.parts)].map((text) => ({ text, words: 4, optional: true })),
+    check: (visual) => (visual.strokes.length === 0 || visual.strokes.length === 4 ? [] : ["Name all four strokes, or none."]),
+    repair: (visual, keep) => ({
+      ...visual,
+      strokes: visual.strokes.length === 4 && visual.strokes.every((text) => keep(text, 4)) ? visual.strokes : [],
+      parts: Object.fromEntries(Object.entries(visual.parts).filter(([, text]) => keep(text, 4))),
+    }),
+  }),
 };
 
 export type TemplateName = keyof typeof TEMPLATES;
@@ -924,12 +1169,12 @@ type AnyTemplate = Omit<Template<z.ZodObject>, "shown" | "check" | "repair" | "p
   shown(visual: TemplateVisual): Shown[];
   check?(visual: TemplateVisual, context: CheckContext): string[];
   repair?(visual: TemplateVisual, keep: Keep, context: CheckContext): TemplateVisual | null;
-  params?(visual: TemplateVisual, extra: { sourceTitle?: string }): Record<string, unknown>;
+  params?(visual: TemplateVisual, extra: Extra): Record<string, unknown>;
 };
 export const templateSpec = (name: TemplateName) => TEMPLATES[name] as unknown as AnyTemplate;
 
 // The params the template is drawn with: its own mapping, or the reply without its kind.
-export function templateParams(visual: TemplateVisual, extra: { sourceTitle?: string }): Record<string, unknown> {
+export function templateParams(visual: TemplateVisual, extra: Extra): Record<string, unknown> {
   const spec = templateSpec(visual.kind);
   if (spec.params) return spec.params(visual, extra);
   const { kind, ...params } = visual;

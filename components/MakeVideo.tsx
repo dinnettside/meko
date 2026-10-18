@@ -6,6 +6,7 @@ import type { FormEvent } from "react";
 import type { DirectResult } from "@/lib/direct";
 import { EXAMPLES } from "@/lib/example";
 import type { Example } from "@/lib/example";
+import type { LibraryVideo } from "@/lib/library";
 import type { FactCheckResult } from "@/lib/factcheck";
 import type { FactCheckReport as Report, ResearchFact, VideoRequest } from "@/lib/pipeline";
 import type { ResearchResult } from "@/lib/research";
@@ -45,6 +46,7 @@ type Finished = {
   costUsd: number;
   ms: number;
   example?: { topic: string; madeAt: string };
+  library?: { madeAt: string }; // when the video comes from the library, made earlier for the same request
 };
 
 // Timeouts are a little longer than each route's maxDuration on the server.
@@ -70,6 +72,36 @@ function hostname(url: string): string {
     return new URL(url).hostname.replace(/^www\./, "");
   } catch {
     return url;
+  }
+}
+
+// A video from the library, ready to play: its MP3s are files in the library's storage.
+function fromLibrary(video: LibraryVideo): Finished {
+  return {
+    storyboard: video.storyboard,
+    voice: Object.fromEntries(video.storyboard.scenes.map((scene) => [scene.id, { audio: video.audio[scene.id], words: video.words[scene.id] ?? [] }])),
+    report: video.report,
+    facts: video.facts,
+    sources: video.sources,
+    costUsd: video.costUsd,
+    ms: video.ms,
+    library: { madeAt: video.madeAt },
+  };
+}
+
+// A finished video of the same request from the library, or null. A library that cannot be reached counts as none.
+async function findInLibrary(request: VideoRequest): Promise<LibraryVideo | null> {
+  try {
+    const response = await fetch("/api/library/find", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ request }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) return null;
+    return ((await response.json()) as { video: LibraryVideo | null }).video;
+  } catch {
+    return null;
   }
 }
 
@@ -273,12 +305,20 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
           return `${result.characters} characters, ${Math.round(seconds)} seconds`;
         });
         if (voiced.skipped) setStep("voice", { status: "skipped", detail: voiced.skipped });
-        setFinished({
+        const result = {
           ...base,
           storyboard: voiced.skipped ? directed.storyboard : voiced.storyboard,
           voice: voiced.voice,
           ms: Date.now() - state.startedAt,
-        });
+        };
+        setFinished(result);
+        // A whole video with its voice goes into the library, so the next person who asks gets it at once. It is
+        // saved in the background; a video that cannot be saved still plays.
+        if (!voiced.skipped) {
+          void postJson("/api/library/save", { request: state.request, ...result }, 60_000, demoCode.trim()).catch((error) =>
+            console.warn("The video could not be saved in the library.", error),
+          );
+        }
       } catch {
         setFinished({ ...base, storyboard: directed.storyboard, voice: {}, ms: Date.now() - state.startedAt });
       }
@@ -289,17 +329,28 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
     }
   }
 
-  function makeVideo(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  // Looks in the library first: a video made earlier for the same request plays at once and costs nothing.
+  // `fresh` makes a new one anyway.
+  async function makeVideo(event?: FormEvent<HTMLFormElement>, fresh = false) {
+    event?.preventDefault();
     if (running) return;
-    setStarted(true);
+    const request: VideoRequest = { topic: topic.trim(), audience, lengthSec, language: "en" };
     setFinished(null);
     setActiveSentence(null);
+    setFailed(null);
+    if (!fresh) {
+      setRunning(true);
+      const saved = await findInLibrary(request);
+      setRunning(false);
+      if (saved) {
+        setStarted(false);
+        setFinished(fromLibrary(saved));
+        return;
+      }
+    }
+    setStarted(true);
     setSteps(waitingSteps());
-    void runFrom("research", {
-      request: { topic: topic.trim(), audience, lengthSec, language: "en" },
-      startedAt: Date.now(),
-    });
+    void runFrom("research", { request, startedAt: Date.now() });
   }
 
   function tryAgain() {
@@ -332,7 +383,7 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
       </header>
 
       <div className="flex flex-col gap-3">
-        <form onSubmit={makeVideo} className="flex flex-col gap-4 sm:flex-row sm:items-end">
+        <form onSubmit={(event) => void makeVideo(event)} className="flex flex-col gap-4 sm:flex-row sm:items-end">
           <label className="flex flex-1 flex-col gap-1">
             <span className="text-sm font-medium text-dim">Topic</span>
             <input
@@ -469,6 +520,22 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
               <p className="text-sm text-dim">
                 Example: “{finished.example.topic}”, made by Meko on{" "}
                 {new Date(finished.example.madeAt).toLocaleDateString("en-GB", { dateStyle: "long" })}.
+              </p>
+            ) : null}
+            {finished.library ? (
+              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-dim">
+                <span>
+                  From the library: made for the same topic on{" "}
+                  {new Date(finished.library.madeAt).toLocaleDateString("en-GB", { dateStyle: "long" })}, checked the same way.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void makeVideo(undefined, true)}
+                  disabled={running}
+                  className="rounded border border-line px-3 py-1 text-sm font-semibold text-paper hover:border-signal disabled:opacity-50"
+                >
+                  Make a new one
+                </button>
               </p>
             ) : null}
             <StoryboardPlayer

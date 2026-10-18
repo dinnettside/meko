@@ -4,6 +4,7 @@ import { addUsage, chatJson, emptyUsage, usageOf } from "./nebius.ts";
 import { CHARS_PER_SECOND, ResearchFactListSchema, ScriptSchema, SourceListSchema, VideoRequestSchema, countWords, spokenLength } from "./pipeline.ts";
 import type { ResearchFact, Usage } from "./pipeline.ts";
 import { directCritiquePrompt, directPlanPrompt, directScenePrompt, directTitlePrompt, placesPrompt } from "./prompts/direct.ts";
+import type { OwnKind } from "./prompts/direct.ts";
 import {
   datesIn,
   isDateIn,
@@ -35,17 +36,19 @@ import {
   statedTogether,
   unitKey,
 } from "./grounding.ts";
-import { BACKDROPS, FIGURE_LOOKS, SPACE_BODIES, StoryboardSchema, storyboardProblems } from "./storyboard.ts";
+import { BACKDROPS, DRAWING_TONES, FIGURE_LOOKS, SPACE_BODIES, StoryboardSchema, storyboardProblems } from "./storyboard.ts";
 import { ICON_NAMES, iconKey } from "./icons.ts";
 import { MOON_SEAS, MOON_SITES, moonPlace } from "./moon.ts";
 import { TEMPLATES, TEMPLATE_NAMES, isTemplateName, templateParams, templateSpec } from "./templates.ts";
 import type { Family, Keep, SceneData, TemplateName, TemplateVisual } from "./templates.ts";
+import { fitDrawing, placeLabels } from "./drawing.ts";
 import { introOptions, looksFor, pickIntro, pickLooks } from "./looks.ts";
+import { saveDrawing, similarDrawings } from "./library.ts";
 import { THEME_NAMES } from "./themes.ts";
 import { placeOf } from "./places.ts";
 import { geoDistance } from "d3-geo";
 import { canDraw, countryCenter, countryContains } from "./world.ts";
-import type { Storyboard } from "./storyboard.ts";
+import type { DrawingPart, Storyboard } from "./storyboard.ts";
 
 const PAUSE_SEC = 0.6;
 const MIN_SCENE_SEC = 2.5;
@@ -184,6 +187,28 @@ const SceneVisualSchema = z.discriminatedUnion("kind", [
     backdrop: z.enum(BACKDROPS).optional(),
   }),
   z.object({ kind: z.literal("change"), from: z.string(), to: z.string(), year: z.number().int().optional() }),
+  // A diagram drawn from simple parts on the 0 to 100 grid; the code clamps them to the grid and draws them. Each label
+  // names one part by its position in the list, and the code places it beside that part (lib/drawing.ts).
+  z.object({
+    kind: z.literal("drawing"),
+    title: z.string().optional(),
+    parts: z
+      .array(
+        z.discriminatedUnion("shape", [
+          z.object({ shape: z.literal("band"), y1: z.number(), y2: z.number(), tone: z.enum(DRAWING_TONES) }),
+          z.object({ shape: z.literal("box"), x: z.number(), y: z.number(), w: z.number(), h: z.number(), tone: z.enum(DRAWING_TONES) }),
+          z.object({ shape: z.literal("blob"), x: z.number(), y: z.number(), w: z.number(), h: z.number(), tone: z.enum(DRAWING_TONES) }),
+          z.object({ shape: z.literal("cone"), x: z.number(), y: z.number(), w: z.number(), h: z.number(), tone: z.enum(DRAWING_TONES) }),
+          z.object({ shape: z.literal("tube"), points: z.array(z.object({ x: z.number(), y: z.number() })).min(2).max(6), tone: z.enum(DRAWING_TONES) }),
+          z.object({ shape: z.literal("arrow"), points: z.array(z.object({ x: z.number(), y: z.number() })).min(2).max(6), tone: z.enum(DRAWING_TONES) }),
+          z.object({ shape: z.literal("flow"), points: z.array(z.object({ x: z.number(), y: z.number() })).min(2).max(6), tone: z.enum(DRAWING_TONES) }),
+          z.object({ shape: z.literal("icon"), name: z.string(), x: z.number(), y: z.number(), size: z.enum(["small", "medium", "large"]) }),
+        ]),
+      )
+      .min(3)
+      .max(10),
+    labels: z.array(z.object({ text: z.string(), part: z.number().int() })).min(2).max(6),
+  }),
 ]);
 
 const SCENE_KINDS = [
@@ -199,6 +224,7 @@ const SCENE_KINDS = [
   "people",
   "space",
   "illustration",
+  "drawing",
   "text",
 ] as const;
 type SceneKind = (typeof SCENE_KINDS)[number];
@@ -220,6 +246,7 @@ const FAMILIES: Record<SceneKind, Family> = {
   people: "people",
   space: "picture",
   illustration: "picture",
+  drawing: "picture",
   text: "words",
 };
 const familyOf = (kind: AnyKind): Family => (isTemplateName(kind) ? templateSpec(kind).family : FAMILIES[kind]);
@@ -242,6 +269,7 @@ function kindLimits(scenes: number, geographic: boolean): Record<AnyKind, number
     people: 2,
     space: 2,
     illustration: 2,
+    drawing: 1, // the model's own drawing is the video's signature scene; two of them were often one too many
     text: 2,
   };
   // Each template at most once: a second cycle or myth card in one video looks like a repeat.
@@ -304,8 +332,10 @@ type SceneReply = { visual: AnyVisual; lines: string[] };
 const isTemplateVisual = (visual: AnyVisual): visual is TemplateVisual => isTemplateName(visual.kind);
 
 // The reply a scene may give: one of the director's own kinds, or one of the templates offered to it.
-function sceneReplySchema(templates: TemplateName[]): z.ZodType<SceneReply> {
-  const options = [...SceneVisualSchema.options, ...templates.map((name) => TEMPLATES[name].schema)];
+// The reply for one scene: the director's own kinds except those it may not use (`blocked`), and the templates offered.
+function sceneReplySchema(templates: TemplateName[], blocked: AnyKind[] = []): z.ZodType<SceneReply> {
+  const own = SceneVisualSchema.options.filter((option) => !blocked.includes(option.shape.kind.value));
+  const options = [...own, ...templates.map((name) => TEMPLATES[name].schema)];
   // Typed as the director's own kinds only; a template's reply is typed loosely as TemplateVisual, and each is
   // checked against its own schema here.
   const visual = z.discriminatedUnion("kind", options as unknown as typeof SceneVisualSchema.options);
@@ -551,6 +581,8 @@ function shownText(visual: SceneVisual): string[] {
       return [visual.craft?.label ?? "", ...visual.sites];
     case "illustration":
       return [visual.title ?? "", ...visual.items.map((item) => item.label ?? ""), ...visual.links.map((link) => link.label ?? "")];
+    case "drawing":
+      return [visual.title ?? "", ...visual.labels.map((label) => label.text)];
   }
 }
 
@@ -993,6 +1025,35 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
       }
       break;
     }
+    case "drawing": {
+      if (visual.title && (tooLong(visual.title, MAX_LINE_WORDS) || !isGrounded(visual.title, source))) problems.push(ungrounded(visual.title));
+      // A label names a part the narration or facts speak of, in their words.
+      for (const label of visual.labels) {
+        if (tooLong(label.text, MAX_LABEL_WORDS)) problems.push(`The label "${label.text}" is too long. Use at most 4 words.`);
+        if (!isGrounded(label.text, source)) problems.push(ungrounded(label.text));
+      }
+      if (visual.labels.some((label, index) => visual.labels.slice(0, index).some((other) => sameWords(other.text, label.text)))) {
+        problems.push("Two labels say the same. Each label names a different part.");
+      }
+      for (const label of visual.labels) {
+        if (!visual.parts[label.part]) problems.push(`The label "${label.text}" names part ${label.part}, but parts are counted from 0 and there are ${visual.parts.length}.`);
+      }
+      // Two labels on one part would sit on top of each other.
+      if (visual.labels.some((label, index) => visual.labels.slice(0, index).some((other) => other.part === label.part))) {
+        problems.push("Two labels name the same part. Give each label its own part.");
+      }
+      for (const part of visual.parts) {
+        if (part.shape === "icon" && !iconKey(part.name)) problems.push(`"${part.name}" is not an icon. Use one from the list.`);
+      }
+      // A clear picture has one thing moving: rows of tubes and flows made a drawing nobody could read.
+      if (visual.parts.filter((part) => part.shape === "tube" || part.shape === "flow" || part.shape === "arrow").length > 4) {
+        problems.push("Draw one clear picture: at most 4 tubes, flows and arrows together, for the one thing that moves.");
+      }
+      if (visual.parts.filter((part) => part.shape === "band").length > 3) problems.push("Use at most 3 layers.");
+      // The model once gave every place as a fraction from 0 to 1, which squeezed the drawing into a corner.
+      if (onUnitGrid(visual)) problems.push("Give x, y, w, h, y1 and y2 as numbers from 0 to 100, not as fractions from 0 to 1.");
+      break;
+    }
     case "illustration": {
       if (visual.title && (tooLong(visual.title, MAX_LINE_WORDS) || !isGrounded(visual.title, source))) problems.push(ungrounded(visual.title));
       visual.items.forEach((item, index) => {
@@ -1017,6 +1078,8 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
           problems.push(`The arrow label "${link.label}" must be what the narration or facts say about the things it joins.`);
         }
       }
+      // The same words twice on one picture are clutter: "stress builds" on an item and on two arrows.
+      if (!linkLabelsAreNew(visual)) problems.push("Two arrows, or an arrow and an item, say the same. Give each arrow its own words, or none.");
       break;
     }
   }
@@ -1027,8 +1090,9 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
 // narration or facts, and the template's own rules must hold.
 function templateProblems(visual: TemplateVisual, allowed: Set<string>, source: string, narration: string, quotable: string[] = []): string[] {
   const spec = templateSpec(visual.kind);
-  const problems = spec.shown(visual).flatMap(({ text, words, chars, exact }) => {
-    if (!text) return [];
+  const problems = spec.shown(visual).flatMap(({ text, words, chars, exact, optional }) => {
+    // An optional text that breaks a rule is left out later, by tidyTemplate.
+    if (!text || optional) return [];
     const found: string[] = [];
     if (countWords(text) > words || (chars !== undefined && text.length > chars)) {
       found.push(`"${text}" is too long. Use at most ${words} words${chars !== undefined ? ` and ${chars} letters` : ""}.`);
@@ -1077,7 +1141,17 @@ function sceneProblems(
 function textVisual(lines: string[], scene: NarratedScene, allowed: Set<string>): SceneVisual {
   // A line cut off at a comma, like "The water cycle, also known as the hydrologic cycle,", ends without it.
   const safeLines = lines.filter((line) => lineIsSafe(line, allowed, scene.narration)).map((line) => line.trim().replace(/[,;:]+$/, ""));
-  return { kind: "text", lines: safeLines.length > 0 ? safeLines : [scene.narration.split(/\s+/).slice(0, 7).join(" ") + "…"] };
+  return { kind: "text", lines: safeLines.length > 0 ? safeLines : [narrationLine(scene.narration)] };
+}
+
+// A short line from the narration itself, for a scene left with no other picture: its first sentence when that is
+// short, else that sentence's first clause ("The cycle repeats"), else its first words.
+function narrationLine(narration: string): string {
+  const sentence = (narration.trim().split(/(?<=[.!?])\s+/)[0] ?? "").replace(/[.!?]+$/, "");
+  if (countWords(sentence) <= MAX_LINE_WORDS) return sentence;
+  const clause = sentence.split(/\s*[,;:—–]\s*/)[0];
+  if (countWords(clause) >= 2 && countWords(clause) <= MAX_LINE_WORDS) return clause;
+  return `${sentence.split(/\s+/).slice(0, 7).join(" ")}…`;
 }
 
 // Last resort after the retries: drop whatever still breaks a rule, so one bad label does not sink the video.
@@ -1099,9 +1173,7 @@ function repairScene(
   if (isTemplateVisual(visual)) {
     // A template keeps what passes the checks, if its own repair leaves enough of it.
     if (templateProblems(visual, allowed, source, scene.narration, quotable).length === 0) return visual;
-    const keep: Keep = (text, words, exact) =>
-      !text || (countWords(text) <= words && safe(text) && (exact ? isFullyGrounded(text, source) : isGrounded(text, source)));
-    const repaired = templateSpec(visual.kind).repair?.(visual, keep, { narration: scene.narration, source, quotable });
+    const repaired = templateSpec(visual.kind).repair?.(visual, keepFor(allowed, source), { narration: scene.narration, source, quotable });
     return repaired && templateProblems(repaired, allowed, source, scene.narration, quotable).length === 0 ? repaired : fallback;
   }
 
@@ -1224,6 +1296,18 @@ function repairScene(
       const repaired = { ...visual, sites, craft: visual.craft ? { ...visual.craft, label } : undefined };
       return visualProblems(repaired, allowed, facts, source).length === 0 ? repaired : fallback;
     }
+    case "drawing": {
+      // A drawing made on a 0 to 1 grid is stretched to the 0 to 100 grid. Labels the narration does not back and
+      // unknown icons go; the drawing stays if two labels are left.
+      const full = onUnitGrid(visual) ? toFullGrid(visual) : visual;
+      const labels = full.labels
+        .filter((label) => countWords(label.text) <= MAX_LABEL_WORDS && isGrounded(label.text, source) && safe(label.text) && full.parts[label.part])
+        .filter((label, index, all) => all.findIndex((other) => sameWords(other.text, label.text) || other.part === label.part) === index);
+      const parts = full.parts.filter((part) => part.shape !== "icon" || iconKey(part.name));
+      const title = full.title && countWords(full.title) <= MAX_LINE_WORDS && isGrounded(full.title, source) ? full.title : undefined;
+      const repaired = { ...full, title, labels, parts };
+      return labels.length >= 2 && parts.length >= 3 && visualProblems(repaired, allowed, facts, source).length === 0 ? repaired : fallback;
+    }
     case "illustration": {
       // Labels and links the narration does not back go; the picture stays if it still says something.
       const labelOk = (label: string | undefined, strict: boolean) =>
@@ -1235,7 +1319,13 @@ function repairScene(
           const ends = [items[link.from].label ?? "", items[link.to].label ?? ""].filter(Boolean);
           const stated = link.label && countWords(link.label) <= MAX_LABEL_WORDS && ends.some((end) => statedTogether(end, link.label ?? "", source));
           return stated ? link : { ...link, label: undefined };
-        });
+        })
+        // An arrow label that repeats an item or an earlier arrow goes.
+        .map((link, index, all) =>
+          link.label && (items.some((item) => item.label && sameWords(item.label, link.label ?? "")) || all.slice(0, index).some((other) => other.label && sameWords(other.label, link.label ?? "")))
+            ? { ...link, label: undefined }
+            : link,
+        );
       const title = visual.title && countWords(visual.title) <= MAX_LINE_WORDS && isGrounded(visual.title, source) ? visual.title : undefined;
       const repaired = { ...visual, title, items, links };
       return visualProblems(repaired, allowed, facts, source).length === 0 ? repaired : fallback;
@@ -1291,6 +1381,42 @@ function tidyMap(visual: AnyVisual, source: string): AnyVisual {
   return { ...visual, highlights, arrows };
 }
 
+// Whether every arrow label in a free picture says something no item and no other arrow says.
+type IllustrationVisual = Extract<SceneVisual, { kind: "illustration" }>;
+const linkLabelsAreNew = (visual: IllustrationVisual) =>
+  visual.links.every(
+    (link, index) =>
+      !link.label ||
+      (!visual.items.some((item) => item.label && sameWords(item.label, link.label ?? "")) &&
+        !visual.links.slice(0, index).some((other) => other.label && sameWords(other.label, link.label ?? ""))),
+  );
+
+// Every number that places something in a drawing, to tell a drawing made on a 0 to 1 grid from one on the 0 to 100
+// grid the prompt asks for.
+type DrawingVisual = Extract<SceneVisual, { kind: "drawing" }>;
+const drawingNumbers = (visual: DrawingVisual) => [
+  ...visual.parts.flatMap((part) => {
+    if (part.shape === "band") return [part.y1, part.y2];
+    if (part.shape === "tube" || part.shape === "arrow" || part.shape === "flow") return part.points.flatMap((point) => [point.x, point.y]);
+    if (part.shape === "icon") return [part.x, part.y];
+    return [part.x, part.y, part.w, part.h];
+  }),
+];
+const onUnitGrid = (visual: DrawingVisual) => drawingNumbers(visual).every((value) => Math.abs(value) <= 1.5);
+// The same drawing on the 0 to 100 grid.
+const toFullGrid = (visual: DrawingVisual): DrawingVisual => {
+  const point = ({ x, y }: { x: number; y: number }) => ({ x: x * 100, y: y * 100 });
+  return {
+    ...visual,
+    parts: visual.parts.map((part) => {
+      if (part.shape === "band") return { ...part, y1: part.y1 * 100, y2: part.y2 * 100 };
+      if (part.shape === "tube" || part.shape === "arrow" || part.shape === "flow") return { ...part, points: part.points.map(point) };
+      if (part.shape === "icon") return { ...part, ...point(part) };
+      return { ...part, ...point(part), w: part.w * 100, h: part.h * 100 };
+    }),
+  };
+};
+
 // The words that say where a free picture takes place, without which its backdrop is left out.
 const BACKDROP_WORDS: Record<(typeof BACKDROPS)[number], RegExp> = {
   underground: /\b(underground|beneath|below|ground|crust|rocks?|magma|soil|roots?|caves?|mines?|wells?|layers?|buried|tunnels?|fossils?)\b/i,
@@ -1299,6 +1425,24 @@ const BACKDROP_WORDS: Record<(typeof BACKDROPS)[number], RegExp> = {
   space: /\b(space|orbit\w*|planets?|stars?|moon|galax\w*|satellites?|rockets?)\b/i,
   body: /\b(body|organs?|blood|heart|lungs?|stomach|brain|liver|kidneys?|muscles?|bones?|skin|immune|digest\w*)\b/i,
 };
+
+// Whether a text a template shows passes the checks: short enough, with only numbers from the narration or facts, and
+// in their words.
+const keepFor =
+  (allowed: Set<string>, source: string): Keep =>
+  (text, words, exact) =>
+    !text ||
+    (countWords(text) <= words && numbersIn(text).every((number) => allowed.has(number)) && (exact ? isFullyGrounded(text, source) : isGrounded(text, source)));
+
+// A template without the optional texts that break a rule, like a label on a drawing in words the narration does not
+// use. Its own repair leaves them out; a template it cannot repair shows the scene as text instead.
+function tidyTemplate(visual: AnyVisual, scene: NarratedScene, allowed: Set<string>, source: string, quotable: string[]): AnyVisual {
+  if (!isTemplateVisual(visual)) return visual;
+  const spec = templateSpec(visual.kind);
+  const keep = keepFor(allowed, source);
+  if (spec.shown(visual).every(({ text, words, exact, optional }) => !optional || keep(text, words, exact))) return visual;
+  return spec.repair?.(visual, keep, { narration: scene.narration, source, quotable }) ?? textVisual([], scene, allowed);
+}
 
 // People and figures as the narration speaks of them. They come in the order they are named, since the scene shows
 // each as it is spoken. A figure wears a look only when its words are said about that person (no crown for a
@@ -1455,8 +1599,8 @@ function routeIcon(by: "land" | "sea", source: string): string | undefined {
   return undefined;
 }
 
-function forStoryboard(visual: AnyVisual, facts: FactMap, source: string, sourceTitle?: string) {
-  if (isTemplateVisual(visual)) return { kind: "template" as const, template: visual.kind, params: templateParams(visual, { sourceTitle }) };
+function forStoryboard(visual: AnyVisual, facts: FactMap, source: string, sourceTitle?: string, narration?: string) {
+  if (isTemplateVisual(visual)) return { kind: "template" as const, template: visual.kind, params: templateParams(visual, { sourceTitle, narration }) };
   // An empty detail would draw an empty line under a card's title, and an unknown icon would draw a dot.
   if (visual.kind === "list") {
     return {
@@ -1477,6 +1621,24 @@ function forStoryboard(visual: AnyVisual, facts: FactMap, source: string, source
   }
   if (visual.kind === "space") {
     return { ...visual, sites: visual.sites.filter((site) => moonPlace(site) !== null) };
+  }
+  if (visual.kind === "drawing") {
+    // A drawing still made on a 0 to 1 grid after the retries is stretched to the 0 to 100 grid.
+    const scale = onUnitGrid(visual) ? 100 : 1;
+    const clamp = (value: number) => Math.max(0, Math.min(100, value * scale));
+    const point = ({ x, y }: { x: number; y: number }) => ({ x: clamp(x), y: clamp(y) });
+    const parts = visual.parts.map((part): DrawingPart | null => {
+      if (part.shape === "band") return { ...part, y1: clamp(Math.min(part.y1, part.y2)), y2: clamp(Math.max(part.y1, part.y2)) };
+      if (part.shape === "icon") return iconKey(part.name) ? { ...part, name: iconKey(part.name) ?? part.name, ...point(part) } : null;
+      if (part.shape === "tube" || part.shape === "arrow" || part.shape === "flow") return { ...part, points: part.points.map(point) };
+      return { ...part, ...point(part), w: clamp(Math.abs(part.w)), h: clamp(Math.abs(part.h)) };
+    });
+    // An unknown icon is left out, so the labels count the parts that are left. The drawing is then fitted to the
+    // canvas, and each label placed beside its part.
+    const kept = parts.flatMap((part) => (part ? [part] : []));
+    const labels = visual.labels.flatMap(({ text, part }) => (parts[part] ? [{ text, part: kept.indexOf(parts[part]) }] : []));
+    const fitted = fitDrawing(kept, Boolean(visual.title));
+    return { kind: "drawing" as const, title: visual.title, parts: fitted, labels: placeLabels(fitted, labels, Boolean(visual.title)) };
   }
   if (visual.kind === "illustration") {
     const clamp = (value: number) => Math.max(0, Math.min(100, value));
@@ -1703,15 +1865,19 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
   const avoidInPrompt = (index: number, kind: AnyKind | undefined) =>
     avoidFor(index, kind).filter((other) => !isTemplateName(other) || offeredFor(index, kind).includes(other));
 
-  // One scene's call, asking for `kind`, or leaving the kind to the model when the plan has none for it.
-  const sceneCall = (index: number, kind: AnyKind | undefined) => {
+  // One scene's call, asking for `kind`, or leaving the kind to the model when the plan has none for it. A scene asked
+  // for a drawing sees drawings made before for similar scenes, from the library, to learn from.
+  const sceneCall = async (index: number, kind: AnyKind | undefined) => {
     const scene = rest[index];
     const offered = offeredFor(index, kind);
+    // A kind the scene may not use is neither described nor in the reply's schema, which keeps the prompt short.
+    const blocked = blockedFor(index, kind);
+    const drawingExamples = kind === "drawing" ? await similarDrawings(scene.narration) : [];
     return orFallback<SceneReply>(
       chatJson({
         step: `direct/${scene.id}`,
         schemaName: "scene",
-        schema: sceneReplySchema(offered),
+        schema: sceneReplySchema(offered, blocked),
         messages: directScenePrompt({
           title: script.title,
           position: `scene ${index + 2} of ${narrated.length}`,
@@ -1722,7 +1888,9 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
           // The Moon's places only matter to a scene about space.
           moonPlaces: SPACE_WORDS.test(scene.narration) ? [...MOON_SEAS, ...MOON_SITES].map((place) => place.name) : [],
           otherFacts: factList(videoFactIds.filter((id) => !scene.factIds.includes(id))),
+          kinds: SCENE_KINDS.filter((other): other is OwnKind => other !== "text" && !blocked.includes(other)),
           templates: offered.map((name) => templateSpec(name).prompt),
+          drawingExamples: drawingExamples.map(({ narration, drawing }) => ({ narration, drawing })),
           plannedKind: kind,
           avoidKinds: avoidInPrompt(index, kind),
           years: yearList,
@@ -1768,7 +1936,11 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     rest.map((scene) => scene.narration),
     deadline,
   );
-  const tidied = checked.visuals.map((visual, index) => tidyPeople(tidyMap(visual, sourceFor(rest[index])), rest[index].narration, sourceFor(rest[index])));
+  const tidied = checked.visuals.map((visual, index) => {
+    const scene = rest[index];
+    const source = sourceFor(scene);
+    return tidyTemplate(tidyPeople(tidyMap(visual, source), scene.narration, source), scene, allowedFor(scene), source, quotableOf(scene));
+  });
   const usage = [title, ...scenes, checked, plan, critique].reduce((total, call) => addUsage(total, call.usage), emptyUsage());
 
   // The calls ran apart, so a map or timeline can repeat the one before, the same kind can come too often in a row,
@@ -1843,7 +2015,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     scenes: narrated.map((scene, index) => ({
       ...(index === 0
         ? { kind: "title", heading: title.data.heading, subheading: question || title.data.subheading, icon: iconKey(title.data.icon) }
-        : forStoryboard(visuals[index - 1], videoFacts, sourceFor(rest[index - 1]), sourceTitleFor(rest[index - 1], visuals[index - 1]))),
+        : forStoryboard(visuals[index - 1], videoFacts, sourceFor(rest[index - 1]), sourceTitleFor(rest[index - 1], visuals[index - 1]), rest[index - 1].narration)),
       id: scene.id,
       narration: scene.narration,
       factIds: scene.factIds,
@@ -1890,5 +2062,12 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
 
   const problems = storyboardProblems(storyboard, facts.map((fact) => fact.id));
   if (problems.length > 0) throw new Error(`The storyboard is not valid: ${problems.join("; ")}`);
+  // Drawings that passed their checks go into the library as the model gave them, so later scenes about similar things
+  // can learn from them.
+  await Promise.all(
+    visuals.flatMap((visual, index) =>
+      visual.kind === "drawing" && !onUnitGrid(visual) ? [saveDrawing(rest[index].narration, { title: visual.title, parts: visual.parts, labels: visual.labels })] : [],
+    ),
+  );
   return { storyboard, usage };
 }

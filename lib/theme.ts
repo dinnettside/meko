@@ -55,6 +55,16 @@ export const VIDEO = {
   },
 };
 
+// Sizes in a drawing the director made (remotion/scenes/DrawingScene.tsx), in pixels. lib/drawing.ts uses them too,
+// to place each label beside its part.
+export const DRAWING = {
+  titleSize: 60,
+  labelSize: 38,
+  labelGap: 16, // between a label and the part it names
+  tubeWidth: 36,
+  iconSizes: { small: 110, medium: 170, large: 240 },
+};
+
 // Animation timings, in seconds.
 export const MOTION = {
   sceneFade: 0.35, // fade in and out of every scene

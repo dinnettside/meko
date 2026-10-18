@@ -10,6 +10,23 @@ export const SPACE_BODIES = ["earth", "moon", "sun", "mars"] as const;
 // Where a free picture takes place, drawn behind its items: under the ground (the surface at y 30), the sea (the water's
 // surface at y 30), the sky (the ground at the bottom), space, or inside a body (a body's outline filling the frame).
 export const BACKDROPS = ["underground", "sea", "sky", "space", "body"] as const;
+// The tones a drawing's parts can have: the look's own colors for the ground, rock, the air and the two highlights,
+// and natural colors for hot things (magma, fire), water and plants.
+export const DRAWING_TONES = ["ground", "rock", "hot", "water", "air", "plant", "signal", "second", "pale"] as const;
+
+// A part of a drawing on its 0 to 100 grid: a layer across the whole width, a box, a rounded blob or a peak (whose
+// base is centered at x, y), a thick tube, an arrow or dots that keep flowing along points, or an icon.
+const DrawingPointSchema = z.object({ x: z.number(), y: z.number() });
+export const DrawingPartSchema = z.discriminatedUnion("shape", [
+  z.object({ shape: z.literal("band"), y1: z.number(), y2: z.number(), tone: z.enum(DRAWING_TONES) }),
+  z.object({ shape: z.literal("box"), x: z.number(), y: z.number(), w: z.number(), h: z.number(), tone: z.enum(DRAWING_TONES) }),
+  z.object({ shape: z.literal("blob"), x: z.number(), y: z.number(), w: z.number(), h: z.number(), tone: z.enum(DRAWING_TONES) }),
+  z.object({ shape: z.literal("cone"), x: z.number(), y: z.number(), w: z.number(), h: z.number(), tone: z.enum(DRAWING_TONES) }),
+  z.object({ shape: z.literal("tube"), points: z.array(DrawingPointSchema), tone: z.enum(DRAWING_TONES) }),
+  z.object({ shape: z.literal("arrow"), points: z.array(DrawingPointSchema), tone: z.enum(DRAWING_TONES) }),
+  z.object({ shape: z.literal("flow"), points: z.array(DrawingPointSchema), tone: z.enum(DRAWING_TONES) }),
+  z.object({ shape: z.literal("icon"), name: z.string(), x: z.number(), y: z.number(), size: z.enum(["small", "medium", "large"]) }),
+]);
 
 export const SourceSchema = z.object({
   id: z.string(),
@@ -198,6 +215,16 @@ const ChangeSceneSchema = z.object({
   year: z.number().optional(),
 });
 
+// A diagram the director draws for its topic from simple parts, like a cutaway of a volcano with magma rising, when no
+// ready diagram fits. Labels sit on the same grid.
+const DrawingSceneSchema = z.object({
+  ...sceneBase,
+  kind: z.literal("drawing"),
+  title: z.string().optional(),
+  parts: z.array(DrawingPartSchema),
+  labels: z.array(z.object({ text: z.string(), x: z.number(), y: z.number() })),
+});
+
 // One of Trym's filmmotor templates (remotion/filmmotor), like a cycle, a pyramid or a myth card, with the params it
 // is drawn with. The director checks every text and number in them against the narration and facts.
 const TemplateSceneSchema = z.object({
@@ -223,6 +250,7 @@ export const SceneSchema = z.discriminatedUnion("kind", [
   SpaceSceneSchema,
   IllustrationSceneSchema,
   TemplateSceneSchema,
+  DrawingSceneSchema,
 ]);
 
 export const StoryboardSchema = z.object({
@@ -243,6 +271,8 @@ export type Scene = z.infer<typeof SceneSchema>;
 export type FigureLook = (typeof FIGURE_LOOKS)[number];
 export type SpaceBody = (typeof SPACE_BODIES)[number];
 export type Backdrop = (typeof BACKDROPS)[number];
+export type DrawingTone = (typeof DRAWING_TONES)[number];
+export type DrawingPart = z.infer<typeof DrawingPartSchema>;
 export type Storyboard = z.infer<typeof StoryboardSchema>;
 
 // Rules zod cannot check on its own. Returns one line per problem, empty when all is fine.

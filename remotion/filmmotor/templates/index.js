@@ -9,4 +9,7 @@ import "./science.js";
 import "./nature-society.js";
 import "./media-language.js";
 import "./misc.js";
+import "./diagrams-earth.js";
+import "./diagrams-body.js";
+import "./diagrams-machines.js";
 import "./variants.js";
