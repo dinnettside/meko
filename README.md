@@ -66,7 +66,7 @@ You need Node.js 22.18 or newer and npm.
    | `ELEVENLABS_API_KEY` | API key for ElevenLabs text-to-speech. Without it, videos play silently with captions |
    | `ELEVENLABS_VOICE_ID` | The ElevenLabs voice. Meko uses the default voice George, `JBFqnCBsd6RMkjVDRZzb` |
    | `DEMO_CODE` | Needed on Vercel: making a video asks for this code, so strangers cannot spend your API credits. Without it, the deployed app makes no new videos. Use a long random code. Leave it empty locally |
-   | `BLOB_READ_WRITE_TOKEN` | Optional. The read-write token of a public Vercel Blob store, for the library of finished videos. Without it, every video is made fresh and nothing is saved |
+   | `BLOB_READ_WRITE_TOKEN` | Optional, for running the library on your own machine: the read-write token of a public Vercel Blob store. On Vercel, connecting the store is enough. Without either, every video is made fresh and nothing is saved |
 
 3. Start the dev server and open http://localhost:3000:
 
@@ -95,7 +95,7 @@ Meko runs on [Vercel](https://vercel.com) with no extra configuration:
 
 1. In Vercel, choose Add New, then Project, and import the GitHub repository.
 2. Add the environment variables from the table above, including `DEMO_CODE`. The example video plays for everyone; making a new video asks for the code. A long random code is what stops people from guessing it, and a rate-limit rule on `/api/*` in the Vercel Firewall adds more protection. If you add or change a variable later, deploy again, since Vercel only applies it to new deployments.
-3. For the library, open the project's Storage tab, create a Blob store with public access and connect it to the project. Vercel then connects the app to it on its own.
+3. For the library, open the project's Storage tab, create a Blob store with public access and connect it to the project. Vercel then sets `BLOB_STORE_ID`, and the app signs in to the store with OIDC on its own.
 4. Deploy. Every push to `main` deploys again.
 
 Each API route sets its own `maxDuration`, at most 180 seconds, which is within Vercel's 300-second limit on every plan.

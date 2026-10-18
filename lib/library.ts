@@ -15,9 +15,9 @@ import { contentWords } from "./words.ts";
 // A video in the library: a saved example, with the address of each scene's MP3.
 export type LibraryVideo = Example & { audio: Record<string, string> };
 
-// Vercel connects the store with OIDC on its servers, and a read-write token works anywhere, also on a laptop.
-export const libraryIsConfigured = () =>
-  Boolean(process.env.BLOB_READ_WRITE_TOKEN || (process.env.BLOB_STORE_ID && process.env.VERCEL_OIDC_TOKEN));
+// A store connected to the Vercel project sets BLOB_STORE_ID, and the SDK signs in with the OIDC token Vercel sends
+// with each request (not an environment variable at run time). A read-write token works anywhere, also on a laptop.
+export const libraryIsConfigured = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
 
 export function libraryKey(request: VideoRequest): string {
   // "The Black Death?" and "black death" are the same topic.
