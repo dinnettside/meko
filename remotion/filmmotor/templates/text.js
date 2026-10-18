@@ -85,7 +85,7 @@ register('kinetic_words', {
   params: 'words (2–5)', example: { words: ['Liberty', 'Equality', 'Fraternity'] },
   build(p, c) {
     const { U, th } = c, W = (p.words || []).slice(0, 5), N = W.length, lh = Math.min(180, 720 / Math.max(1, N)), y0 = 540 - ((N - 1) * lh) / 2 + lh * 0.35;
-    return U.bg() + W.map((w, k) => { const y = y0 + k * lh, s = Math.min(170, lh * 0.95); return U.T(960, y, U.lab(w), { fam: 'd', s, w: 800, f: k % 2 ? th.accent : th.ink, an: U.A('stamp', 0.06 + k * (0.6 / N), 0.05, { cx: 960, cy: y - s * 0.3 }) }); }).join('');
+    return U.bg() + W.map((w, k) => { const y = y0 + k * lh, s = Math.min(170, lh * 0.95); return U.T(960, y, U.lab(w), { fam: 'd', s, w: 800, f: k % 2 ? th.accent : th.ink, an: U.A('stamp', p.times?.[k] ?? 0.06 + k * (0.6 / N), 0.05, { cx: 960, cy: y - s * 0.3 }) }); }).join('');
   },
 });
 register('strike_replace', {
@@ -94,7 +94,7 @@ register('strike_replace', {
   build(p, c) {
     const { U, th } = c, I = (p.items || []).slice(0, 5), N = I.length, lh = 120, y0 = 540 - ((N - 1) * lh) / 2 + 24, step = 0.8 / N;
     return U.bg() + I.map((it, k) => {
-      const y = y0 + k * lh, at = 0.05 + k * step, w = U.tw(it.text, 72, { fam: 'd', w: 700 }), last = k === N - 1;
+      const y = y0 + k * lh, at = p.times?.[k] ?? 0.05 + k * step, w = U.tw(it.text, 72, { fam: 'd', w: 700 }), last = k === N - 1;
       return U.T(960, y, it.text, { fam: 'd', s: 72, w: 700, f: last ? th.accent : th.ink, an: U.A('up', at, 0.08) }) +
         (it.strike ? `<path d="M${960 - w / 2 - 20} ${y - 22}H${960 + w / 2 + 20}" stroke="${th.bad}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${w + 40}" stroke-dashoffset="${w + 40}"${U.A('draw', at + step * 0.6, 0.08, { l: w + 40 })}/>` : '');
     }).join('');
@@ -126,7 +126,7 @@ register('bullet_list', {
       return `<circle cx="${x}" cy="${y - 14}" r="11" fill="${th.accent}"/>`;
     };
     return U.bg() + (p.title ? U.T(380, 250, p.title, { a: 'start', fam: 'd', s: 70, w: 700, an: U.A('left', 0.02, 0.08) }) : '') +
-      I.map((it, k) => { const y = y0 + k * lh + 30; return `<g${U.A('left', 0.1 + k * step, 0.07)}>${mark(k, y)}${U.T(480, y, it, { a: 'start', s: 44 })}</g>`; }).join('');
+      I.map((it, k) => { const y = y0 + k * lh + 30; return `<g${U.A('left', p.times?.[k] ?? 0.1 + k * step, 0.07)}>${mark(k, y)}${U.T(480, y, it, { a: 'start', s: 44 })}</g>`; }).join('');
   },
 });
 preset('checklist_recap', 'bullet_list', { cat: 'Teaching', title: 'Recap with checks', desc: 'The main points are checked off one by one.', use: 'The end of a part or of the video.', defaults: { style: 'check' },

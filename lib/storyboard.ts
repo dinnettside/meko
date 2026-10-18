@@ -31,11 +31,13 @@ const sceneBase = {
   look: z.object({ template: z.string(), params: z.record(z.string(), z.unknown()) }).optional(),
 };
 
+// `icon` is a big icon for the topic, drawn beside the heading in a video without places, where there is no globe.
 const TitleSceneSchema = z.object({
   ...sceneBase,
   kind: z.literal("title"),
   heading: z.string(),
   subheading: z.string().optional(),
+  icon: z.string().optional(),
 });
 
 const TextSceneSchema = z.object({

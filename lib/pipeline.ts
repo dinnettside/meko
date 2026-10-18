@@ -99,6 +99,16 @@ export const CHARS_PER_SECOND = 15;
 // Characters per word including the space, in our narrations: about 6.2 to 6.7.
 export const CHARS_PER_WORD = 6.5;
 
+// How long a text is when spoken, in characters, with numbers counted as the words the voice says: a year like
+// "1347" is "thirteen forty-seven", "75%" is "seventy-five percent". Counted as digits, numbers took much longer to say
+// than the script allowed for, and a 60-second video about the plague ran for 81 seconds.
+export function spokenLength(text: string): number {
+  return text
+    .replace(/\b(?:1\d|20)\d{2}s?\b/g, "thirteen forty-seven")
+    .replace(/\d+(?:[.,]\d+)*/g, (number) => "x".repeat(Math.min(25, 5 * number.replace(/[.,]/g, "").length)))
+    .replace(/%/g, " percent").length;
+}
+
 export function countWords(text: string): number {
   return text.split(/\s+/).filter(Boolean).length;
 }

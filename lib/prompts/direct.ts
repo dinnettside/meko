@@ -66,7 +66,7 @@ export function directPlanPrompt(
         "Prefer the kind that shows what this scene is about over a general one: a cycle for a loop, a pyramid for a hierarchy, a myth card for a belief the narration says is wrong. Text, lists and single numbers are the fallbacks, not the first choice.",
         "The video should not show the same kind of picture again and again, so the other choices matter: the best one is not always used.",
         "The last scene sums up the video. When it names 2 or 3 main points, a list fits it well.",
-        'Also pick the look of the whole video as "theme": "night" for history, exploration, wars, empires, politics and people of the past; "blueprint" for machines, inventions, engineering, physics, chemistry, computers, technology and space; "field" for anything about living things or the planet: the human body, medicine, disease and vaccines, health, food, animals, plants, nature, weather and climate.',
+        'Also pick the look of the whole video as "theme": "night" for history and the past: wars, empires, explorers, revolutions, politics, people of the past and epidemics of the past, like the Black Death; "blueprint" for machines, inventions, engineering, physics, chemistry, computers, technology and space; "field" for living things and the planet today: the human body, medicine, vaccines, health, food, animals, plants, nature, weather and climate.',
       ].join("\n"),
     },
     { role: "user", content: `Video title: ${title}\n\nScenes:\n${JSON.stringify(scenes, null, 1)}` },
@@ -96,7 +96,7 @@ export function directCritiquePrompt(
 }
 
 // The opening scene only needs a title.
-export function directTitlePrompt(title: string, narration: string): ChatCompletionMessageParam[] {
+export function directTitlePrompt(title: string, narration: string, icons: readonly string[]): ChatCompletionMessageParam[] {
   return [
     {
       role: "system",
@@ -104,10 +104,11 @@ export function directTitlePrompt(title: string, narration: string): ChatComplet
         "You write the title card that opens a short explainer video.",
         "The heading names what the whole video is about, based on the video title, in at most 6 words.",
         "The optional subheading, at most 10 words, can hint at where the story starts.",
+        'The optional "icon" pictures the whole topic, like syringe for vaccines or rocket for a rocket launch: a name from the icon list below. Leave it out when no icon is clearly about the topic.',
         "Do not use numbers that are not in the narration.",
       ].join("\n"),
     },
-    { role: "user", content: `Video title: ${title}\nOpening narration: ${narration}` },
+    { role: "user", content: `Video title: ${title}\nOpening narration: ${narration}\nIcons: ${icons.join(", ")}` },
   ];
 }
 

@@ -19,9 +19,13 @@ register('stat_trio', {
   params: 'stats: [{value, decimals, prefix, suffix, label, sub, sep ("none" for years)}]', example: { stats: [{ value: 112, label: 'delegates' }, { value: 57, label: 'officials' }, { value: 37, label: 'farmers' }] },
   build(p, c) {
     const { U, th } = c, S = (p.stats || []).slice(0, 4), N = Math.max(1, S.length), w = 1600 / N;
+    // Every number gets the same size, small enough that the longest, like "75 million", fits its column (added for
+    // Meko: long numbers ran into each other).
+    const widest = Math.max(...S.map((s) => U.tw(`${s.prefix || ''}${U.fmtNum(s.value, s.decimals || 0)}${s.suffix || ''}`, 150, { fam: 'd', w: 700 })), 1);
+    const size = Math.min(150, Math.floor((150 * (w - 70)) / widest));
     return U.bg() + S.map((s, k) => {
-      const x = 160 + w * (k + 0.5), at = 0.06 + k * 0.12;
-      return U.T(x, 540, '0', { fam: 'd', s: 150, w: 700, f: k % 2 ? th.accent2 : th.accent, an: cnt(U, at, 0.35, s.value, { dec: s.decimals, pre: s.prefix, suf: s.suffix, sep: s.sep }) }) +
+      const x = 160 + w * (k + 0.5), at = p.times?.[k] ?? 0.06 + k * 0.12;
+      return U.T(x, 540, '0', { fam: 'd', s: size, w: 700, f: k % 2 ? th.accent2 : th.accent, an: cnt(U, at, 0.35, s.value, { dec: s.decimals, pre: s.prefix, suf: s.suffix, sep: s.sep }) }) +
         U.T(x, 615, U.lab(s.label || ''), { s: 34, w: 600, an: U.A('up', at + 0.1, 0.08) }) + (s.sub ? U.T(x, 665, s.sub, { s: 28, f: th.muted, an: U.A('up', at + 0.14, 0.08) }) : '') +
         (k ? `<path d="M${160 + w * k} 380V700" stroke="${th.line}" stroke-width="3" stroke-dasharray="320" stroke-dashoffset="320"${U.A('draw', 0.04, 0.15, { l: 320 })}/>` : '');
     }).join('');
@@ -83,7 +87,9 @@ register('gauge', {
   build(p, c) {
     const { U, th } = c, min = p.min ?? 0, max = p.max ?? 100, cx = 960, cy = 760, R = 380, ang = (v) => -180 + (180 * (v - min)) / (max - min);
     const pt = (a, r = R) => [cx + r * Math.cos((a * Math.PI) / 180), cy + r * Math.sin((a * Math.PI) / 180)];
-    const zones = p.zones || [{ to: min + (max - min) / 3, color: th.bad }, { to: min + (2 * (max - min)) / 3, color: th.warn }, { to: max, color: th.good }];
+    // One plain band unless zones are given: red, amber and green zones would judge the value as bad or good (changed
+    // for Meko).
+    const zones = p.zones || [{ to: max, color: th.surface }];
     let from = min, out = U.bg() + U.T(960, 260, U.lab(p.label || ''), { s: 40, w: 600, ls: th.upper ? 6 : 0, an: U.A('fade', 0.02, 0.06) });
     zones.forEach((z, k) => { const a0 = pt(ang(from)), a1 = pt(ang(z.to)); out += `<path d="M${a0[0].toFixed(1)} ${a0[1].toFixed(1)}A${R} ${R} 0 0 1 ${a1[0].toFixed(1)} ${a1[1].toFixed(1)}" stroke="${z.color}" stroke-width="64" fill="none" opacity="0"${U.A('fade', 0.06 + k * 0.08, 0.08)}/>`; from = z.to; });
     return out + `<g transform=""${U.A('rot', 0.3, 0.35, { a0: -90, a1: ang(p.value) + 90, cx, cy })}><path d="M${cx - 12} ${cy}L${cx} ${cy - R + 80}L${cx + 12} ${cy}Z" fill="${th.ink}"/></g><circle cx="${cx}" cy="${cy}" r="26" fill="${th.ink}"/>` +

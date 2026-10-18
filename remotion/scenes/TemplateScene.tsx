@@ -7,7 +7,7 @@ import type { Anim, FilmTheme, Template, TemplateContext, TemplateParams } from 
 import "../filmmotor/templates";
 import { filmFontCss, filmTheme } from "../filmmotor/theme";
 import { useTheme } from "../theme";
-import { spokenAt } from "../spoken";
+import { revealTimes, spokenAt } from "../spoken";
 
 // Everything is in place this long before the scene ends, since the next scene dissolves in over its last moments.
 const SETTLE_SEC = 0.8;
@@ -16,6 +16,25 @@ const LEAD_SEC = 0.2;
 // Params that say when something happens, as a fraction of the scene from 0 to 1. A word can be given instead, and
 // the thing then happens as the narration says it.
 const TIMING_KEYS = new Set(["at", "highlightAt", "revealAt", "changeAt"]);
+// The list in a template's params whose items come in one after another, and the field of each item that the
+// narration says, so each item comes in as it is said instead of on the template's own beat. The templates read the
+// times as `times` (one fraction of the scene per item); others keep their own timing.
+const ITEM_LISTS: Record<string, { list: string; text?: string }> = {
+  cycle: { list: "nodes", text: "text" },
+  pyramid: { list: "levels", text: "label" },
+  cause_chain: { list: "nodes", text: "text" },
+  process_steps: { list: "nodes", text: "text" },
+  icon_chain: { list: "nodes", text: "label" },
+  layer_stack: { list: "layers", text: "label" },
+  funnel: { list: "stages", text: "label" },
+  tree_chart: { list: "children", text: "label" },
+  bullet_list: { list: "items" },
+  key_takeaways: { list: "items" },
+  checklist_recap: { list: "items" },
+  kinetic_words: { list: "words" },
+  strike_replace: { list: "items", text: "text" },
+  stat_trio: { list: "stats", text: "label" },
+};
 // The free part of the frame: below the notes in the top corners, above the captions, a little in from the sides.
 const FREE = { left: 40, top: VIDEO.topSpace, right: VIDEO.width - 40, bottom: VIDEO.height - VIDEO.captionSpace };
 // How much bigger than its settled size an element gets at the top of the engine's pop animation.
@@ -132,6 +151,8 @@ function buildTemplate(name: string, params: TemplateParams, words: TimedWord[],
     return null;
   }
   const merged = timedParams({ ...template.defaults, ...params }, words, activeSec) as TemplateParams;
+  const times = itemTimes(name, merged, words, activeSec);
+  if (times) merged.times = times;
   const ctx: TemplateContext = { id, th: film, U: makeU(film), data: {} };
   try {
     return { template, params: merged, ctx, markup: template.build(merged, ctx) };
@@ -156,6 +177,17 @@ function timedParams(value: unknown, words: TimedWord[], activeSec: number): unk
     }
   }
   return copy;
+}
+
+// When each item of a template's list comes in, as a fraction of the scene: a moment before the narration says it, in
+// order, or spread over the scene when it never says it (see revealTimes). Undefined for a template without such a list.
+function itemTimes(name: string, params: TemplateParams, words: TimedWord[], activeSec: number): number[] | undefined {
+  const spec = Object.hasOwn(ITEM_LISTS, name) ? ITEM_LISTS[name] : undefined;
+  const items = spec ? params[spec.list] : undefined;
+  if (!spec || !Array.isArray(items) || items.length === 0) return undefined;
+  const texts = items.map((item) => String((spec.text && item && typeof item === "object" ? (item as Record<string, unknown>)[spec.text] : item) ?? ""));
+  const seconds = revealTimes(texts, words, { firstSec: 0.3, spreadSec: activeSec * 0.7, gapSec: 0.35, durationSec: activeSec + SETTLE_SEC });
+  return seconds.map((sec) => Math.min(0.95, Math.max(0, sec / activeSec)));
 }
 
 // Collects the animated elements of freshly drawn markup and runs the template's own setup.

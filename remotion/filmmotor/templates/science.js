@@ -99,7 +99,7 @@ register('icon_chain', {
   build(p, c) {
     const { U, th } = c, Nd = (p.nodes || []).slice(0, 6), n = Math.max(1, Nd.length), w = 1600 / n, cols = th.series;
     let o = U.bg() + H.title(U, th, p.title, 250);
-    Nd.forEach((q, k) => { const x = 160 + w * (k + 0.5), at = 0.08 + k * (0.65 / n); o += `<g${U.A('pop', at, 0.05, { cx: x, cy: 540 })}><circle cx="${x}" cy="540" r="${Math.min(110, w * 0.32)}" fill="${th.surface}" stroke="${cols[k % 6]}" stroke-width="6"/>${U.icon(q.icon || 'dot', x, 540, Math.min(130, w * 0.38), cols[k % 6])}</g>` + U.T(x, 720, q.label || '', { s: 36, w: 700, an: U.A('fade', at + 0.03, 0.05) }); if (k < n - 1) o += H.arrow(U, th.muted, x + Math.min(110, w * 0.32) + 12, 540, x + w - Math.min(110, w * 0.32) - 12, 540, at + 0.06, 6) + (p.arrowLabel ? U.T(x + w / 2, 510, p.arrowLabel, { s: 22, f: th.muted }) : ''); });
+    Nd.forEach((q, k) => { const x = 160 + w * (k + 0.5), at = p.times?.[k] ?? 0.08 + k * (0.65 / n); o += `<g${U.A('pop', at, 0.05, { cx: x, cy: 540 })}><circle cx="${x}" cy="540" r="${Math.min(110, w * 0.32)}" fill="${th.surface}" stroke="${cols[k % 6]}" stroke-width="6"/>${U.icon(q.icon || 'dot', x, 540, Math.min(130, w * 0.38), cols[k % 6])}</g>` + U.T(x, 720, q.label || '', { s: 36, w: 700, an: U.A('fade', at + 0.03, 0.05) }); if (k < n - 1) o += H.arrow(U, th.muted, x + Math.min(110, w * 0.32) + 12, 540, x + w - Math.min(110, w * 0.32) - 12, 540, at + 0.06, 6) + (p.arrowLabel ? U.T(x + w / 2, 510, p.arrowLabel, { s: 22, f: th.muted }) : ''); });
     return o;
   },
 });

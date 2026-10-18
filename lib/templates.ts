@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { barIsStated, hasPhrase, isNotAPerson, isYearLike, roleOf } from "./grounding.ts";
+import { barIsStated, hasPhrase, isNotAPerson, isYearLike, roleOf, statedTogether } from "./grounding.ts";
 import { iconKey } from "./icons.ts";
 import { isDateIn, isNameNumber, numbersIn, statesDate, yearsIn } from "./numbers.ts";
 import { groundedWords, sameWords, sentencesOf } from "./words.ts";
@@ -20,6 +20,7 @@ export type SceneData = {
   dates: string[]; // days and months in the source, like "20 July"
   percents: number; // how many amounts in the source are in percent
   namesPerson: boolean;
+  quotable: string[]; // whole sentences of the scene's source quotes, which may be shown word for word
 };
 
 // A text a template shows, with the most words it may have, and the most characters where the template has room for
@@ -29,7 +30,7 @@ export type Shown = { text: string | undefined; words: number; chars?: number; e
 // Whether a text passes the checks for shown texts: backed, not too long and only with numbers from the narration.
 export type Keep = (text: string | undefined, words: number, exact?: boolean) => boolean;
 
-export type CheckContext = { narration: string; source: string };
+export type CheckContext = { narration: string; source: string; quotable: string[] };
 
 type Template<S extends z.ZodObject> = {
   family: Family;
@@ -65,7 +66,9 @@ const decimalsOf = (value: number) => (String(value).split(".")[1] ?? "").length
 // What is wrong with a number shown with a label: one sentence must give it for that thing, and it must be an amount,
 // not a year, a date or part of a name like Apollo 11.
 function amountProblems(stat: { value: number; label: string; unit?: string }, source: string): string[] {
-  if (isDateIn(stat.value, source) || (!stat.unit && isYearLike(stat.value))) return [`${stat.value} is a year or a date, not an amount to show here.`];
+  // A number like 1000 is a year unless the narration writes it with a separator, as in "1,000 applicants".
+  const looksLikeYear = isYearLike(stat.value) && !source.includes(stat.value.toLocaleString("en-US"));
+  if (isDateIn(stat.value, source) || (!stat.unit && looksLikeYear)) return [`${stat.value} is a year or a date, not an amount to show here.`];
   if (isNameNumber(stat.value, source)) return [`${stat.value} is part of a name here, like Apollo 11, not an amount.`];
   if (!barIsStated(stat, stat.unit, source)) return [`No sentence of this scene gives ${stat.value} for "${stat.label}". Show numbers the narration or facts give for that thing.`];
   return [];
@@ -82,6 +85,31 @@ const namedTogether = (a: string, b: string, source: string) =>
 // A year said of a person: in a sentence that names them, with a word for birth or death.
 const yearOfPerson = (name: string, year: number, words: RegExp, source: string) =>
   sentencesOf(source).some((sentence) => groundedWords(name, sentence).matched > 0 && yearsIn(sentence).includes(year) && words.test(sentence));
+
+// The times of day a text gives, in minutes after midnight: "10:56 p.m.", "4:17 PM", "20:17" or "9 a.m.". A number
+// with neither a colon nor a.m. or p.m. is not a time.
+function timesIn(text: string): number[] {
+  const times: number[] = [];
+  for (const [, hours, minutes, half] of text.matchAll(/\b(\d{1,2})(?::(\d{2}))?\s*(a\.?\s?m\.?|p\.?\s?m\.?)?(?![\d:])/gi)) {
+    if (minutes === undefined && half === undefined) continue;
+    let hour = Number(hours);
+    const minute = Number(minutes ?? 0);
+    if (hour > 23 || minute > 59) continue;
+    if (half) hour = (hour % 12) + (/p/i.test(half) ? 12 : 0);
+    times.push(hour * 60 + minute);
+  }
+  return times;
+}
+const clockMinutes = (time: string) => {
+  const match = time.match(/^(\d{1,2}):(\d{2})$/);
+  return match && Number(match[1]) < 24 && Number(match[2]) < 60 ? Number(match[1]) * 60 + Number(match[2]) : null;
+};
+
+// A formula without spaces and multiplication signs, so "E = m·c²" matches "E=mc²".
+const formulaKey = (text: string) => text.replace(/[\s·×*⋅]/g, "").toLowerCase();
+
+// The names the narration may use for each molecule the template can draw.
+const MOLECULES = { H2O: /\b(water|h2o)\b/i, CO2: /\b(carbon dioxide|co2)\b/i, CH4: /\b(methane|ch4)\b/i, O2: /\b(oxygen|o2)\b/i, NH3: /\b(ammonia|nh3)\b/i };
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] as const;
 
@@ -101,6 +129,9 @@ const SCALE_WORDS = /\b(inside|within|made (?:up )?of|consists? of|contains?|tin
 const DIVISION_WORDS = /\b(divided|divides|split|branch(?:es)?|consists? of|made up of|includes?|types?|kinds?|parts?|categor(?:y|ies)|groups?|sections?)\b/i;
 const LAYER_WORDS = /\b(layers?|on top of|built on|foundations?|beneath|underneath|stack(?:ed)?|strata|tiers?)\b/i;
 const LINK_WORDS = /\b(connect\w*|link\w*|network\w*|allies|allied|alliances?|between|influenc\w*|relations?|ties|trad(?:e|ed|ing) with|spread)\b/i;
+const DOCUMENT_WORDS = /\b(treat(?:y|ies)|act|laws?|constitution|declaration|charter|bill|decree|edict|accord|convention|agreement|manifesto|proclamation|magna carta|ordinance)\b/i;
+const LETTER_WORDS = /\b(letters?|wrote|writes|diar(?:y|ies)|journal|telegram|postcard|note)\b/i;
+const SCALE_WORDS_2 = /\b(scale|ph|decibels?|db|richter|magnitude|degrees?|temperature|°[cf]?)\b/i;
 const PLANET_WORDS = /\b(mercury|venus|mars|jupiter|saturn|uranus|neptune)\b/gi;
 const SEAT_WORDS = /\b(seats?|parliament\w*|mandates?|majority|coalition|assembly|congress|senate|chamber)\b/i;
 
@@ -692,6 +723,190 @@ export const TEMPLATES = {
       sentencesOf(source).some((sentence) => numbersIn(sentence).includes(String(visual.bpm)) && /\b(beats?|bpm|pulse|heart rate)\b/i.test(sentence))
         ? []
         : [`No sentence of this scene gives ${visual.bpm} as a heart rate.`],
+  }),
+  // Added on Oct 19, 2026, so the director has more to choose from.
+  funnel: template({
+    family: "chart",
+    plan: "a group that shrinks step by step, like how many of 1,000 applicants were hired, when the scene gives each number",
+    prompt:
+      '"funnel" when the narration gives how a group shrinks step by step, like 1,000 applicants, 200 interviews and 20 hires: 3 or 4 "stages" from the largest down, each a "label" of 1 to 4 words and its "value" from the sentence that gives it, and an optional "unit".',
+    schema: z.object({ kind: z.literal("funnel"), stages: z.array(z.object({ label: z.string(), value: z.number() })).min(3).max(4), unit: z.string().optional() }),
+    fits: (scene) => scene.amounts.length >= 3,
+    shown: (visual) => [...visual.stages.map((stage) => ({ text: stage.label, words: 4 })), { text: visual.unit, words: 2 }],
+    check: (visual, { source }) => [
+      ...distinct(visual.stages.map((stage) => stage.label), "Two stages have the same label."),
+      ...visual.stages.flatMap((stage) => amountProblems({ ...stage, unit: visual.unit }, source)),
+      ...(visual.stages.every((stage, index) => index === 0 || stage.value < visual.stages[index - 1].value) ? [] : ["Each stage must be smaller than the one before it."]),
+    ],
+    params: (visual) => ({ stages: visual.stages, unit: suffix(visual.unit) }),
+  }),
+  document_closeup: template({
+    family: "words",
+    plan: "a document like a law, a treaty or a declaration, when the scene is about one",
+    prompt:
+      '"document_closeup" when the scene is about a document, like a law, a treaty, a charter or a declaration: "heading" is its name as the narration writes it, at most 6 words, an optional "subheading" of at most 6 words, an optional "date" as the narration or facts give it, and an optional "stamp" of 1 or 2 words the narration says of it, like "Signed" or "Abolished".',
+    schema: z.object({
+      kind: z.literal("document_closeup"),
+      heading: z.string(),
+      subheading: z.string().optional(),
+      date: z.string().optional(),
+      stamp: z.string().optional(),
+    }),
+    fits: (scene) => DOCUMENT_WORDS.test(scene.narration),
+    shown: (visual) => [
+      { text: visual.heading, words: 6, exact: true },
+      { text: visual.subheading, words: 6 },
+      { text: visual.date, words: 5, exact: true },
+      { text: visual.stamp, words: 2, exact: true },
+    ],
+    // The template draws grey lines for the document's text, never words.
+    params: (visual) => ({ heading: visual.heading, subheading: visual.subheading, date: visual.date, lines: 8, stamp: visual.stamp, tone: "true" }),
+  }),
+  letter_handwritten: template({
+    family: "words",
+    plan: "a letter or a diary page with the writer's own words, when the facts quote one",
+    prompt:
+      '"letter_handwritten" when the scene is about a letter, a diary or a note and the facts quote its words: "lines" are 1 to 3 whole sentences copied exactly from "Sentences you may quote", an optional "greeting" and "sign" (the writer\'s name) only as the facts give them, and an optional "date" as the narration or facts give it.',
+    schema: z.object({
+      kind: z.literal("letter_handwritten"),
+      lines: z.array(z.string()).min(1).max(3),
+      greeting: z.string().optional(),
+      sign: z.string().optional(),
+      date: z.string().optional(),
+    }),
+    fits: (scene) => LETTER_WORDS.test(scene.narration) && scene.quotable.length > 0,
+    shown: (visual) => [
+      { text: visual.greeting, words: 4, exact: true },
+      { text: visual.sign, words: 4, exact: true },
+      { text: visual.date, words: 5, exact: true },
+    ],
+    check: (visual, { quotable }) =>
+      visual.lines
+        .filter((line) => !quotable.includes(line.trim()))
+        .map((line) => `"${line}" is not one of the sentences you may quote. Copy whole sentences exactly.`),
+    repair: (visual, keep, { quotable }) => {
+      const lines = visual.lines.filter((line) => quotable.includes(line.trim()));
+      if (lines.length === 0) return null;
+      return { ...visual, lines, greeting: keep(visual.greeting, 4, true) ? visual.greeting : undefined, sign: keep(visual.sign, 4, true) ? visual.sign : undefined, date: keep(visual.date, 5, true) ? visual.date : undefined };
+    },
+  }),
+  clock_time: template({
+    family: "time",
+    plan: "a clock whose hands move from one time of day to another, when the scene gives the times",
+    prompt: '"clock_time" when the narration gives times of day, like 10:56 p.m.: "from" and "to" as 24-hour "HH:MM" times the narration or facts give, a "label" of at most 6 words saying what happened, and an optional "sub" of at most 6 words.',
+    schema: z.object({ kind: z.literal("clock_time"), from: z.string(), to: z.string(), label: z.string(), sub: z.string().optional() }),
+    fits: (scene) => timesIn(scene.source).length > 0,
+    shown: (visual) => [
+      { text: visual.label, words: 6 },
+      { text: visual.sub, words: 6 },
+    ],
+    check: (visual, { source }) => {
+      const stated = timesIn(source);
+      return [visual.from, visual.to].flatMap((time) => {
+        const minutes = clockMinutes(time);
+        if (minutes === null) return [`Write "${time}" as a 24-hour time, like 22:56.`];
+        return stated.includes(minutes) ? [] : [`The narration and facts do not give the time ${time}.`];
+      });
+    },
+  }),
+  scale_ladder: template({
+    family: "chart",
+    plan: "things placed on one scale, like the pH of liquids or the loudness of sounds, when the scene gives their values",
+    prompt:
+      '"scale_ladder" when the narration places things on one scale, like pH, decibels or temperature: a "title" of at most 5 words, an optional "unit", and 2 to 5 "marks", each a "value" and a "label" of 1 to 3 words from the sentence that gives that value.',
+    schema: z.object({
+      kind: z.literal("scale_ladder"),
+      title: z.string(),
+      unit: z.string().optional(),
+      marks: z.array(z.object({ value: z.number(), label: z.string() })).min(2).max(5),
+    }),
+    fits: (scene) => scene.amounts.length >= 2 && SCALE_WORDS_2.test(scene.source),
+    shown: (visual) => [{ text: visual.title, words: 5 }, { text: visual.unit, words: 2 }, ...visual.marks.map((mark) => ({ text: mark.label, words: 3 }))],
+    check: (visual, { source }) => [
+      ...distinct(visual.marks.map((mark) => mark.label), "Two marks have the same label."),
+      ...visual.marks.flatMap((mark) => amountProblems({ ...mark, unit: visual.unit }, source)),
+    ],
+    // The scale runs from the lowest mark to the highest, so its ends are numbers the narration gives too.
+    params: (visual) => {
+      const values = visual.marks.map((mark) => mark.value);
+      return { title: visual.title, unit: suffix(visual.unit), min: Math.min(...values), max: Math.max(...values), marks: visual.marks.map((mark) => ({ v: mark.value, label: mark.label })) };
+    },
+  }),
+  formula_reveal: template({
+    family: "words",
+    plan: "a formula built up part by part, like E = mc², when the narration or facts give it",
+    prompt:
+      '"formula_reveal" when the narration or facts give a formula, like E = mc² or F = ma: its "parts" in order, each a "text" (a symbol, a number or a sign like = or +) and an optional "note" of 1 to 3 words saying what it stands for, as the narration or facts say, and an optional "caption" of at most 8 words.',
+    schema: z.object({
+      kind: z.literal("formula_reveal"),
+      parts: z.array(z.object({ text: z.string(), note: z.string().optional() })).min(2).max(7),
+      caption: z.string().optional(),
+    }),
+    fits: (scene) => /=|\bequals\b/i.test(scene.source),
+    shown: (visual) => [...visual.parts.map((part) => ({ text: part.note, words: 3 })), { text: visual.caption, words: 8 }],
+    check: (visual, { source }) =>
+      formulaKey(source).includes(formulaKey(visual.parts.map((part) => part.text).join(""))) ? [] : ["The narration and facts do not give this formula. Write it as they do."],
+    repair: (visual, keep) => ({ ...visual, parts: visual.parts.map((part) => (keep(part.note, 3) ? part : { text: part.text })), caption: keep(visual.caption, 8) ? visual.caption : undefined }),
+  }),
+  molecule: template({
+    family: "picture",
+    plan: "a model of a simple molecule like water or carbon dioxide, when the scene is about it",
+    prompt: '"molecule" when the scene is about one of these molecules: H2O (water), CO2 (carbon dioxide), CH4 (methane), O2 (oxygen) or NH3 (ammonia). "formula" names it; the video draws its atoms and bonds.',
+    schema: z.object({ kind: z.literal("molecule"), formula: z.enum(["H2O", "CO2", "CH4", "O2", "NH3"]) }),
+    fits: (scene) => Object.values(MOLECULES).some((words) => words.test(scene.narration)) && /\b(molecules?|atoms?|bonds?|formula|chemical)\b/i.test(scene.source),
+    shown: () => [],
+    check: (visual, { narration }) => (MOLECULES[visual.formula].test(narration) ? [] : [`The narration does not name ${visual.formula}. Show the molecule it names.`]),
+  }),
+  data_table: template({
+    family: "chart",
+    plan: "a small table comparing three or four things on two or three points, when the scene gives every value",
+    prompt:
+      '"data_table" when the narration compares three or four things on two or three points: an optional "title" of at most 6 words, "columns" with the points as headings (the first heading may be empty), and 2 to 4 "rows", each starting with the thing\'s name and then its value for each column, every cell at most 4 words in the narration\'s words.',
+    schema: z.object({
+      kind: z.literal("data_table"),
+      title: z.string().optional(),
+      columns: z.array(z.string()).min(2).max(4),
+      rows: z.array(z.array(z.string())).min(2).max(4),
+    }),
+    fits: (scene) => scene.amounts.length >= 3 || SHARED_WORDS.test(scene.narration),
+    shown: (visual) => [
+      { text: visual.title, words: 6 },
+      // The first heading only names what the rows are, like "Planet"; the others say what the values mean.
+      ...visual.columns.slice(1).map((text) => ({ text, words: 4 })),
+      ...visual.rows.flatMap((row) => row.map((text) => ({ text, words: 4, exact: true }))),
+    ],
+    check: (visual, { source }) => [
+      ...(visual.rows.every((row) => row.length === visual.columns.length) ? [] : ["Every row needs one cell for each column."]),
+      // A number in a row is said of that row's thing, in one sentence.
+      ...visual.rows.flatMap((row) =>
+        row.slice(1).flatMap((cell) =>
+          numbersIn(cell).length > 0 && !sentencesOf(source).some((sentence) => numbersIn(cell).every((number) => numbersIn(sentence).includes(number)) && groundedWords(row[0], sentence).matched > 0)
+            ? [`No sentence gives "${cell}" for "${row[0]}".`]
+            : [],
+        ),
+      ),
+    ],
+  }),
+  people_ideas: template({
+    family: "people",
+    plan: "two or three people, each with the idea or work the narration ties to them",
+    prompt:
+      '"people_ideas" when the narration names two or three people and what each is known for: "people", each with a "name" as the narration writes it and a "keyword" of 1 to 3 words the narration says of that person, and an optional "title" of at most 5 words.',
+    schema: z.object({
+      kind: z.literal("people_ideas"),
+      title: z.string().optional(),
+      people: z.array(z.object({ name: z.string(), keyword: z.string() })).min(2).max(3),
+    }),
+    fits: (scene) => scene.namesPerson,
+    shown: (visual) => [{ text: visual.title, words: 5 }, ...visual.people.flatMap((person) => [{ text: person.name, words: 4, exact: true }, { text: person.keyword, words: 3 }])],
+    check: (visual, { source }) => [
+      ...distinct(visual.people.map((person) => person.name), "Two people have the same name."),
+      ...visual.people.flatMap((person) => (isNotAPerson(person.name, source) ? [`"${person.name}" is not a person here.`] : [])),
+      ...visual.people
+        .filter((person) => !statedTogether(person.name, person.keyword, source))
+        .map((person) => `"${person.keyword}" must be what the narration says of ${person.name}, in the same sentence.`),
+    ],
+    params: (visual) => ({ title: visual.title, people: visual.people.map(({ name, keyword }) => ({ name, keyword })) }),
   }),
 };
 

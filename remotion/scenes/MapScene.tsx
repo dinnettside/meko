@@ -503,8 +503,8 @@ export function MapScene({
           ))}
         </g>
       </svg>
-      {/* A rush of air as the camera flies on from the map before, or zooms into the cities. */}
-      {start ? <Html5Audio src={sounds().flight} volume={FLIGHT_VOLUME} /> : null}
+      {/* A rush of air as the camera zooms into the cities. Flights from one map to the next have none, since they
+          come often. */}
       {zoom ? (
         <Sequence from={Math.round(zoom.startSec * fps)} layout="none">
           <Html5Audio src={sounds().flight} volume={FLIGHT_VOLUME} />

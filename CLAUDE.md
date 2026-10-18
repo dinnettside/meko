@@ -82,7 +82,7 @@ type SceneBase = {
 };
 
 type Scene =
-  | (SceneBase & { kind: "title"; heading: string; subheading?: string })
+  | (SceneBase & { kind: "title"; heading: string; subheading?: string; icon?: string }) // `icon` (added Oct 18, 2026 with Trym's OK, for varied openings) is a big icon for the topic in a video without places
   | (SceneBase & { kind: "text"; lines: string[] })
   | (SceneBase & {
       kind: "map";

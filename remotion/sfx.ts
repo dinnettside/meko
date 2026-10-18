@@ -36,8 +36,8 @@ function noise(seed: number): () => number {
   };
 }
 
-// Air rushing past: noise through a low-pass filter that opens and closes, swelling and fading. For a scene that
-// comes in, or a camera that flies.
+// Air rushing past: noise through a low-pass filter that opens and closes, swelling and fading. For a map's camera
+// that zooms in.
 function whoosh(seconds: number, seed: number): Float32Array {
   const samples = new Float32Array(Math.round(seconds * RATE));
   const random = noise(seed);
@@ -90,10 +90,9 @@ function chime(): Float32Array {
 }
 
 // Built when first asked for, since only the browser plays them.
-let cache: Record<"whoosh" | "flight" | "pop" | "thud" | "chime", string> | null = null;
+let cache: Record<"flight" | "pop" | "thud" | "chime", string> | null = null;
 export function sounds() {
   cache ??= {
-    whoosh: wav(whoosh(0.55, 7)),
     flight: wav(whoosh(1.4, 11)),
     pop: wav(pop()),
     thud: wav(thud()),

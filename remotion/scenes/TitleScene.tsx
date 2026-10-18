@@ -4,15 +4,17 @@ import { AbsoluteFill, interpolateColors, useCurrentFrame, useVideoConfig } from
 import { VIDEO } from "@/lib/theme";
 import { globeCountries, regionCenter } from "../globe";
 import { Hatch } from "../hatch";
+import { Icon } from "../icons";
 import { ease, useEase } from "../motion";
 import { alpha, useTheme } from "../theme";
 
 const GLOBE = 760; // size of the globe drawing, in pixels
+const ICON_SIZE = 460; // size of the topic's icon in a video without places
 const graticule = geoGraticule10();
 
 // The opening: a big serif heading with an amber rule under it. When the video has maps, a globe turns to the
-// part of the world the story is about.
-export function TitleScene({ heading, subheading, region }: { heading: string; subheading?: string; region: string[] }) {
+// part of the world the story is about; in a video without places, a big icon for the topic can take its place.
+export function TitleScene({ heading, subheading, icon, region }: { heading: string; subheading?: string; icon?: string; region: string[] }) {
   const { colors, fonts } = useTheme();
   const headingIn = useEase(0.2, 0.8);
   const ruleIn = useEase(0.7, 0.8);
@@ -32,9 +34,9 @@ export function TitleScene({ heading, subheading, region }: { heading: string; s
       <div style={{ flex: 1 }}>
         <div
           style={{
-            maxWidth: center ? 900 : 1450,
+            maxWidth: center || icon ? 900 : 1450,
             fontFamily: fonts.display,
-            fontSize: (center ? VIDEO.fontSize.title * 0.85 : VIDEO.fontSize.title) * fonts.displayScale,
+            fontSize: (center || icon ? VIDEO.fontSize.title * 0.85 : VIDEO.fontSize.title) * fonts.displayScale,
             fontWeight: fonts.displayWeight,
             lineHeight: 1.04,
             color: colors.paper,
@@ -51,8 +53,27 @@ export function TitleScene({ heading, subheading, region }: { heading: string; s
           </div>
         ) : null}
       </div>
-      {center ? <Globe center={center} region={region} /> : null}
+      {center ? <Globe center={center} region={region} /> : icon ? <TopicIcon name={icon} /> : null}
     </AbsoluteFill>
+  );
+}
+
+// A big icon for the topic where a video about places has its globe. It grows in and settles with a small turn.
+function TopicIcon({ name }: { name: string }) {
+  const { colors } = useTheme();
+  const appear = useEase(0.2, 1.1);
+  return (
+    <div
+      style={{
+        width: GLOBE,
+        display: "flex",
+        justifyContent: "center",
+        opacity: appear,
+        transform: `scale(${0.7 + 0.3 * appear}) rotate(${(1 - appear) * -10}deg)`,
+      }}
+    >
+      <Icon name={name} size={ICON_SIZE} color={colors.signal} />
+    </div>
   );
 }
 

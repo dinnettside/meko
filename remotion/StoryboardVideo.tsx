@@ -66,7 +66,7 @@ export function storyboardFrames(storyboard: Storyboard): number {
 
 const NO_VOICE: Record<string, SceneVoice> = {};
 // The sound effects are quiet, under the voice.
-const SFX_VOLUME = { chime: 0.18, whoosh: 0.12 };
+const CHIME_VOLUME = 0.18;
 const NO_SITES: Record<string, string[]> = {};
 
 // `voice` holds the recorded narration by scene ID. Without it, the video plays silently with captions.
@@ -128,12 +128,8 @@ export function StoryboardVideo({
                   <Caption words={words} />
                 </Fade>
                 {voice[scene.id] ? <Html5Audio src={voice[scene.id].audio} /> : null}
-                {/* A soft bell opens the video, and a rush of air brings in each scene. A map after a map flies on with
-                    its own sound. */}
-                {index === 0 ? <Html5Audio src={sounds().chime} volume={SFX_VOLUME.chime} /> : null}
-                {index > 0 && !(scene.kind === "map" && storyboard.scenes[index - 1].kind === "map") ? (
-                  <Html5Audio src={sounds().whoosh} volume={SFX_VOLUME.whoosh} />
-                ) : null}
+                {/* A soft bell opens the video. Scenes come in without a sound: one on every scene got repetitive. */}
+                {index === 0 ? <Html5Audio src={sounds().chime} volume={CHIME_VOLUME} /> : null}
               </Series.Sequence>
             );
           })}
@@ -142,7 +138,7 @@ export function StoryboardVideo({
               <Fade frames={credits} fade={overlap} fadeOut>
                 <Credits sources={storyboard.sources} checks={checks} />
               </Fade>
-              <Html5Audio src={sounds().chime} volume={SFX_VOLUME.chime} />
+              <Html5Audio src={sounds().chime} volume={CHIME_VOLUME} />
             </Series.Sequence>
           ) : null}
         </Series>
@@ -225,7 +221,7 @@ function SceneView({
   if (scene.look) return <TemplateScene template={scene.look.template} params={scene.look.params} {...timing} />;
   switch (scene.kind) {
     case "title":
-      return <TitleScene heading={scene.heading} subheading={scene.subheading} region={region} />;
+      return <TitleScene heading={scene.heading} subheading={scene.subheading} icon={scene.icon} region={region} />;
     case "text":
       return <TextScene lines={scene.lines} {...timing} />;
     case "map":

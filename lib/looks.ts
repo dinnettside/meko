@@ -49,8 +49,19 @@ export function looksFor(scene: Scene, context: LookContext): Look[] {
         ...(short ? [{ template: "kinetic_words", params: { words: scene.items.map((item) => item.title) } }] : []),
       ];
     }
-    case "versus":
-      return [{ template: "scoreboard", params: { left: scene.left, right: scene.right, criteria: scene.rows.map(({ label, left, right }) => ({ label, left, right })) } }];
+    case "versus": {
+      // Each side's points as "point: answer" under its name, side by side.
+      type Row = { label: string; left: string; right: string };
+      const side = (title: string, icon: string | undefined, pick: (row: Row) => string) => ({
+        title,
+        icon,
+        points: scene.rows.map((row) => `${row.label}: ${pick(row)}`),
+      });
+      return [
+        { template: "scoreboard", params: { left: scene.left, right: scene.right, criteria: scene.rows.map(({ label, left, right }) => ({ label, left, right })) } },
+        { template: "split_screen", params: { left: side(scene.left, scene.leftIcon, (row) => row.left), right: side(scene.right, scene.rightIcon, (row) => row.right), vs: "" } },
+      ];
+    }
     case "compare": {
       const data = scene.bars.map(({ label, value }) => ({ label, value }));
       const decimals = Math.max(...scene.bars.map((bar) => decimalsOf(bar.value)));
@@ -59,6 +70,13 @@ export function looksFor(scene: Scene, context: LookContext): Look[] {
         { template: "bar_chart", params: { title: scene.title, data, unit, decimals } },
         { template: "ranking_bars", params: { title: scene.title, data, unit, decimals, orientation: "h", sort: true } },
         ...(RACE_UNITS.test(scene.unit?.trim() ?? "") ? [{ template: "race_lanes", params: { title: scene.title, lanes: data, unit } }] : []),
+        // Two amounts: two tall bars, or a balance that tips toward the bigger one.
+        ...(data.length === 2
+          ? [
+              { template: "comparison_bars", params: { title: scene.title, data, unit, decimals } },
+              { template: "scale_balance", params: { left: data[0], right: data[1] } },
+            ]
+          : []),
       ];
     }
     case "stat": {
@@ -80,8 +98,36 @@ export function looksFor(scene: Scene, context: LookContext): Look[] {
         }
         return whole && scene.total <= 100 ? [{ template: "unit_grid", params: { value: scene.value, total: scene.total, label: scene.label, cols: 10 } }] : [];
       }
-      return [{ template: "big_number", params: { value: scene.value, decimals, suffix: suffix(scene.unit), label: scene.label } }];
+      // A percentage can also be a needle on a dial from 0 to 100, or a bar that fills.
+      const percent = /^(%|percent|per cent)$/i.test(scene.unit?.trim() ?? "") && scene.value >= 0 && scene.value <= 100;
+      return [
+        { template: "big_number", params: { value: scene.value, decimals, suffix: suffix(scene.unit), label: scene.label } },
+        ...(percent
+          ? [
+              { template: "gauge", params: { value: scene.value, min: 0, max: 100, label: scene.label, unit: "%", decimals, minLabel: "0%", maxLabel: "100%" } },
+              { template: "progress_bar", params: { value: scene.value, max: 100, label: scene.label, unit: "%", decimals } },
+            ]
+          : []),
+      ];
     }
+    case "timeline": {
+      // The template's axis has no BC and no days, so only a timeline of different years after year 0 can use it.
+      const years = scene.events.map((event) => event.year);
+      if (years.some((year) => year <= 0) || new Set(years).size < years.length || scene.events.some((event) => event.date)) return [];
+      const [first, last] = [Math.min(...years), Math.max(...years)];
+      const span = Math.max(1, last - first);
+      // Ticks every round number of years, about 4 to 7 of them, with a little room before the first event and after the last.
+      const step = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000].find((each) => span / each <= 7) ?? 2000;
+      const start = Math.floor((first - span * 0.08) / step) * step;
+      const end = Math.ceil((last + span * 0.08) / step) * step;
+      const bands = (scene.eras ?? []).map((era) => ({ from: Math.max(era.start, start), to: Math.min(era.end, end), label: era.label }));
+      return [{ template: "timeline", params: { start, end, step, events: scene.events.map(({ year, label }) => ({ year, label })), bands } }];
+    }
+    case "people":
+      // One person: a portrait card with their name and role.
+      return scene.people.length === 1
+        ? [{ template: "profile_card", params: { name: scene.people[0].name, role: scene.people[0].role ?? "", years: "", facts: [] } }]
+        : [];
     case "quote": {
       // The source words around the quote, with the quote marked, when they fit on the page.
       const fits = context.excerpt !== undefined && context.excerpt.length <= 320 && context.excerpt.includes(scene.text);
@@ -99,6 +145,30 @@ export function looksFor(scene: Scene, context: LookContext): Look[] {
     default:
       return [];
   }
+}
+
+// The ways a video can open besides its own title card: the question it answers in big letters, the years its opening
+// spans rolling by, or a plain title card. Its own title card has a globe in a video about places, or a big icon for the
+// topic; with neither it would be only a heading, so then it is not one of the options.
+export function introOptions(
+  scene: Extract<Scene, { kind: "title" }>,
+  context: { question?: string; years?: [number, number]; places: boolean },
+): { own: boolean; looks: Look[] } {
+  const looks: Look[] = [];
+  if (context.question) looks.push({ template: "question_card", params: { label: "", question: context.question } });
+  if (context.years) looks.push({ template: "year_roll", params: { from: context.years[0], to: context.years[1], label: scene.heading } });
+  looks.push({ template: "title_card", params: { title: scene.heading, subtitle: scene.subheading ?? "" } });
+  return { own: context.places || scene.icon !== undefined, looks };
+}
+
+// Picks how a video opens, from its title, like pickLooks: a look, or none for the video's own title card. A template
+// the video already shows elsewhere is not used again.
+export function pickIntro(options: { own: boolean; looks: Look[] }, seed: string, used: string[]): Look | undefined {
+  const looks = options.looks.filter((look) => !used.includes(look.template));
+  const count = looks.length + (options.own ? 1 : 0);
+  if (count === 0) return undefined;
+  const choice = hash(`${seed}#intro`) % count;
+  return options.own ? (choice === 0 ? undefined : looks[choice - 1]) : looks[choice];
 }
 
 // A number from a text, the same every time, so a video's looks do not change when its storyboard is built again.

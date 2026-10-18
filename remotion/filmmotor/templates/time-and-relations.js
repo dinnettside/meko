@@ -59,12 +59,12 @@ register('cause_chain', {
     let out = U.bg();
     if (p.direction === 'v') {
       const h = Math.min(110, 640 / N - 30), gap = (700 - N * h) / Math.max(1, N - 1);
-      Nd.forEach((n, k) => { const y = 200 + k * (h + gap), at = 0.06 + k * step; out += `<g${U.A('pop', at, 0.05, { cx: 960, cy: y + h / 2 })}>${U.card(560, y, 800, h, { s: k === N - 1 ? th.accent : th.line, sw: 4 })}${U.T(960, y + h / 2 + 14, n.text, { s: 40, w: 600 })}</g>`; if (k < N - 1) out += arrow(U, th, 960, y + h + 6, 960, y + h + gap - 6, at + step * 0.6); });
+      Nd.forEach((n, k) => { const y = 200 + k * (h + gap), at = p.times?.[k] ?? 0.06 + k * step; out += `<g${U.A('pop', at, 0.05, { cx: 960, cy: y + h / 2 })}>${U.card(560, y, 800, h, { s: k === N - 1 ? th.accent : th.line, sw: 4 })}${U.T(960, y + h / 2 + 14, n.text, { s: 40, w: 600 })}</g>`; if (k < N - 1) out += arrow(U, th, 960, y + h + 6, 960, y + h + gap - 6, at + step * 0.6); });
       return out;
     }
     const gapX = 70, w = Math.min(300, (1600 - (N - 1) * gapX) / N), x0 = 960 - (N * w + (N - 1) * gapX) / 2;
     Nd.forEach((n, k) => {
-      const x = x0 + k * (w + gapX), at = 0.06 + k * step, L = U.wrap(n.text, Math.max(8, Math.floor(w / 22))).slice(0, 3);
+      const x = x0 + k * (w + gapX), at = p.times?.[k] ?? 0.06 + k * step, L = U.wrap(n.text, Math.max(8, Math.floor(w / 22))).slice(0, 3);
       out += `<g${U.A('pop', at, 0.05, { cx: x + w / 2, cy: 560 })}>${U.card(x, 470, w, 180, { s: k === N - 1 ? th.accent : th.line, sw: 4 })}` + L.map((l, i) => U.T(x + w / 2, 560 - (L.length - 1) * 20 + i * 40 + 12, l, { s: 34, w: 600 })).join('') +
         (p.numbered ? `<circle cx="${x + w / 2}" cy="430" r="30" fill="${th.accent}"/>` + U.T(x + w / 2, 442, String(k + 1), { s: 32, w: 700, f: th.bg }) : '') + '</g>';
       if (k < N - 1) out += arrow(U, th, x + w + 8, 560, x + w + gapX - 8, 560, at + step * 0.6);
@@ -81,7 +81,7 @@ register('cycle', {
     const { U, th } = c, id = c.id, Nd = (p.nodes || []).slice(0, 6), N = Math.max(1, Nd.length), cx = 960, cy = 560, rx = 360, ry = 270, P = (a) => [cx + rx * Math.cos(a), cy + ry * Math.sin(a)];
     let out = U.bg() + `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${th.line}" stroke-width="3" stroke-dasharray="6 10"/>` + `<circle id="${id}dot" r="12" fill="${th.accent}"/>`;
     Nd.forEach((n, k) => {
-      const a = -Math.PI / 2 + (2 * Math.PI * k) / N, b = -Math.PI / 2 + (2 * Math.PI * (k + 1)) / N, [x, y] = P(a), at = 0.06 + k * (0.7 / N);
+      const a = -Math.PI / 2 + (2 * Math.PI * k) / N, b = -Math.PI / 2 + (2 * Math.PI * (k + 1)) / N, [x, y] = P(a), at = p.times?.[k] ?? 0.06 + k * (0.7 / N);
       const s0 = P(a + 0.32), s1 = P(b - 0.32), len = 2 * Math.PI * ((rx + ry) / 2) / N * 0.6;
       out += `<path d="M${s0[0].toFixed(1)} ${s0[1].toFixed(1)}A${rx} ${ry} 0 0 1 ${s1[0].toFixed(1)} ${s1[1].toFixed(1)}" stroke="${th.accent}" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="${len.toFixed(0)}" stroke-dashoffset="${len.toFixed(0)}"${U.A('draw', at + 0.06, 0.1, { l: len.toFixed(0) })}/>` +
         `<g${U.A('pop', at, 0.05, { cx: x, cy: y })}><circle cx="${x}" cy="${y}" r="78" fill="${th.surface}" stroke="${th.accent}" stroke-width="5"/>${n.icon ? U.icon(n.icon, x, y - 4, 80, th.accent) : ''}${U.T(x, y + 120, n.text, { s: 34, w: 600, halo: 8 })}</g>`;
@@ -97,7 +97,7 @@ register('pyramid', {
   build(p, c) {
     const { U, th } = c, Lv = (p.levels || []).slice(0, 6), N = Math.max(1, Lv.length), top = 200, H = 680, h = H / N, W = (y) => 120 + ((y - top) / H) * 1100;
     return U.bg() + Lv.map((l, k) => {
-      const y0 = top + k * h, y1 = y0 + h - 8, w0 = W(y0), w1 = W(y1), col = k === N - 1 ? th.accent : th.surface, at = 0.06 + k * (0.6 / N);
+      const y0 = top + k * h, y1 = y0 + h - 8, w0 = W(y0), w1 = W(y1), col = k === N - 1 ? th.accent : th.surface, at = p.times?.[k] ?? 0.06 + k * (0.6 / N);
       return `<g${U.A('pop', at, 0.06, { cx: 960, cy: (y0 + y1) / 2 })}><path d="M${960 - w0 / 2} ${y0}H${960 + w0 / 2}L${960 + w1 / 2} ${y1}H${960 - w1 / 2}Z" fill="${col}" stroke="${th.line}" stroke-width="3"/>` +
         U.T(960, (y0 + y1) / 2 + (l.text ? 0 : 12), l.label, { s: Math.min(42, h * 0.38, ((w0 + w1) / 2) * 1.1 / Math.max(0.01, U.tw(l.label, 1, { w: 700 }))), w: 700, f: k === N - 1 ? th.bg : th.ink }) + (l.text ? U.T(960, (y0 + y1) / 2 + 36, l.text, { s: 26, f: k === N - 1 ? th.bg : th.muted }) : '') + '</g>';
     }).join('');
@@ -111,7 +111,7 @@ register('tree_chart', {
     const line = (x0, y0, x1, y1, at) => { const len = Math.abs(y1 - y0) + Math.abs(x1 - x0); const my = (y0 + y1) / 2; return `<path d="M${x0} ${y0}V${my}H${x1}V${y1}" stroke="${th.muted}" stroke-width="4" fill="none" stroke-dasharray="${len}" stroke-dashoffset="${len}"${U.A('draw', at, 0.1, { l: len })}/>`; };
     let out = U.bg() + box(960, 260, p.root || '', 0.04, true);
     C.forEach((ch, k) => {
-      const x = 160 + (1600 / N) * (k + 0.5), at = 0.15 + k * 0.1;
+      const x = 160 + (1600 / N) * (k + 0.5), at = p.times?.[k] ?? 0.15 + k * 0.1;
       out += line(960, 305, x, 475, at) + box(x, 520, ch.label, at + 0.08);
       (ch.children || []).slice(0, 2).forEach((g, i) => { out += line(x, 565, x, 705 + i * 120, at + 0.18) + `<g${U.A('fade', at + 0.22, 0.06)}>${U.T(x, 760 + i * 120, g, { s: 30, f: th.muted })}</g>`; });
     });
@@ -124,7 +124,7 @@ register('funnel', {
   build(p, c) {
     const { U, th } = c, S = (p.stages || []).slice(0, 6), N = Math.max(1, S.length), h = 620 / N, top = 220;
     return U.bg() + S.map((s, k) => {
-      const y0 = top + k * h, y1 = y0 + h - 10, w0 = 1100 - (k * 700) / N, w1 = 1100 - ((k + 1) * 700) / N, at = 0.06 + k * (0.6 / N);
+      const y0 = top + k * h, y1 = y0 + h - 10, w0 = 1100 - (k * 700) / N, w1 = 1100 - ((k + 1) * 700) / N, at = p.times?.[k] ?? 0.06 + k * (0.6 / N);
       return `<g${U.A('up', at, 0.07)}><path d="M${860 - w0 / 2} ${y0}H${860 + w0 / 2}L${860 + w1 / 2} ${y1}H${860 - w1 / 2}Z" fill="${k % 2 ? th.accent2 : th.accent}" fill-opacity="${1 - k * 0.12}"/>${U.T(860, (y0 + y1) / 2 + 12, s.label, { s: 34, w: 700, f: th.bg })}</g>` +
         (s.value != null ? U.T(1500, (y0 + y1) / 2 + 16, '0', { a: 'start', fam: 'd', s: 54, w: 700, f: th.ink, an: U.A('count', at, 0.15, { from: 0, to: s.value, dec: 0, suf: p.unit || '' }) }) : '');
     }).join('');
@@ -136,7 +136,7 @@ register('layer_stack', {
   build(p, c) {
     const { U, th } = c, Ly = (p.layers || []).slice(0, 6), N = Math.max(1, Ly.length), cols = th.series;
     return U.bg() + Ly.map((l, k) => {
-      const y = 780 - k * (520 / N), at = 0.06 + k * (0.6 / N), col = l.color || cols[k % cols.length];
+      const y = 780 - k * (520 / N), at = p.times?.[k] ?? 0.06 + k * (0.6 / N), col = l.color || cols[k % cols.length];
       return `<g${U.A('up', at, 0.07)}><path d="M560 ${y}L860 ${y - 110}L1220 ${y - 110}L920 ${y}Z" fill="${col}" fill-opacity=".85" stroke="${th.bg}" stroke-width="4"/><path d="M560 ${y}L920 ${y}L920 ${y + 24}L560 ${y + 24}Z" fill="${col}" fill-opacity=".55"/><path d="M920 ${y}L1220 ${y - 110}L1220 ${y - 86}L920 ${y + 24}Z" fill="${col}" fill-opacity=".4"/>` +
         `<path d="M1230 ${y - 60}H1330" stroke="${th.muted}" stroke-width="3"/>${U.T(1350, y - 50, l.label, { a: 'start', s: 38, w: 700 })}${l.text ? U.T(1350, y - 12, l.text, { a: 'start', s: 26, f: th.muted }) : ''}</g>`;
     }).join('');

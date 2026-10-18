@@ -2,6 +2,7 @@ import { z } from "zod";
 import { chatJson } from "./nebius.ts";
 import {
   CHARS_PER_SECOND,
+  spokenLength,
   CHARS_PER_WORD,
   ResearchFactListSchema,
   ScriptSentenceSchema,
@@ -56,10 +57,12 @@ export function questionProblems(question: string, narration: string): string[] 
 }
 
 // About one scene every 8 to 12 seconds, so the picture changes often, and a narration that fits the length.
-// The short pauses between scenes take about 6% of the video. The length is checked in characters, which predict
-// the spoken time better than words; the prompt still asks for words, which the model counts better.
+// The short pauses between scenes take about 6% of the video, and the credits at the end about 6 seconds. The length
+// is checked in spoken characters (numbers counted as the words the voice says), which predict the spoken time better
+// than words; the prompt still asks for words, which the model counts better.
+const CREDITS_SEC = 6;
 export function scriptTargets(lengthSec: number) {
-  const maxChars = Math.round(lengthSec * 0.94 * CHARS_PER_SECOND);
+  const maxChars = Math.round((lengthSec * 0.94 - CREDITS_SEC) * CHARS_PER_SECOND);
   const minChars = Math.round(maxChars * 0.85);
   const words = Math.round(maxChars / CHARS_PER_WORD);
   const maxWords = words;
@@ -91,10 +94,11 @@ function scriptProblems(script: Script, factIds: Set<string>, targets: ReturnTyp
   const text = narrationOf(script.scenes);
   // The question frames the video on its title card.
   problems.push(...questionProblems(script.question ?? "", text));
-  if (text.length < targets.minChars || text.length > targets.maxChars) {
+  const spoken = spokenLength(text);
+  if (spoken < targets.minChars || spoken > targets.maxChars) {
     const wordsNow = countWords(text);
     const change = Math.max(5, Math.round(Math.abs(wordsNow - targets.words) / 5) * 5);
-    const advice = text.length > targets.maxChars ? `Cut about ${change} words` : `Add about ${change} words`;
+    const advice = spoken > targets.maxChars ? `Cut about ${change} words by removing whole sentences` : `Add about ${change} words`;
     problems.push(`The narration does not fit the length. ${advice}, for about ${targets.words} words in total instead of ${wordsNow}.`);
   }
   script.scenes.forEach((scene, index) => {
@@ -119,8 +123,23 @@ function scriptProblems(script: Script, factIds: Set<string>, targets: ReturnTyp
 
 // How many characters a script is outside the length it should have, 0 when it fits.
 function lengthDistance(script: Script, targets: ReturnType<typeof scriptTargets>): number {
-  const length = narrationOf(script.scenes).length;
+  const length = spokenLength(narrationOf(script.scenes));
   return Math.max(0, targets.minChars - length, length - targets.maxChars);
+}
+
+// A script still too long after the retries loses sentences until it fits: the last sentence of the longest scene that
+// has more than one, never in the opening or the closing scene, which ask and answer the video's question. A sentence
+// that goes takes away detail, never adds a claim. The model often cut only a third of what it was asked to.
+function fitLength(script: Script, targets: ReturnType<typeof scriptTargets>): Script {
+  const scenes = script.scenes.map((scene) => ({ ...scene, sentences: [...scene.sentences] }));
+  const sceneLength = (scene: (typeof scenes)[number]) => spokenLength(scene.sentences.map((sentence) => sentence.text).join(" "));
+  while (spokenLength(narrationOf(scenes)) > targets.maxChars) {
+    const middle = scenes.slice(1, -1).filter((scene) => scene.sentences.length > 1);
+    if (middle.length === 0) break;
+    const longest = middle.reduce((best, scene) => (sceneLength(scene) > sceneLength(best) ? scene : best));
+    longest.sentences.pop();
+  }
+  return { ...script, scenes };
 }
 
 // Makes a script that broke a rule usable. Sentences that cite no known fact go, since the fact-check could not back
@@ -166,6 +185,10 @@ export async function writeScript({ request, facts }: z.infer<typeof ScriptInput
     deadline: Date.now() + DEADLINE_MS,
   });
   // Our own scene IDs, so the fact-check can name sentences like "scene-2.1".
-  const scenes = data.scenes.map((scene, index) => ({ ...scene, id: `scene-${index + 1}` }));
-  return { script: { title: data.title, question: data.question?.trim(), scenes }, usage };
+  const fitted = fitLength(data, targets);
+  if (narrationOf(fitted.scenes) !== narrationOf(data.scenes)) {
+    console.warn(`[script] Cut sentences to fit the length: ${spokenLength(narrationOf(data.scenes))} to ${spokenLength(narrationOf(fitted.scenes))} spoken characters`);
+  }
+  const scenes = fitted.scenes.map((scene, index) => ({ ...scene, id: `scene-${index + 1}` }));
+  return { script: { title: fitted.title, question: fitted.question?.trim(), scenes }, usage };
 }

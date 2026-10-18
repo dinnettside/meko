@@ -366,7 +366,7 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
             >
               {LENGTHS.map((seconds) => (
                 <option key={seconds} value={seconds}>
-                  {seconds} seconds
+                  About {seconds} seconds
                 </option>
               ))}
             </select>

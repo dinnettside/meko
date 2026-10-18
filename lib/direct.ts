@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { COUNTRIES, isKnownCountry } from "./countries.ts";
 import { addUsage, chatJson, emptyUsage, usageOf } from "./nebius.ts";
-import { CHARS_PER_SECOND, ResearchFactListSchema, ScriptSchema, SourceListSchema, VideoRequestSchema, countWords } from "./pipeline.ts";
+import { CHARS_PER_SECOND, ResearchFactListSchema, ScriptSchema, SourceListSchema, VideoRequestSchema, countWords, spokenLength } from "./pipeline.ts";
 import type { ResearchFact, Usage } from "./pipeline.ts";
 import { directCritiquePrompt, directPlanPrompt, directScenePrompt, directTitlePrompt, placesPrompt } from "./prompts/direct.ts";
 import {
@@ -40,7 +40,7 @@ import { ICON_NAMES, iconKey } from "./icons.ts";
 import { MOON_SEAS, MOON_SITES, moonPlace } from "./moon.ts";
 import { TEMPLATES, TEMPLATE_NAMES, isTemplateName, templateParams, templateSpec } from "./templates.ts";
 import type { Family, Keep, SceneData, TemplateName, TemplateVisual } from "./templates.ts";
-import { looksFor, pickLooks } from "./looks.ts";
+import { introOptions, looksFor, pickIntro, pickLooks } from "./looks.ts";
 import { THEME_NAMES } from "./themes.ts";
 import { placeOf } from "./places.ts";
 import { geoDistance } from "d3-geo";
@@ -80,7 +80,7 @@ export const DirectInputSchema = z.object({
 
 export type DirectResult = { storyboard: Storyboard; usage: Usage };
 
-const TitleVisualSchema = z.object({ heading: z.string(), subheading: z.string().optional() });
+const TitleVisualSchema = z.object({ heading: z.string(), subheading: z.string().optional(), icon: z.string().optional() });
 
 const SceneVisualSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("text"), lines: z.array(z.string()).min(1).max(3) }),
@@ -350,7 +350,7 @@ const PERCENT_AMOUNT = /\d(?:[\d,.]*\d)?\s*(?:%|percent\b|per cent\b)/gi;
 
 // Estimated from the word count until the voice-over sets the real length.
 export function sceneDuration(narration: string): number {
-  const seconds = narration.length / CHARS_PER_SECOND + PAUSE_SEC;
+  const seconds = spokenLength(narration) / CHARS_PER_SECOND + PAUSE_SEC;
   return Math.max(MIN_SCENE_SEC, Math.round(seconds * 10) / 10);
 }
 
@@ -1024,7 +1024,7 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
 
 // What is wrong with a template's reply: each text it shows must be short, backed and use only numbers from the
 // narration or facts, and the template's own rules must hold.
-function templateProblems(visual: TemplateVisual, allowed: Set<string>, source: string, narration: string): string[] {
+function templateProblems(visual: TemplateVisual, allowed: Set<string>, source: string, narration: string, quotable: string[] = []): string[] {
   const spec = templateSpec(visual.kind);
   const problems = spec.shown(visual).flatMap(({ text, words, chars, exact }) => {
     if (!text) return [];
@@ -1040,7 +1040,7 @@ function templateProblems(visual: TemplateVisual, allowed: Set<string>, source: 
     }
     return found;
   });
-  return [...problems, ...(spec.check?.(visual, { narration, source }) ?? [])];
+  return [...problems, ...(spec.check?.(visual, { narration, source, quotable }) ?? [])];
 }
 
 // `avoid` names the kinds this scene should not switch to, `blocked` the kinds it may not use at all, and `offered`
@@ -1054,6 +1054,7 @@ function sceneProblems(
   avoid: AnyKind[],
   blocked: AnyKind[],
   offered: TemplateName[],
+  quotable: string[] = [],
 ): string[] {
   // The lines are only shown if the visual cannot be used, so they are worth a retry only when none of them works.
   const lineProblems = lines.some((line) => lineIsSafe(line, allowed, source)) ? [] : linesProblems(lines, allowed, source);
@@ -1063,7 +1064,7 @@ function sceneProblems(
     const why = visual.kind === "map" ? ": its narration names no place a map can show" : "";
     return [`A ${visual.kind} does not fit this scene${why}. Use ${others.join(" or ") || "text"} instead.`, ...lineProblems];
   }
-  const problems = isTemplateVisual(visual) ? templateProblems(visual, allowed, source, narration) : visualProblems(visual, allowed, facts, source);
+  const problems = isTemplateVisual(visual) ? templateProblems(visual, allowed, source, narration, quotable) : visualProblems(visual, allowed, facts, source);
   const hint =
     problems.length > 0 && visual.kind !== "text" && others.length > 0
       ? [`Fix the problems below. If a ${visual.kind} cannot work with these facts, use ${others.join(" or ")} instead.`]
@@ -1088,6 +1089,7 @@ function repairScene(
   facts: FactMap,
   source: string,
   blocked: AnyKind[],
+  quotable: string[] = [],
 ): AnyVisual {
   const safe = (text: string) => numbersIn(text).every((number) => allowed.has(number));
   const safeLabel = (label?: string) => (label && safe(label) && countWords(label) <= MAX_LABEL_WORDS ? label : undefined);
@@ -1095,11 +1097,11 @@ function repairScene(
   if (blocked.includes(visual.kind)) return fallback;
   if (isTemplateVisual(visual)) {
     // A template keeps what passes the checks, if its own repair leaves enough of it.
-    if (templateProblems(visual, allowed, source, scene.narration).length === 0) return visual;
+    if (templateProblems(visual, allowed, source, scene.narration, quotable).length === 0) return visual;
     const keep: Keep = (text, words, exact) =>
       !text || (countWords(text) <= words && safe(text) && (exact ? isFullyGrounded(text, source) : isGrounded(text, source)));
-    const repaired = templateSpec(visual.kind).repair?.(visual, keep, { narration: scene.narration, source });
-    return repaired && templateProblems(repaired, allowed, source, scene.narration).length === 0 ? repaired : fallback;
+    const repaired = templateSpec(visual.kind).repair?.(visual, keep, { narration: scene.narration, source, quotable });
+    return repaired && templateProblems(repaired, allowed, source, scene.narration, quotable).length === 0 ? repaired : fallback;
   }
 
   switch (visual.kind) {
@@ -1555,7 +1557,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
       step: `direct/${opening.id}`,
       schemaName: "title",
       schema: TitleVisualSchema,
-      messages: directTitlePrompt(script.title, opening.narration),
+      messages: directTitlePrompt(script.title, opening.narration, ICON_NAMES),
       maxTokens: 300,
       timeoutMs: SCENE_CALL_TIMEOUT_MS,
       deadline: deadline - MARKER_CHECK_MS,
@@ -1578,6 +1580,8 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     return !SPACE_WORDS.test(scene.narration) && (namesAPlace(scene.narration) || placeInFacts);
   });
   const limits = kindLimits(rest.length, geographic);
+  // The whole sentences of a scene's source quotes, which a quote or a letter may show word for word.
+  const quotableOf = (scene: NarratedScene) => scene.factIds.flatMap((id) => quotableSentences(factMap.get(id)?.quote ?? ""));
   // What each scene offers the templates to decide whether they fit.
   const sceneData = (scene: NarratedScene): SceneData => {
     const source = sourceFor(scene);
@@ -1589,6 +1593,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
       dates: datesIn(source),
       percents: (source.match(PERCENT_AMOUNT) ?? []).length,
       namesPerson: namesAPerson(source),
+      quotable: quotableOf(scene),
     };
   };
   // The kinds each scene cannot use: those its facts have no data for, and a map where it names no place.
@@ -1716,10 +1721,10 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
         deadline: deadline - MARKER_CHECK_MS,
         check: (reply) => [
           ...(reply.visual.kind === "text" && kind && kind !== "text" ? [`Show a ${kind} or another picture, not text.`] : []),
-          ...sceneProblems(reply, allowedFor(scene), videoFacts, sourceFor(scene), scene.narration, avoidFor(index, kind), blockedFor(index, kind), offered),
+          ...sceneProblems(reply, allowedFor(scene), videoFacts, sourceFor(scene), scene.narration, avoidFor(index, kind), blockedFor(index, kind), offered, quotableOf(scene)),
         ],
         repair: (reply) => ({
-          visual: repairScene(reply, scene, allowedFor(scene), videoFacts, sourceFor(scene), blockedFor(index, kind)),
+          visual: repairScene(reply, scene, allowedFor(scene), videoFacts, sourceFor(scene), blockedFor(index, kind), quotableOf(scene)),
           lines: reply.lines,
         }),
       }),
@@ -1825,7 +1830,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     height: 1080,
     scenes: narrated.map((scene, index) => ({
       ...(index === 0
-        ? { kind: "title", heading: title.data.heading, subheading: question || title.data.subheading }
+        ? { kind: "title", heading: title.data.heading, subheading: question || title.data.subheading, icon: iconKey(title.data.icon) }
         : forStoryboard(visuals[index - 1], videoFacts, sourceFor(rest[index - 1]), sourceTitleFor(rest[index - 1], visuals[index - 1]))),
       id: scene.id,
       narration: scene.narration,
@@ -1853,6 +1858,22 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
   storyboard.scenes.forEach((scene, index) => {
     if (looks[index]) scene.look = looks[index];
   });
+  // The opening varies too: a globe when the video is about places, a big icon for its topic, the question it answers
+  // in big letters, the years its opening spans rolling by, or a plain title card.
+  const titleScene = storyboard.scenes[0];
+  if (titleScene?.kind === "title") {
+    const years = [...new Set(yearsIn(titleScene.narration))].sort((a, b) => a - b);
+    const intro = pickIntro(
+      introOptions(titleScene, {
+        question,
+        years: years.length >= 2 ? [years[0], years[years.length - 1]] : undefined,
+        places: storyboard.scenes.some((scene) => scene.kind === "map"),
+      }),
+      script.title,
+      [...templatesShown, ...looks.flatMap((look) => (look ? [look.template] : []))],
+    );
+    if (intro) titleScene.look = intro;
+  }
   console.log(`[direct] looks: ${storyboard.scenes.map((scene) => scene.look?.template ?? (scene.kind === "template" ? scene.template : scene.kind)).join(", ")}`);
 
   const problems = storyboardProblems(storyboard, facts.map((fact) => fact.id));
