@@ -39,7 +39,7 @@ const OWN_KINDS: Record<string, string> = {
   people: "the people the narration names, drawn as figures",
   space: "a journey through space, or places on the Moon",
   illustration: "a picture you compose from icons and figures with labels and arrows, also underground, at sea, in the sky, in space or inside the body, to show how something works or where it happens",
-  drawing: "a cutaway or diagram you draw yourself from simple shapes (layers, boxes, rounded shapes, peaks, tubes, arrows and flowing dots) with labels, to show how something works inside when no ready diagram fits, like magma rising through the crust",
+  drawing: "a diagram you draw yourself from simple shapes, only when no ready diagram and no kit picture (cutaway, journey, input_output, forces) can show it",
   text: "only when nothing else fits",
 };
 
@@ -59,13 +59,13 @@ export function directPlanPrompt(
     {
       role: "system",
       content: [
-        "You plan the pictures of a short explainer video. For every scene, in order, rank the 3 kinds of picture that would show its narration best, best first.",
+        "You plan the pictures of a short explainer video, like the director of a good science or history channel. For every scene, in order, first write in \"idea\" one sentence that says what the viewer sees: the one picture that makes the narration click, like \"a cutaway of the ground with magma rising from a chamber up to the crater\" or \"electricity travelling from the power plant along the lines to a house\". Then rank the 3 kinds of picture that show that idea best, best first.",
         "Kinds:",
         ...menu(templates),
         'Each scene lists under "fits" the kinds its narration and facts have what they need for. Only rank those, and only a kind whose whole picture this scene\'s own narration and facts give: a cycle needs its steps in this scene, not only the word "cycle".',
         "Use a map when the scene is about where something happens on Earth or a movement between places on Earth. Never for space, the human body or ideas.",
         "Prefer the kind that shows what this scene is about over a general one: a cycle for a loop, a pyramid for a hierarchy, a myth card for a belief the narration says is wrong. Text, lists and single numbers are the fallbacks, not the first choice.",
-        "Every video needs one or two signature scenes, two in a video of more than 8 scenes: a picture made for this topic that shows how it works or where it happens, like a diagram from the menu, a map, or an illustration composed for it (with a backdrop like underground, the sea or the body). Rank one first for the scenes that explain the core of the topic, like how the magma rises in a video about volcanoes.",
+        "Every video needs one or two signature scenes, two in a video of more than 8 scenes: a picture made for this topic that shows how it works or where it happens. Best is a ready diagram from the menu made for exactly this, like volcano_cutaway for how a volcano erupts; next a kit picture filled for this topic: a cutaway (what is inside or under something), a journey (one thing travelling through stages), input_output (what a process takes in and gives out) or forces (the forces on one thing); then a map or an illustration. Rank one first for the scenes that explain the core of the topic.",
         "The video should not show the same kind of picture again and again, so the other choices matter: the best one is not always used.",
         "The last scene sums up the video. When it names 2 or 3 main points, a list fits it well.",
         'Also pick the look of the whole video as "theme": "night" for history and the past: wars, empires, explorers, revolutions, politics, people of the past and epidemics of the past, like the Black Death; "blueprint" for machines, inventions, engineering, physics, chemistry, computers, technology and space; "field" for living things and the planet today: the human body, medicine, vaccines, health, food, animals, plants, nature, weather and climate.',
@@ -78,7 +78,7 @@ export function directPlanPrompt(
 // A second look at the plan, by the model as a demanding editor.
 export function directCritiquePrompt(
   title: string,
-  scenes: { id: string; narration: string; picked: string; fits: string[] }[],
+  scenes: { id: string; narration: string; idea: string; picked: string; fits: string[] }[],
   templates: { name: string; plan: string }[],
 ): ChatCompletionMessageParam[] {
   return [
@@ -87,7 +87,7 @@ export function directCritiquePrompt(
       content: [
         "You are the editor of a short explainer video, and you are hard to please. A planner picked a kind of picture for every scene. Challenge the plan.",
         "Find at most 3 scenes where another kind would be clearly better: one that shows what the narration is really about, where the plan chose a general picture like text, a list or a single number, or one that breaks a run of scenes that look alike.",
-        "Make sure the video has a signature scene: a picture made for this topic that shows how it works or where it happens, like a diagram, a map or an illustration composed for it. If the plan has none, turn the scene that explains the core of the topic into one.",
+        "Make sure the video has a signature scene: a picture made for this topic that shows how it works or where it happens, like a ready diagram, a kit picture (cutaway, journey, input_output, forces), a map or an illustration composed for it. If the plan has none, turn the scene that explains the core of the topic into one. Check each scene\'s idea too: if a better picture would make it click, change the kind to the one that shows it.",
         'Only propose a kind listed under "fits" for that scene. Give the scene\'s id, the new kind and in a few words why.',
         "Change nothing that already works. If the plan is good, return no changes.",
         "Kinds:",
@@ -159,6 +159,7 @@ export function directScenePrompt(input: {
   templates: string[]; // how to fill each template offered to this scene
   drawingExamples: { narration: string; drawing: unknown }[]; // drawings made before for similar scenes
   plannedKind?: string; // from the plan for the whole video
+  idea?: string; // the plan's picture for this scene, in words
   avoidKinds: string[]; // kinds without data, and the kinds of the scenes next to this one
   years: string[]; // every year the facts state, like "f10: 1227"
   amounts: string[]; // the amounts in this scene's narration and facts, like "6,400 km"
@@ -186,6 +187,7 @@ export function directScenePrompt(input: {
         `Video title: ${input.title}`,
         `This is ${input.position}.`,
         ...(input.plannedKind ? [`Planned kind for this scene: ${input.plannedKind}. Use it unless it really does not fit.`] : []),
+        ...(input.idea ? [`The picture planned for this scene: ${input.idea}`] : []),
         ...(input.avoidKinds.length > 0 ? [`Do not use: ${input.avoidKinds.join(", ")}.`] : []),
         `Narration: ${input.narration}`,
         `Amounts in this scene: ${input.amounts.length > 0 ? input.amounts.join("; ") : "none"}`,

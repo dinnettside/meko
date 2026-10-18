@@ -34,6 +34,10 @@ const ITEM_LISTS: Record<string, { list: string; text?: string }> = {
   kinetic_words: { list: "words" },
   strike_replace: { list: "items", text: "text" },
   stat_trio: { list: "stats", text: "label" },
+  cutaway: { list: "items", text: "label" },
+  journey: { list: "stations", text: "label" },
+  forces: { list: "forces", text: "label" },
+  food_chain: { list: "chain", text: "label" },
 };
 // The free part of the frame: below the notes in the top corners, above the captions, a little in from the sides.
 const FREE = { left: 40, top: VIDEO.topSpace, right: VIDEO.width - 40, bottom: VIDEO.height - VIDEO.captionSpace };

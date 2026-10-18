@@ -45,10 +45,13 @@ type Template<S extends z.ZodObject> = {
   // problem after the retries shows the scene's lines instead.
   repair?(visual: z.infer<S>, keep: Keep, context: CheckContext): z.infer<S> | null;
   params?(visual: z.infer<S>, extra: Extra): Record<string, unknown>;
+  // A drawing made for one topic, like the volcano: the director makes sure a video uses one when its narration fits.
+  signature?: boolean;
 };
 
-// What the params may use besides the reply: the title of the scene's source and the narration.
-type Extra = { sourceTitle?: string; narration?: string };
+// What the params may use besides the reply: the title of the scene's source, the narration, and the narration with
+// the facts behind it (`source`), so the code can set what a drawing claims from what they say.
+type Extra = { sourceTitle?: string; narration?: string; source?: string };
 
 const template = <S extends z.ZodObject>(spec: Template<S>) => spec;
 
@@ -139,6 +142,69 @@ const SCALE_WORDS_2 = /\b(scale|ph|decibels?|db|richter|magnitude|degrees?|tempe
 const PLANET_WORDS = /\b(mercury|venus|mars|jupiter|saturn|uranus|neptune)\b/gi;
 const SEAT_WORDS = /\b(seats?|parliament\w*|mandates?|majority|coalition|assembly|congress|senate|chamber)\b/i;
 
+// Words that tell where a cutaway takes place. A body, the sea or the ground is drawn only when the narration or facts
+// speak of it; a box (a machine, a building, a container) fits anything with an inside.
+const SETTING_WORDS = {
+  ground: /\b(underground|beneath|below|ground|soil|roots?|rocks?|caves?|mines?|wells?|layers?|buried|tunnels?|aquifers?|bedrock|groundwater|magma|crust|surface)\b/i,
+  sea: /\b(seas?|oceans?|underwater|fish|ships?|waves?|coral|seabed|seafloor|marine|deep water|surface)\b/i,
+  body: /\b(body|organs?|blood|heart|lungs?|stomach|brain|liver|kidneys?|muscles?|bones?|skin|intestines?|digest\w*|chest|belly|throat)\b/i,
+  // A box is a thing with an inside you could cut open: a machine, a building or a container, not an idea.
+  box: /\b(machines?|devices?|engines?|motors?|buildings?|houses?|homes?|factory|factories|containers?|tanks?|boxes|box|fridges?|refrigerators?|computers?|chambers?|cases?|casings?|cylinders?|reactors?|ovens?|boilers?|pumps?|batter(y|ies)|wells?|pipes?|walls?|rooms?|hulls?|ships?)\b/i,
+} as const;
+// Common words like "under" (under a king) and "inside" (inside the palace) are left out: they fit history too.
+const CUTAWAY_WORDS = /\b(beneath|underground|underwater|layers?|soil|roots?|seabed|seafloor|organs?|chambers?|compartments?|interior|cut open|aquifers?|bedrock|groundwater)\b/i;
+// Words that tell one thing travels through places or stages in order.
+const JOURNEY_WORDS = /\b(travel\w*|moves?|moved|moving|pass(es|ed)?|flows?|flowed|goes|went|journey|route|through|reach(es|ed)?|enters?|entered|carried|transported|sent|delivered|on to|onward)\b/i;
+// Words that tell a thing turns into something else on the way.
+const CHANGE_WORDS = /\b(becomes?|became|turns? into|turned into|changes? into|changed into|convert\w*|broken down|breaks? down|absorbed|transform\w*)\b/i;
+// Words that tell a process takes things in, and words that tell it gives things out; a scene needs both.
+const INTAKE_WORDS = /\b(takes? in|took in|uses?|used|absorbs?|absorbed|consumes?|consumed|burns?|burned|eats?|needs?|draws? in)\b/i;
+const OUTPUT_WORDS = /\b(produc\w*|makes?|made|gives? off|releases?|released|turns? \w+( \w+)? into|convert\w*|creates?|generat\w*)\b/i;
+// Words for physical forces. "Forces" and "pressure" alone are left out: armies and politics have them too.
+const FORCE_WORDS = /\b(gravity|gravitational|thrust|drag|friction|buoyan\w*|upthrust|air resistance|aerodynamic\w*)\b/i;
+const LIFT_WORDS = /\blift\b.*\b(wings?|planes?|aircraft|airplanes?|air)\b|\b(wings?|planes?|aircraft|airplanes?)\b.*\blift\b/i;
+// Words that compare the size of forces, without which they are drawn the same size.
+const STRENGTH_WORDS = /\b(strong\w*|weak\w*|greater|bigger|larger|smaller|less|more than|exceeds?|outweighs?|overcomes?|balanced?|equal)\b/i;
+// Words that tell which way a thing moves, by direction.
+const MOVE_WORDS = {
+  up: /\b(rises?|rose|rising|climbs?|climbed|lifts? off|takes? off|took off|floats? up|goes up|upward\w*|ascend\w*)\b/i,
+  down: /\b(falls?|fell|falling|sinks?|sank|sinking|drops?|dropped|descend\w*|downward\w*|goes down)\b/i,
+  left: /\b(slows?|slowed|backward\w*|brakes?|braking|stops?)\b/i,
+  right: /\b(moves? forward|speeds? up|accelerat\w*|forward\w*|travels?|flies|flying|drives?)\b/i,
+} as const;
+// Forces whose direction is part of what they are.
+const FORCE_DIRECTIONS: { words: RegExp; direction: "up" | "down" }[] = [
+  { words: /\b(gravity|weight)\b/i, direction: "down" },
+  { words: /\b(lift|buoyan\w*|upthrust)\b/i, direction: "up" },
+];
+
+// Where a label's main words first come in the narration, or undefined when they do not; for keeping things in the
+// narration's order.
+function firstMention(label: string, narration: string): number | undefined {
+  const text = narration.toLowerCase();
+  const places = label
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word.length >= 4)
+    .map((word) => text.search(new RegExp(`\\b${word.slice(0, Math.max(4, word.length - 2))}`)))
+    .filter((place) => place >= 0);
+  return places.length > 0 ? Math.min(...places) : undefined;
+}
+
+// A kit picture's icon: the one named, else one its label names ("Water table" draws a drop), else none, and the
+// template draws a plain disc.
+const kitIcon = (name: string | undefined, label?: string) =>
+  icon(name) ??
+  label
+    ?.split(/[^A-Za-z]+/)
+    .map((word) => iconKey(word))
+    .find((key) => key !== undefined);
+
+// What is wrong with the icons of a template: names the video cannot draw, even through an alias (lib/icons.ts). The
+// kit pictures leave this out: there an unknown icon is drawn as a plain disc beside its label.
+const iconProblems = (names: (string | undefined)[]) =>
+  names.flatMap((name) => (name !== undefined && !iconKey(name) ? [`"${name}" is not an icon. Use one from the list.`] : []));
+
 // A drawn diagram from the library (remotion/filmmotor/templates/diagrams-*.js) whose words are all optional labels,
 // one per part, under `labels`. Each label is at most 3 words, mostly the narration's; a part without one, or with one
 // that breaks a rule, is drawn without a label. `options` are the diagram's other params, like which kind of plate
@@ -151,7 +217,7 @@ function labelDiagram<N extends string, P extends string, O extends z.ZodRawShap
   fits: (scene: SceneData) => boolean;
   options: O;
   check?: (visual: Record<string, unknown>, context: CheckContext) => string[];
-  params?: (visual: Record<string, unknown>) => Record<string, unknown>;
+  params?: (visual: Record<string, unknown>, extra: Extra) => Record<string, unknown>;
   cue?: RegExp; // the word for the moment the drawing turns on, like "erupts"; it then happens as the narration says it
 }) {
   const labels = z.object(Object.fromEntries(spec.parts.map((part) => [part, z.string().optional()])) as Record<P, z.ZodOptional<z.ZodString>>);
@@ -159,6 +225,7 @@ function labelDiagram<N extends string, P extends string, O extends z.ZodRawShap
   const textsOf = (visual: unknown) => Object.values(labelsOf(visual)).filter((text): text is string => Boolean(text));
   return template({
     family: "picture",
+    signature: true,
     plan: spec.plan,
     prompt: `${spec.prompt} Every label is optional, at most 3 words in the narration's words; give only labels for parts the narration or facts name, and leave the others out.`,
     schema: z.object({ kind: z.literal(spec.name), labels, ...spec.options }),
@@ -169,13 +236,13 @@ function labelDiagram<N extends string, P extends string, O extends z.ZodRawShap
       const repaired = { ...visual, labels: Object.fromEntries(Object.entries(labelsOf(visual)).filter(([, text]) => text && keep(text, 3))) };
       return (spec.check?.(repaired, context) ?? []).length === 0 ? repaired : null;
     },
-    params: (visual, { narration }) => {
+    params: (visual, extra) => {
       const { kind, labels, ...params } = visual as Record<string, unknown>;
       void kind;
       // Labels are names on a drawing, so they start with a capital, like "Right ventricle".
       const named = Object.fromEntries(Object.entries(labels as Record<string, string>).map(([part, text]) => [part, text.charAt(0).toUpperCase() + text.slice(1)]));
       const all = { ...params, labels: named };
-      return { ...cueAt(narration, spec.cue), ...(spec.params ? spec.params(all) : all) };
+      return { ...cueAt(extra.narration, spec.cue), ...(spec.params ? spec.params(all, extra) : all) };
     },
   });
 }
@@ -960,6 +1027,184 @@ export const TEMPLATES = {
     ],
     params: (visual) => ({ title: visual.title, people: visual.people.map(({ name, keyword }) => ({ name, keyword })) }),
   }),
+  // The kit (remotion/filmmotor/templates/kit-*.js, added on Oct 18, 2026): pictures for any topic. The model says what
+  // is in them, by name, icon and place in words, and the template lays them out and moves them.
+  cutaway: template({
+    family: "picture",
+    plan: "a cross-section of a place, under the ground, in the sea, inside the body or inside a machine or building, with the things the narration names in it and what moves between them",
+    prompt:
+      '"cutaway" when the narration explains what is inside or under something and what happens there: "setting" is "ground", "sea", "body" or "box" (a machine, a building or a container, named in "boxLabel"). "layers" (ground and sea only) are 0 to 4 layers from the top down, each with an optional "label", only those the narration names; in the sea they are depths of water, and the seabed is always drawn below them. "items" are 2 to 6 things the narration names, each with an "icon", a "label" of 1 to 3 words in its words, a "zone" ("sky" in the air above; "surface" on the ground or the water, or the head of a body; "upper" just below the surface, or the chest; "lower" deep down, or the belly) and a "side" ("left", "center" or "right"). "flows" are 0 to 4 movements the narration speaks of, from one item to another by their position in the list (from 0), each with an optional "label".',
+    schema: z.object({
+      kind: z.literal("cutaway"),
+      setting: z.enum(["ground", "sea", "body", "box"]),
+      boxLabel: z.string().optional(),
+      layers: z.array(z.object({ label: z.string().optional() })).max(4),
+      items: z
+        .array(z.object({ icon: z.string(), label: z.string().optional(), zone: z.enum(["sky", "surface", "upper", "lower"]), side: z.enum(["left", "center", "right"]) }))
+        .min(2)
+        .max(6),
+      flows: z.array(z.object({ from: z.number().int(), to: z.number().int(), label: z.string().optional() })).max(4),
+    }),
+    fits: (scene) => CUTAWAY_WORDS.test(scene.narration),
+    shown: (visual) => [
+      { text: visual.boxLabel, words: 3 },
+      ...visual.layers.map((layer) => ({ text: layer.label, words: 3 })),
+      ...visual.items.map((item) => ({ text: item.label, words: 3 })),
+      ...visual.flows.map((flow) => ({ text: flow.label, words: 3 })),
+    ],
+    check: (visual, { source }) => {
+      const labelOf = (index: number) => visual.items[index]?.label;
+      return [
+        ...(SETTING_WORDS[visual.setting].test(source) ? [] : [`The narration does not speak of the ${visual.setting}. Pick the setting it describes.`]),
+        ...(visual.items.filter((item) => item.label).length >= 2 ? [] : ["Label at least two items in the narration's words."]),
+        ...distinct(visual.items.flatMap((item) => (item.label ? [item.label] : [])), "Two items have the same label."),
+        ...visual.flows.flatMap((flow) => {
+          const [from, to] = [labelOf(flow.from), labelOf(flow.to)];
+          if (!visual.items[flow.from] || !visual.items[flow.to] || flow.from === flow.to) return [`A flow joins items ${flow.from} and ${flow.to}, but items are counted from 0 and a flow joins two different items.`];
+          // A flow says one thing moves to the other, so one sentence must name both.
+          return from && to && namedTogether(from, to, source) ? [] : [`No sentence names both ends of the flow from item ${flow.from} to item ${flow.to}. Show only movements the narration speaks of, between labeled items.`];
+        }),
+      ];
+    },
+    repair: (visual, keep, { source }) => {
+      const items = visual.items.map((item) => (keep(item.label, 3) ? item : { ...item, label: undefined }));
+      const flows = visual.flows
+        .filter((flow) => items[flow.from] && items[flow.to] && flow.from !== flow.to)
+        .filter((flow) => {
+          const [from, to] = [items[flow.from].label, items[flow.to].label];
+          return from && to && namedTogether(from, to, source);
+        })
+        .map((flow) => (keep(flow.label, 3) ? flow : { ...flow, label: undefined }));
+      const layers = visual.layers.map((layer) => (keep(layer.label, 3) ? layer : {}));
+      const repaired = { ...visual, boxLabel: keep(visual.boxLabel, 3) ? visual.boxLabel : undefined, layers, items, flows };
+      return items.filter((item) => item.label).length >= 2 && SETTING_WORDS[visual.setting].test(source) ? repaired : null;
+    },
+    params: (visual) => ({
+      setting: visual.setting,
+      ...(visual.boxLabel ? { boxLabel: visual.boxLabel } : {}),
+      ...(visual.setting === "ground" || visual.setting === "sea" ? { layers: visual.layers } : {}),
+      items: visual.items.map((item) => ({ ...item, icon: kitIcon(item.icon, item.label) })),
+      flows: visual.flows,
+    }),
+  }),
+  journey: template({
+    family: "chain",
+    plan: "one thing travelling through places or stages in order and changing on the way, like food through the body, electricity from a power plant to a home or a data packet across the internet",
+    prompt:
+      '"journey" when the narration follows one thing on its way through places or stages in order: "traveller" is the thing that moves, with an "icon" and an optional "label" of 1 to 3 words; "stations" are 2 to 6 places or stages it passes, in the order the narration gives, each with an "icon", a "label" of 1 to 3 words in the narration\'s words, and an optional "becomes", the icon of what the traveller turns into after that station, only when the narration says it changes there.',
+    schema: z.object({
+      kind: z.literal("journey"),
+      traveller: z.object({ icon: z.string(), label: z.string().optional() }),
+      stations: z.array(z.object({ icon: z.string(), label: z.string(), becomes: z.string().optional() })).min(2).max(6),
+    }),
+    fits: (scene) => JOURNEY_WORDS.test(scene.narration),
+    shown: (visual) => [{ text: visual.traveller.label, words: 3 }, ...visual.stations.map((station) => ({ text: station.label, words: 3 }))],
+    check: (visual, { narration, source }) => {
+      // The stations go in the narration's order, as far as it names them.
+      const mentions = visual.stations.map((station) => firstMention(station.label, narration)).filter((place): place is number => place !== undefined);
+      return [
+        // Turning into a plain disc says nothing, so a change needs an icon the video can draw.
+        ...iconProblems(visual.stations.map((station) => station.becomes)),
+        ...distinct(visual.stations.map((station) => station.label), "Two stations have the same label."),
+        ...(mentions.every((place, index) => index === 0 || place >= mentions[index - 1]) ? [] : ["The stations are not in the order the narration names them. Keep its order."]),
+        ...(visual.stations.some((station) => station.becomes) && !CHANGE_WORDS.test(source) ? ['The narration does not say the traveller changes. Leave "becomes" out.'] : []),
+      ];
+    },
+    repair: (visual, keep, { source }) => {
+      const stations = visual.stations
+        .filter((station) => keep(station.label, 3))
+        .map((station) => (station.becomes && iconKey(station.becomes) && CHANGE_WORDS.test(source) ? station : { ...station, becomes: undefined }));
+      const traveller = { ...visual.traveller, label: keep(visual.traveller.label, 3) ? visual.traveller.label : undefined };
+      return stations.length >= 2 ? { ...visual, traveller, stations } : null;
+    },
+    params: (visual) => ({
+      traveller: { ...visual.traveller, icon: kitIcon(visual.traveller.icon, visual.traveller.label) },
+      stations: visual.stations.map((station) => ({ ...station, icon: kitIcon(station.icon, station.label), ...(station.becomes ? { becomes: icon(station.becomes) } : {}) })),
+    }),
+  }),
+  input_output: template({
+    family: "structure",
+    plan: "a process in the middle with what goes in on the left and what comes out on the right, like a leaf turning sunlight, water and carbon dioxide into sugar and oxygen, or a power plant turning coal into electricity",
+    prompt:
+      '"input_output" when the narration says what a process, a machine or a living thing takes in and what it gives out: "process" with an "icon" and a "label" of 1 to 3 words; "inputs", 1 to 4 things that go in, and "outputs", 1 to 4 things that come out, each with an "icon" and a "label" of 1 to 3 words, all in the narration\'s words.',
+    schema: z.object({
+      kind: z.literal("input_output"),
+      process: z.object({ icon: z.string(), label: z.string() }),
+      inputs: z.array(z.object({ icon: z.string(), label: z.string() })).min(1).max(4),
+      outputs: z.array(z.object({ icon: z.string(), label: z.string() })).min(1).max(4),
+    }),
+    fits: (scene) => INTAKE_WORDS.test(scene.narration) && OUTPUT_WORDS.test(scene.narration),
+    shown: (visual) => [visual.process, ...visual.inputs, ...visual.outputs].map((item) => ({ text: item.label, words: 3 })),
+    check: (visual, { source }) => {
+      const all = [visual.process, ...visual.inputs, ...visual.outputs];
+      // What goes in and comes out is said of this process: each is named in a sentence with the process or another part.
+      const unsaid = [...visual.inputs, ...visual.outputs].filter((item) => !all.some((other) => other !== item && namedTogether(item.label, other.label, source)));
+      return [
+        ...distinct(all.map((item) => item.label), "Two parts have the same label."),
+        ...unsaid.map((item) => `No sentence says "${item.label}" goes in or comes out of the process. Show only what the narration says.`),
+      ];
+    },
+    repair: (visual, keep, { source }) => {
+      const good = (item: { icon: string; label: string }) => keep(item.label, 3);
+      const inputs = visual.inputs.filter(good);
+      const outputs = visual.outputs.filter(good);
+      const all = [visual.process, ...inputs, ...outputs];
+      const said = (item: { label: string }) => all.some((other) => other !== item && namedTogether(item.label, other.label, source));
+      const repaired = { ...visual, inputs: inputs.filter(said), outputs: outputs.filter(said) };
+      return good(visual.process) && repaired.inputs.length >= 1 && repaired.outputs.length >= 1 ? repaired : null;
+    },
+    params: (visual, { narration }) => ({
+      ...cueAt(narration, /\b(produc\w*|makes?|made|turns? into|turned into|convert\w*|releases?|released|gives? off|creates?|created)\b/i),
+      process: { ...visual.process, icon: kitIcon(visual.process.icon, visual.process.label) },
+      inputs: visual.inputs.map((item) => ({ ...item, icon: kitIcon(item.icon, item.label) })),
+      outputs: visual.outputs.map((item) => ({ ...item, icon: kitIcon(item.icon, item.label) })),
+    }),
+  }),
+  forces: template({
+    family: "picture",
+    plan: "the forces on one thing as arrows that push or pull it, like lift, weight, thrust and drag on a plane, or buoyancy and weight on a ship",
+    prompt:
+      '"forces" when the narration names forces that act on one thing: "object" with an "icon" and an optional "label"; "forces", 1 to 4, each with a "direction" ("up", "down", "left" or "right"; forward is right, so a plane\'s thrust points right), a "label" of 1 to 3 words in the narration\'s words, and an optional "strength" ("small", "medium" or "large") only when the narration compares them; "setting" is "air", "water", "ground", "space" or "none"; "moves" is the way the thing moves as a result, only when the narration says it moves, else "none".',
+    schema: z.object({
+      kind: z.literal("forces"),
+      object: z.object({ icon: z.string(), label: z.string().optional() }),
+      setting: z.enum(["air", "water", "ground", "space", "none"]),
+      forces: z
+        .array(z.object({ direction: z.enum(["up", "down", "left", "right"]), label: z.string(), strength: z.enum(["small", "medium", "large"]).optional() }))
+        .min(1)
+        .max(4),
+      moves: z.enum(["up", "down", "left", "right", "none"]),
+    }),
+    fits: (scene) => FORCE_WORDS.test(scene.narration) || LIFT_WORDS.test(scene.narration),
+    shown: (visual) => [{ text: visual.object.label, words: 3 }, ...visual.forces.map((force) => ({ text: force.label, words: 3 }))],
+    check: (visual, { source }) => [
+      ...distinct(visual.forces.map((force) => force.label), "Two forces have the same label."),
+      // Gravity pulls down and lift pushes up, whatever the model says.
+      ...visual.forces.flatMap((force) => {
+        const known = FORCE_DIRECTIONS.find((entry) => entry.words.test(force.label));
+        return known && known.direction !== force.direction ? [`"${force.label}" points ${known.direction}. Give it that direction.`] : [];
+      }),
+      ...(new Set(visual.forces.map((force) => force.strength ?? "medium")).size > 1 && !STRENGTH_WORDS.test(source)
+        ? ["The narration does not compare the forces. Leave their strength out."]
+        : []),
+      ...(visual.moves !== "none" && !MOVE_WORDS[visual.moves].test(source) ? [`The narration does not say the thing moves ${visual.moves}. Give "moves" "none".`] : []),
+    ],
+    repair: (visual, keep, { source }) => {
+      const forces = visual.forces
+        .filter((force) => keep(force.label, 3))
+        .map((force) => ({ ...force, direction: FORCE_DIRECTIONS.find((entry) => entry.words.test(force.label))?.direction ?? force.direction }));
+      const sizes = STRENGTH_WORDS.test(source) ? forces : forces.map(({ strength, ...force }) => (void strength, force));
+      const moves: typeof visual.moves = visual.moves !== "none" && MOVE_WORDS[visual.moves].test(source) ? visual.moves : "none";
+      const object = { ...visual.object, label: keep(visual.object.label, 3) ? visual.object.label : undefined };
+      return sizes.length >= 1 ? { ...visual, object, forces: sizes, moves } : null;
+    },
+    params: (visual) => ({
+      object: { ...visual.object, icon: kitIcon(visual.object.icon, visual.object.label) },
+      setting: visual.setting,
+      forces: visual.forces,
+      moves: visual.moves,
+    }),
+  }),
   // Drawn diagrams of how things work, from the library (added on Oct 18, 2026).
   volcano_cutaway: labelDiagram({
     name: "volcano_cutaway",
@@ -1096,7 +1341,304 @@ export const TEMPLATES = {
       /\b(germs?|bacteri\w*|virus\w*|pathogens?|microbes?)\b/i.test(scene.source) && /\bantibod\w*/i.test(scene.source) && /\bwhite blood cells?\b/i.test(scene.source),
     options: {},
   }),
+  // More drawn diagrams (diagrams-ai.js, diagrams-physics.js, diagrams-life.js, diagrams-sky.js, added on Oct 18, 2026).
+  neural_network: labelDiagram({
+    name: "neural_network",
+    plan: "an artificial neural network: layers of nodes joined by lines, with a signal flowing forward from the input layer to the output",
+    prompt: '"neural_network" when the narration explains how an artificial neural network works: layers of connected nodes passing a signal forward. "labels" names the parts: input, hidden, output, signal. "hidden" is how many hidden layers to draw, 1 to 3.',
+    parts: ["input", "hidden", "output", "signal"],
+    fits: (scene) => /\b(neural networks?|deep learning|artificial neurons?)\b/i.test(scene.source),
+    options: { hidden: z.number().int() },
+    cue: /\b(signals?|inputs?|flows?)\b/i,
+    // A number of hidden layers the narration gives is the number drawn.
+    check: (visual, { source }) => {
+      const said = source.match(/\b(one|two|three|1|2|3) hidden layers?\b/i)?.[1].toLowerCase();
+      const count = said ? { one: 1, two: 2, three: 3 }[said] ?? Number(said) : undefined;
+      return count !== undefined && count !== visual.hidden ? [`The narration speaks of ${count} hidden layers. Give "hidden" ${count}.`] : [];
+    },
+    params: ({ hidden, ...params }) => ({ ...params, hidden: Math.max(1, Math.min(3, Number(hidden) || 2)) }),
+  }),
+  next_word_prediction: template({
+    signature: true,
+    family: "picture",
+    plan: "how a language model writes: the text so far as word tiles, candidate next words as bars, and the likeliest one added to the text",
+    prompt:
+      '"next_word_prediction" when the narration explains how a language model writes text by predicting the next word. "words" are the words of the text so far, and "candidates" 2 to 4 possible next words, the first being the one picked; take both only from an example the narration or facts give, word for word, else leave both empty and blank tiles are drawn. Optional "labels", each at most 3 words in the narration\'s words: "model", "text", "choice".',
+    schema: z.object({
+      kind: z.literal("next_word_prediction"),
+      words: z.array(z.string()).max(8),
+      candidates: z.array(z.string()).max(4),
+      labels: z.object({ model: z.string().optional(), text: z.string().optional(), choice: z.string().optional() }),
+    }),
+    fits: (scene) => /\b(language models?|LLMs?|chatbots?|next word|predict\w* (the )?(next )?(word|token)s?|tokens?)\b/i.test(scene.source),
+    shown: (visual) => Object.values(visual.labels).map((text) => ({ text, words: 3, optional: true })),
+    // The tiles are an example the narration or facts give, so the text so far is one phrase of theirs and each
+    // candidate one of their words.
+    check: (visual, { source }) => [
+      ...(visual.words.length > 0 && !hasPhrase(visual.words.join(" "), source) ? ["The words so far must be an example the narration or facts give, word for word. Else leave them empty."] : []),
+      ...visual.candidates.filter((word) => !hasPhrase(word, source)).map((word) => `"${word}" is not in the narration or facts. Take the candidates from their example, or leave them empty.`),
+      ...(visual.candidates.length === 1 ? ["Give 2 to 4 candidates, or none."] : []),
+      // The longest bar is picked, so the narration must say the model picks the likeliest word.
+      ...(visual.candidates.length > 0 && !/\b(likel\w*|probab\w*|most common|best guess|predicts?)\b/i.test(source) ? ["The narration does not say the model picks the likeliest word. Leave the candidates empty."] : []),
+    ],
+    params: ({ kind, ...visual }, { narration, source }) => (
+      void kind,
+      {
+        ...cueAt(narration, /\b(picks?|chooses?|chosen|selects?|likeliest)\b/i),
+        ...visual,
+        repeat: /\b(word by word|one (word|token) at a time|again and again|over and over|repeats?)\b/i.test(source ?? ""),
+      }
+    ),
+    repair: (visual, keep, { source }) => ({
+      ...visual,
+      words: visual.words.length > 0 && hasPhrase(visual.words.join(" "), source) ? visual.words : [],
+      candidates: visual.candidates.length >= 2 && visual.candidates.every((word) => hasPhrase(word, source)) && /\b(likel\w*|probab\w*|most common|best guess|predicts?)\b/i.test(source) ? visual.candidates : [],
+      labels: Object.fromEntries(Object.entries(visual.labels).filter(([, text]) => keep(text, 3))),
+    }),
+  }),
+  gpu_parallel: labelDiagram({
+    name: "gpu_parallel",
+    plan: "a CPU with a few big cores working through tasks one after another, beside a GPU with many small cores doing many tasks at once",
+    prompt: '"gpu_parallel" when the narration explains why a GPU does many calculations at once, unlike a CPU. "labels" names the parts: cpu, gpu, cores, tasks.',
+    parts: ["cpu", "gpu", "cores", "tasks"],
+    // The drawing shows the GPU working in parallel, so the narration must say so.
+    fits: (scene) =>
+      /\b(GPUs?|graphics (cards?|processors?|processing units?))\b/i.test(scene.source) &&
+      /\b(CPUs?|central processing units?|processors?)\b/i.test(scene.source) &&
+      /\b(parallel|at once|at the same time|simultaneous\w*|many (small )?cores|thousands of)\b/i.test(scene.source),
+    options: {},
+    cue: /\b(parallel|simultaneously|once)\b/i,
+  }),
+  model_training: labelDiagram({
+    name: "model_training",
+    plan: "how a model learns, as a loop: it guesses, compares with the right answer, and adjusts itself, with the error shrinking each round",
+    prompt: '"model_training" when the narration explains how an AI model is trained: it makes a guess, compares it with the right answer and adjusts, again and again. "labels" names the parts: data, model, guess, answer, error, adjust. "rounds" is 2 to 4.',
+    parts: ["data", "model", "guess", "answer", "error", "adjust"],
+    fits: (scene) =>
+      /\b(train\w*|learns?|learning)\b/i.test(scene.narration) &&
+      /\b(models?|neural networks?|AI|machine learning|algorithms?)\b/i.test(scene.source) &&
+      /\b(errors?|mistakes?|adjust\w*|weights?|feedback|correct\w*|improv\w*)\b/i.test(scene.source),
+    options: { rounds: z.number().int() },
+    params: ({ rounds, ...params }) => ({ ...params, rounds: Math.max(2, Math.min(4, Number(rounds) || 3)) }),
+  }),
+  internet_packets: labelDiagram({
+    name: "internet_packets",
+    plan: "data crossing the internet: a message split into packets that take different routes through routers and come back together",
+    prompt: '"internet_packets" when the narration explains how data travels across the internet in packets. "labels" names the parts: sender, receiver, packets, routers, message.',
+    parts: ["sender", "receiver", "packets", "routers", "message"],
+    // The packets taking different routes through routers and coming back together are always drawn.
+    fits: (scene) => /\bpackets?\b/i.test(scene.source) && /\b(routers?|routes?|paths?|reassembl\w*|back together)\b/i.test(scene.source),
+    options: {},
+    cue: /\b(split\w*|broken|divided|chopped)\b/i,
+  }),
+  airplane_lift: labelDiagram({
+    name: "airplane_lift",
+    plan: "air flowing over and under a wing, lower pressure above it, and lift pushing it up; weight, thrust and drag when the narration names them",
+    prompt: '"airplane_lift" when the narration explains how a wing lifts a plane. "labels" names the parts: wing, airflow, lift, weight, thrust, drag, lowPressure, highPressure; weight, thrust and drag are drawn only when labeled.',
+    parts: ["wing", "airflow", "lift", "weight", "thrust", "drag", "lowPressure", "highPressure"],
+    // Faster air over the top and lower pressure above are always drawn, so the narration must explain lift that way.
+    fits: (scene) =>
+      /\blift\b/i.test(scene.source) &&
+      /\b(wings?|planes?|aircraft|airplanes?|aeroplanes?|flight|fly|flies)\b/i.test(scene.narration) &&
+      /\b(faster|pressure|speeds? up|quicker)\b/i.test(scene.source),
+    options: {},
+    cue: /\b(lifts?|upward|pushes (it )?up)\b/i,
+  }),
+  solar_panel: labelDiagram({
+    name: "solar_panel",
+    plan: "sunlight knocking electrons loose in a solar cell, and the current flowing through a wire to light a lamp or a house",
+    prompt: '"solar_panel" when the narration explains how a solar panel turns sunlight into electricity. "labels" names the parts: sunlight, panel, electrons, current, device.',
+    parts: ["sunlight", "panel", "electrons", "current", "device"],
+    // Electrons knocked loose are always drawn.
+    fits: (scene) => /\b(solar (panels?|cells?|power|energy)|photovoltaic)\b/i.test(scene.source) && /\belectrons?\b/i.test(scene.source),
+    options: {},
+    cue: /\b(hits?|strikes?|knocks?|absorb\w*|frees?)\b/i,
+    // A house is lit only when the narration speaks of homes; a lamp otherwise.
+    params: (params, { source }) => ({ ...params, powers: /\b(homes?|houses?|household\w*)\b/i.test(source ?? "") ? "house" : "lamp" }),
+  }),
+  battery_circuit: labelDiagram({
+    name: "battery_circuit",
+    plan: "a battery cut open, with electrons flowing from the anode through a wire to the cathode and lighting a bulb",
+    prompt: '"battery_circuit" when the narration explains how a battery makes a current. "labels" names the parts: anode, cathode, electrolyte, electrons, ions, bulb.',
+    parts: ["anode", "cathode", "electrolyte", "electrons", "ions", "bulb"],
+    // Ions moving inside are always drawn.
+    fits: (scene) => /\bbatter(y|ies)\b/i.test(scene.source) && /\belectrons?\b/i.test(scene.source) && /\b(ions?|electrolytes?)\b/i.test(scene.source),
+    options: {},
+    cue: /\b(flows?|flowing|connect\w*|switch\w* on)\b/i,
+  }),
+  nuclear_fission: labelDiagram({
+    name: "nuclear_fission",
+    plan: "a neutron splitting a large nucleus into two, releasing energy and more neutrons that split more nuclei in a chain reaction",
+    prompt: '"nuclear_fission" when the narration explains nuclear fission. "labels" names the parts: neutron, nucleus, fragments, energy, chainReaction. "chain" is true only when the narration speaks of a chain reaction or the new neutrons splitting more nuclei.',
+    parts: ["neutron", "nucleus", "fragments", "energy", "chainReaction"],
+    fits: (scene) => /\b(fission|split\w* (the |an )?(atoms?|nucle\w*)|chain reaction|uranium)\b/i.test(scene.source) && /\bneutrons?\b/i.test(scene.source),
+    options: { chain: z.boolean() },
+    // Two new neutrons when the narration says two, else three.
+    params: (params, { source }) => ({ ...params, neutrons: /\b(two|2) (new |more |free |extra )?neutrons\b/i.test(source ?? "") && !/\b(three|3) (new |more |free |extra )?neutrons\b/i.test(source ?? "") ? 2 : 3 }),
+    cue: /\b(hits?|strikes?|struck|splits?|split)\b/i,
+    check: (visual, { source }) =>
+      visual.chain === true && !/\b(chain reaction|more neutrons|other (atoms|nuclei)|more (atoms|nuclei))\b/i.test(source) ? ['The narration does not speak of a chain reaction. Give "chain" false.'] : [],
+  }),
+  fridge_heat_pump: labelDiagram({
+    name: "fridge_heat_pump",
+    plan: "a fridge cut open, with the refrigerant carrying heat from the cold coils inside to the hot coils at the back",
+    prompt: '"fridge_heat_pump" when the narration explains how a fridge, a freezer, an air conditioner or a heat pump moves heat. "labels" names the parts: compressor, condenser, expansionValve, evaporator, refrigerant, heatIn, heatOut, inside.',
+    parts: ["compressor", "condenser", "expansionValve", "evaporator", "refrigerant", "heatIn", "heatOut", "inside"],
+    // The whole loop is always drawn: the narration must say a refrigerant carries the heat.
+    fits: (scene) => /\b(refrigerators?|fridges?|freezers?|air condition\w*|heat pumps?)\b/i.test(scene.source) && /\b(refrigerants?|coolants?)\b/i.test(scene.source) && /\bheat\b/i.test(scene.source),
+    options: {},
+  }),
+  eye_vision: labelDiagram({
+    name: "eye_vision",
+    plan: "light entering the eye through the lens, landing on the retina, and a signal running along the optic nerve to the brain",
+    prompt: '"eye_vision" when the narration explains how the eye sees. "labels" names the parts: light, cornea, pupil, lens, retina, opticNerve, brain.',
+    parts: ["light", "cornea", "pupil", "lens", "retina", "opticNerve", "brain"],
+    // The signal along the optic nerve to the brain is always drawn.
+    fits: (scene) => /\beyes?\b/i.test(scene.source) && /\b(retina|lens|cornea|pupil)\b/i.test(scene.source) && /\b(brain|optic nerve|nerves?)\b/i.test(scene.source),
+    options: {},
+    // The picture on the retina is drawn upside down only when the narration says it lands that way.
+    params: (params, { source }) => ({ ...params, image: /\b(upside[- ]down|inverted|flipped|reversed)\b/i.test(source ?? "") }),
+  }),
+  digestion: labelDiagram({
+    name: "digestion",
+    plan: "food moving down the digestive tract, from the mouth through the stomach to the intestines, with nutrients passing into the blood",
+    prompt: '"digestion" when the narration explains how the body digests food. "labels" names the parts: mouth, esophagus, stomach, smallIntestine, largeIntestine, liver, nutrients.',
+    parts: ["mouth", "esophagus", "stomach", "smallIntestine", "largeIntestine", "liver", "nutrients"],
+    fits: (scene) => /\b(digest\w*|stomach|intestines?|esophagus)\b/i.test(scene.narration) && /\b(food|nutrients?|meal|eat\w*)\b/i.test(scene.source),
+    options: {},
+    // The close-up of nutrients passing into the blood only when the narration says they are absorbed.
+    params: (params, { source }) => ({ ...params, zoom: /\bnutrients?\b/i.test(source ?? "") && /\b(absorb\w*|blood\w*)\b/i.test(source ?? "") }),
+  }),
+  virus_infection: labelDiagram({
+    name: "virus_infection",
+    plan: "a virus attaching to a cell, getting its genes inside, the cell making copies, and new viruses bursting out",
+    prompt: '"virus_infection" when the narration explains how a virus infects a cell and makes copies of itself. "labels" names the parts: virus, cell, receptor, genes, copies.',
+    parts: ["virus", "cell", "receptor", "genes", "copies"],
+    // The virus's genes going into the cell are always drawn.
+    fits: (scene) =>
+      /\bvirus\w*/i.test(scene.source) &&
+      /\bcells?\b/i.test(scene.source) &&
+      /\b(copies|copy|replicat\w*|multipl\w*|reproduc\w*|hijack\w*)\b/i.test(scene.source) &&
+      /\b(genes?|genetic|DNA|RNA|instructions)\b/i.test(scene.source),
+    options: {},
+    cue: /\b(attach\w*|binds?|bound|latch\w*|enters?)\b/i,
+    // The cell bursts open only when the narration says so; else the new viruses leave through its wall.
+    params: (params, { source }) => ({ ...params, bursts: /\b(burst\w*|breaks? open|broke open|ruptur\w*|explod\w*|lys\w*)\b/i.test(source ?? "") }),
+  }),
+  natural_selection: labelDiagram({
+    name: "natural_selection",
+    plan: "natural selection: creatures in a few colors, a predator catching the ones that stand out, and the next generations mostly the well-hidden color",
+    prompt: '"natural_selection" when the narration explains natural selection through creatures that blend in surviving predators. "labels" names the parts: population, variation, predator, survivors, offspring. "generations" is 2 or 3.',
+    parts: ["population", "variation", "predator", "survivors", "offspring"],
+    // The drawing shows predators picking off the creatures that stand out.
+    fits: (scene) => /\b(natural selection|evolution|evolv\w*|survival of the fittest)\b/i.test(scene.source) && /\b(predators?|camouflag\w*|eaten|blend in|stand out|hunted)\b/i.test(scene.source),
+    options: { generations: z.number().int() },
+    params: ({ generations, ...params }) => ({ ...params, generations: Math.max(2, Math.min(3, Number(generations) || 3)) }),
+  }),
+  food_chain: template({
+    signature: true,
+    family: "chain",
+    plan: "energy passing along a food chain, from the sun to a plant to the animals that eat it, each link as an icon",
+    prompt:
+      '"food_chain" when the narration follows a food chain: "chain" is 3 to 5 links from the plant up to the top predator, each with an "icon" and a "label" of 1 to 3 words, in the narration\'s words; optional "labels" "sun" and "energy", each at most 3 words.',
+    schema: z.object({
+      kind: z.literal("food_chain"),
+      chain: z.array(z.object({ icon: z.string(), label: z.string() })).min(3).max(5),
+      labels: z.object({ sun: z.string().optional(), energy: z.string().optional() }),
+    }),
+    fits: (scene) => /\b(food (chains?|webs?)|predators?|prey|herbivores?|carnivores?|producers?|consumers?)\b/i.test(scene.source) && /\b(eats?|eaten|feeds? on|energy)\b/i.test(scene.source),
+    shown: (visual) => [...visual.chain.map((link) => ({ text: link.label, words: 3 })), ...Object.values(visual.labels).map((text) => ({ text, words: 3, optional: true }))],
+    // Each link is eaten by the next, so one clause must name both, as in "foxes eat rabbits".
+    check: (visual, { source }) => [
+      ...visual.chain.slice(1).flatMap((link, index) =>
+        statedTogether(visual.chain[index].label, link.label, source) ? [] : [`No clause names both "${visual.chain[index].label}" and "${link.label}". Each link must eat the one before, as the narration says.`],
+      ),
+    ],
+    repair: (visual, keep) => ({ ...visual, labels: Object.fromEntries(Object.entries(visual.labels).filter(([, text]) => keep(text, 3))) }),
+    // The arrows thin out up the chain only when the narration says energy is lost at each step.
+    params: ({ kind, ...visual }, { source }) => (
+      void kind,
+      {
+        ...visual,
+        chain: visual.chain.map((link) => ({ ...link, icon: kitIcon(link.icon, link.label) })),
+        energyLoss: /\b(energy (is )?(lost|wasted)|loses? (some |most )?(of its )?energy|less energy|(10|ten) ?(%|percent))\b/i.test(source ?? ""),
+      }
+    ),
+  }),
+  water_cycle_landscape: labelDiagram({
+    name: "water_cycle_landscape",
+    plan: "the water cycle in a landscape: the sun, water evaporating from the sea, clouds over mountains, rain, and rivers running back to the sea",
+    prompt: '"water_cycle_landscape" when the narration explains the water cycle. "labels" names the parts: sun, evaporation, condensation, precipitation, runoff, groundwater, collection.',
+    parts: ["sun", "evaporation", "condensation", "precipitation", "runoff", "groundwater", "collection"],
+    // The whole cycle is drawn, rivers and groundwater too, so the narration must name the cycle or follow the water back.
+    fits: (scene) =>
+      /\bwater cycle\b/i.test(scene.source) ||
+      (/\bevaporat\w*/i.test(scene.source) && /\b(rain\w*|precipitation)\b/i.test(scene.source) && /\b(rivers?|runoff|groundwater|flows? back|back to the (sea|ocean))\b/i.test(scene.source)),
+    options: {},
+  }),
+  hurricane: labelDiagram({
+    name: "hurricane",
+    plan: "a hurricane forming: warm ocean water, moist air rising into towering clouds, and the storm spinning round a calm eye",
+    prompt: '"hurricane" when the narration explains how a hurricane, a typhoon or a cyclone forms. "labels" names the parts: warmOcean, risingAir, clouds, eye, wind.',
+    parts: ["warmOcean", "risingAir", "clouds", "eye", "wind"],
+    // Warm water, rising air and the spin round an eye are always drawn.
+    fits: (scene) =>
+      /\b(hurricanes?|typhoons?|tropical (storms?|cyclones?)|cyclones?)\b/i.test(scene.source) &&
+      /\bwarm\w*/i.test(scene.source) &&
+      /\b(spin\w*|rotat\w*|swirl\w*|eye)\b/i.test(scene.source),
+    options: {},
+    // It turns clockwise, as in the south, only when the narration says so; counterclockwise otherwise, as in the north.
+    params: (params, { source }) => ({
+      ...params,
+      clockwise: /\b(southern hemisphere|south of the equator)\b/i.test(source ?? "") || /(?<!counter-?|anti-?)\bclockwise\b/i.test(source ?? ""),
+    }),
+  }),
+  carbon_cycle: labelDiagram({
+    name: "carbon_cycle",
+    plan: "carbon moving between the air, plants, animals, the ocean and the ground, and burning fossil fuels putting it back into the air",
+    prompt: '"carbon_cycle" when the narration explains the carbon cycle. "labels" names the parts: atmosphere, plants, animals, ocean, decay, fossilFuels, burning.',
+    parts: ["atmosphere", "plants", "animals", "ocean", "decay", "fossilFuels", "burning"],
+    // Plants, animals, decay, the ocean and burning fossil fuels are all drawn.
+    fits: (scene) => /\bcarbon cycle\b/i.test(scene.source) || (/\bcarbon\b/i.test(scene.source) && /\bplants?\b/i.test(scene.source) && /\b(fossil fuels?|burn\w*)\b/i.test(scene.source)),
+    options: {},
+  }),
+  eclipse: labelDiagram({
+    name: "eclipse",
+    plan: "an eclipse: the Sun, the Moon and the Earth lining up, with the Moon's shadow on the Earth, or the Moon in the Earth's shadow",
+    prompt: '"eclipse" when the narration explains an eclipse. "eclipseKind" is "solar" when the Moon blocks the Sun, "lunar" when the Moon passes into the Earth\'s shadow, as the narration says. "labels" names the parts: sun, moon, earth, shadow, totality.',
+    parts: ["sun", "moon", "earth", "shadow", "totality"],
+    fits: (scene) => /\beclipses?\b/i.test(scene.source),
+    options: { eclipseKind: z.enum(["solar", "lunar"]) },
+    cue: /\b(totality|total|blocks?|covers?)\b/i,
+    check: (visual, { source }) => {
+      // The view from the ground always shows a total solar eclipse.
+      if (visual.eclipseKind === "solar" && /\b(partial|annular)\b/i.test(source) && !/\btotal\w*/i.test(source)) return ["This drawing shows a total eclipse, and the narration speaks of a partial or annular one."];
+      const solar = /\b(solar eclipse|moon (blocks|covers|passes in front of) the sun)\b/i.test(source);
+      const lunar = /\b(lunar eclipse|earth'?s shadow)\b/i.test(source);
+      if (visual.eclipseKind === "solar" && lunar && !solar) return ['The narration speaks of a lunar eclipse. Give "eclipseKind" "lunar".'];
+      if (visual.eclipseKind === "lunar" && solar && !lunar) return ['The narration speaks of a solar eclipse. Give "eclipseKind" "solar".'];
+      return [];
+    },
+    // The template calls the kind of eclipse "kind".
+    params: ({ eclipseKind, ...params }) => ({ ...params, kind: eclipseKind }),
+  }),
+  black_hole: labelDiagram({
+    name: "black_hole",
+    plan: "a big star collapsing into a black hole, with a glowing disk of matter swirling round it and light bending at its edge",
+    prompt: '"black_hole" when the narration explains black holes. "fromStar" is true only when the narration tells how a star collapses into one. "labels" names the parts: star, collapse, supernova, blackHole, eventHorizon, disk.',
+    parts: ["star", "collapse", "supernova", "blackHole", "eventHorizon", "disk"],
+    // A disk of matter and light bending round it are always drawn.
+    fits: (scene) => /\bblack holes?\b/i.test(scene.source) && /\b(light|gravity|matter|disk|disc)\b/i.test(scene.source),
+    options: { fromStar: z.boolean() },
+    cue: /\b(collaps\w*|implod\w*)\b/i,
+    // The collapse ends in a supernova flash, so the narration must tell both.
+    check: (visual, { source }) =>
+      visual.fromStar === true && !(/\b(collaps\w*|runs? out of fuel|dying star|implod\w*)\b/i.test(source) && /\b(supernova\w*|explod\w*|explosion)\b/i.test(source))
+        ? ['The narration does not tell how a star collapses and explodes. Give "fromStar" false.']
+        : [],
+  }),
   rocket_launch: template({
+    signature: true,
     family: "picture",
     plan: "a rocket lifting off, turning over toward orbit and dropping its first stage",
     prompt: '"rocket_launch" when the narration explains how a rocket reaches orbit: liftoff, the turn toward orbit and the stages separating. "stages" is how many stages the narration speaks of (1 to 3). Optional labels in the narration\'s words, each at most 4 words: "stageLabels" (a name for each stage, bottom first, or empty), "liftoff", "separation" and "orbit".',
@@ -1129,6 +1671,7 @@ export const TEMPLATES = {
     },
   }),
   engine_cycle: template({
+    signature: true,
     family: "picture",
     plan: "a four-stroke petrol engine: the piston moving, the valves opening, the spark and the exhaust, one stroke after another",
     prompt: '"engine_cycle" when the narration explains how a piston engine works: "strokes" are the names of its four strokes in order (intake, compression, power, exhaust) as the narration names them, or empty; optional "parts" labels in its words, each at most 4 words: intakeValve, exhaustValve, sparkPlug, piston, rod, crankshaft, fuelAir, exhaustGas.',

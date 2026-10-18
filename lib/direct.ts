@@ -232,6 +232,9 @@ type SceneKind = (typeof SCENE_KINDS)[number];
 type AnyKind = SceneKind | TemplateName;
 const ALL_KINDS = [...SCENE_KINDS, ...TEMPLATE_NAMES] as [AnyKind, ...AnyKind[]];
 
+// Kinds that tell more than they show; a drawing made for the topic replaces these first.
+const PLAIN_KINDS: AnyKind[] = ["text", "list", "steps", "quote", "illustration", "drawing", "big_statement", "kinetic_words", "definition_card"];
+
 // Which of the director's own kinds look alike on screen (see Family in lib/templates.ts).
 const FAMILIES: Record<SceneKind, Family> = {
   map: "map",
@@ -1600,7 +1603,7 @@ function routeIcon(by: "land" | "sea", source: string): string | undefined {
 }
 
 function forStoryboard(visual: AnyVisual, facts: FactMap, source: string, sourceTitle?: string, narration?: string) {
-  if (isTemplateVisual(visual)) return { kind: "template" as const, template: visual.kind, params: templateParams(visual, { sourceTitle, narration }) };
+  if (isTemplateVisual(visual)) return { kind: "template" as const, template: visual.kind, params: templateParams(visual, { sourceTitle, narration, source }) };
   // An empty detail would draw an empty line under a card's title, and an unknown icon would draw a dot.
   if (visual.kind === "list") {
     return {
@@ -1778,7 +1781,8 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
   const rules: KindRules = { missing, limits, families: familyLimits(rest.length) };
   // The kinds a scene can use at all, for the plan and the critique.
   const fitsFor = (index: number) => ALL_KINDS.filter((kind) => !missing[index].includes(kind) && limits[kind] > 0);
-  const templateMenu = TEMPLATE_NAMES.map((name) => ({ name, plan: templateSpec(name).plan }));
+  // Only the templates some scene can use, so the menu stays short.
+  const templateMenu = TEMPLATE_NAMES.filter((name) => rest.some((_, index) => fitsFor(index).includes(name))).map((name) => ({ name, plan: templateSpec(name).plan }));
   // One call ranks the kinds that fit each scene, and the code picks from them so the video gets a rhythm.
   // If the call fails, each scene picks on its own.
   const plan = await chatJson({
@@ -1786,7 +1790,8 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     schemaName: "plan",
     schema: z.object({
       theme: z.enum(THEME_NAMES),
-      scenes: z.array(z.object({ kinds: z.array(z.enum(ALL_KINDS)).min(2).max(3) })).length(rest.length),
+      // Each scene's picture in words first, then the kinds that can show it.
+      scenes: z.array(z.object({ idea: z.string(), kinds: z.array(z.enum(ALL_KINDS)).min(2).max(3) })).length(rest.length),
     }),
     messages: directPlanPrompt(
       script.title,
@@ -1798,7 +1803,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
       })),
       templateMenu,
     ),
-    maxTokens: 700,
+    maxTokens: 1400,
     timeoutMs: SCENE_CALL_TIMEOUT_MS,
     deadline: Math.min(deadline - MARKER_CHECK_MS, Date.now() + PLAN_DEADLINE_MS),
   }).catch((error) => {
@@ -1818,7 +1823,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
         }),
         messages: directCritiquePrompt(
           script.title,
-          rest.map((scene, index) => ({ id: scene.id, narration: scene.narration, picked: plannedKinds[index] ?? "free", fits: fitsFor(index) })),
+          rest.map((scene, index) => ({ id: scene.id, narration: scene.narration, idea: plan.data?.scenes[index]?.idea ?? "", picked: plannedKinds[index] ?? "free", fits: fitsFor(index) })),
           templateMenu,
         ),
         maxTokens: 500,
@@ -1835,6 +1840,20 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     const fits = kindFits(change.kind, index, plannedKinds, rules, false);
     console.log(`[direct/critique] ${change.scene}: ${plannedKinds[index] ?? "free"} to ${change.kind}${fits ? "" : " does not fit, kept"} (${change.why})`);
     if (fits) plannedKinds[index] = change.kind;
+  }
+  // A drawing made for exactly this topic, like the volcano, is the best picture a video can have, and its narrow
+  // checks only let it in where the narration explains its process. When one fits a scene and the plan picked none, it
+  // takes the plainest scene it fits.
+  if (plan.data && !plannedKinds.some((kind) => kind !== undefined && isTemplateName(kind) && templateSpec(kind).signature)) {
+    const plainness = (kind: AnyKind | undefined) => (kind === undefined || PLAIN_KINDS.includes(kind) ? 0 : kind === "map" ? 2 : 1);
+    const candidates = rest.flatMap((_, index) =>
+      TEMPLATE_NAMES.filter((name) => templateSpec(name).signature && !missing[index].includes(name) && kindFits(name, index, plannedKinds, rules, false)).map((name) => ({ index, name })),
+    );
+    const best = candidates.sort((a, b) => plainness(plannedKinds[a.index]) - plainness(plannedKinds[b.index]))[0];
+    if (best) {
+      console.log(`[direct] ${rest[best.index].id}: ${plannedKinds[best.index] ?? "free"} to ${best.name}, a drawing made for this topic`);
+      plannedKinds[best.index] = best.name;
+    }
   }
   // The templates a scene may use: those the plan ranked for it and `kind`, the kind it is asked for, unless another
   // scene is to use them.
@@ -1892,6 +1911,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
           templates: offered.map((name) => templateSpec(name).prompt),
           drawingExamples: drawingExamples.map(({ narration, drawing }) => ({ narration, drawing })),
           plannedKind: kind,
+          idea: plan.data?.scenes[index]?.idea,
           avoidKinds: avoidInPrompt(index, kind),
           years: yearList,
           amounts: amountsFor(sourceFor(scene)),
