@@ -11,9 +11,12 @@ export function SiteHeader() {
           <span className="hidden text-sm text-muted sm:inline">Fact-checked explainer videos</span>
         </Link>
         <nav className="flex items-center gap-5 text-sm">
-          <a href="#how" className="text-muted transition-colors hover:text-fg">
+          <Link href="/watch" className="text-muted transition-colors hover:text-fg">
+            Watch
+          </Link>
+          <Link href="/#how" className="hidden text-muted transition-colors hover:text-fg sm:inline">
             How it works
-          </a>
+          </Link>
           <ThemeToggle />
         </nav>
       </div>

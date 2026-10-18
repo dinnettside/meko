@@ -117,22 +117,20 @@ function SentenceRow({
           >
             {text}
           </span>
-          {sourceIds.map((id) => {
-            const source = sourceById.get(id);
-            const number = numberOf.get(id);
-            return source ? (
-              <a
-                key={id}
-                href={source.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={source.title}
-                className="ml-0.5 align-super font-mono text-xs text-muted hover:text-fg"
-              >
-                {number ?? "↗"}
-              </a>
-            ) : null;
-          })}
+          {/* Footnotes with a comma between them, so 5 and 1 never read as 51. */}
+          {sourceIds
+            .flatMap((id) => {
+              const source = sourceById.get(id);
+              return source ? [{ id, source, number: numberOf.get(id) }] : [];
+            })
+            .map(({ id, source, number }, index) => (
+              <span key={id} className="align-super font-mono text-xs text-muted">
+                {index === 0 ? <span className="ml-0.5" /> : ","}
+                <a href={source.url} target="_blank" rel="noopener noreferrer" title={source.title} className="hover:text-fg">
+                  {number ?? "↗"}
+                </a>
+              </span>
+            ))}
         </p>
       )}
       {check.status === "revised" ? <p className="mt-1 text-sm text-muted line-through">{check.original}</p> : null}

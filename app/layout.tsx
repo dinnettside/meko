@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Archivo, Big_Shoulders, Fraunces, Geist, Geist_Mono, IBM_Plex_Mono, IBM_Plex_Sans, Newsreader, Work_Sans, Young_Serif } from "next/font/google";
 import { appThemeCss, cssVariables } from "@/lib/theme";
 import "./globals.css";
@@ -37,17 +38,16 @@ export const metadata: Metadata = {
   description: "Turn a topic into a short, fact-checked, animated explainer video, with every claim checked against its sources.",
 };
 
-// Sets the light or dark mode the reader picked before the page is drawn, so it never flashes the other one. Storage can
-// be blocked, and then the system's choice stands.
-const THEME_SCRIPT = `try{var t=localStorage.getItem("meko-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
-
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
   const fonts = [appSerif, appSans, appMono, display, body].map((font) => font.variable).join(" ");
+  // The mode the reader picked with the switch, kept in a cookie so the page arrives in it and never flashes the other.
+  // Without one, the system's mode stands (lib/theme.ts, appThemeCss).
+  const picked = (await cookies()).get("meko-theme")?.value;
+  const theme = picked === "light" || picked === "dark" ? picked : undefined;
   return (
-    // The mode is set on <html> by the script before React runs, so the server's markup may differ there.
-    <html lang="en" className={`${fonts} ${themeFonts} h-full antialiased`} style={cssVariables} suppressHydrationWarning>
+    // The switch changes data-theme on <html> after the page has loaded.
+    <html lang="en" data-theme={theme} className={`${fonts} ${themeFonts} h-full antialiased`} style={cssVariables} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <style dangerouslySetInnerHTML={{ __html: appThemeCss() }} />
       </head>
       <body className="min-h-full flex flex-col">{children}</body>

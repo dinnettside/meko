@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
-const STORAGE_KEY = "meko-theme";
+const COOKIE = "meko-theme";
 const CHANGED = "meko-theme-change";
 type Mode = "light" | "dark";
 
@@ -24,17 +24,16 @@ function subscribe(onChange: () => void) {
   };
 }
 
-// Switches between the light and the dark mode and remembers the choice in this browser. On the server it does not know
-// the mode, so it draws no icon until the page runs, and nothing jumps.
+// Switches between the light and the dark mode and remembers the choice in a cookie for a year, so the server sends
+// the next page in it (app/layout.tsx). On the server it does not know the mode, so it draws no icon until the page
+// runs, and nothing jumps.
 export function ThemeToggle() {
   const mode = useSyncExternalStore<Mode | null>(subscribe, currentMode, () => null);
 
   function toggle() {
     const next: Mode = currentMode() === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = next;
-    try {
-      localStorage.setItem(STORAGE_KEY, next);
-    } catch {}
+    document.cookie = `${COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
     window.dispatchEvent(new Event(CHANGED));
   }
 

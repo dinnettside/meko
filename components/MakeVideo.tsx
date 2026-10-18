@@ -5,7 +5,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { DirectResult } from "@/lib/direct";
 import { EXAMPLES } from "@/lib/example";
-import type { Example } from "@/lib/example";
 import type { LibraryVideo } from "@/lib/library";
 import type { FactCheckResult } from "@/lib/factcheck";
 import type { FactCheckReport as Report, ResearchFact, VideoRequest } from "@/lib/pipeline";
@@ -14,6 +13,8 @@ import type { ScriptResult } from "@/lib/script";
 import type { Source, Storyboard } from "@/lib/storyboard";
 import type { SceneVoice, VoiceResult } from "@/lib/voice";
 import { FactCheckReport } from "./FactCheckReport";
+import { loadSavedVideo } from "./saved-video";
+import Link from "next/link";
 import { HowItWorks } from "./HowItWorks";
 import { sentenceSpans } from "./sentence-timing";
 import { SiteFooter, SiteHeader } from "./SiteChrome";
@@ -112,28 +113,6 @@ async function findInLibrary(request: VideoRequest): Promise<LibraryVideo | null
   } catch {
     return null;
   }
-}
-
-// A saved example video, ready to play.
-async function loadExample(slug: string): Promise<Finished> {
-  const response = await fetch(`/examples/${slug}.json`);
-  if (!response.ok) throw new Error(`The example "${slug}" could not be loaded.`);
-  const example = (await response.json()) as Example;
-  return {
-    storyboard: example.storyboard,
-    voice: Object.fromEntries(
-      example.storyboard.scenes.map((scene) => [
-        scene.id,
-        { audio: `/examples/${slug}/${scene.id}.mp3`, words: example.words[scene.id] ?? [] },
-      ]),
-    ),
-    report: example.report,
-    facts: example.facts,
-    sources: example.sources,
-    costUsd: example.costUsd,
-    ms: example.ms,
-    example: { topic: example.request.topic, madeAt: example.madeAt },
-  };
 }
 
 // A step the server refused for its demo code, so the form can ask for one.
@@ -386,7 +365,7 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
     const wanted = new URLSearchParams(window.location.search).get("example");
     if (wanted === null) return;
     const slug = EXAMPLES.some((example) => example.slug === wanted) ? wanted : EXAMPLES[0].slug;
-    void loadExample(slug).then(setFinished);
+    void loadSavedVideo(slug).then(setFinished);
   }, []);
 
   const home = !started && !finished;
@@ -600,6 +579,17 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
           </section>
         ) : null}
 
+        <section className="mt-20 flex flex-col gap-4 rounded-2xl border border-rule p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+          <div>
+            <h2 className="font-serif text-2xl sm:text-3xl">Watch videos made by Meko</h2>
+            <p className="mt-2 max-w-xl text-muted">
+              Scroll through them one by one, open the fact-check and sources behind each, and like or comment without an account.
+            </p>
+          </div>
+          <Link href="/watch" className="shrink-0 self-start rounded-full bg-fg px-6 py-3 font-medium text-bg hover:opacity-85 sm:self-auto">
+            Open the feed
+          </Link>
+        </section>
         <HowItWorks />
       </main>
       <SiteFooter />
