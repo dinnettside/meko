@@ -1544,7 +1544,7 @@ export const TEMPLATES = {
     family: "chain",
     plan: "energy passing along a food chain, from the sun to a plant to the animals that eat it, each link as an icon",
     prompt:
-      '"food_chain" when the narration follows a food chain: "chain" is 3 to 5 links from the plant up to the top predator, each with an "icon" and a "label" of 1 to 3 words, in the narration\'s words; optional "labels" "sun" and "energy", each at most 3 words.',
+      '"food_chain" when the narration follows a food chain: "chain" is 3 to 5 links from the plant up to the top predator, each with an "icon" and a "label" of 1 to 3 words, in the narration\'s words; the sun is drawn already, so the chain starts with the plant. Optional "labels" "sun" and "energy", each at most 3 words.',
     schema: z.object({
       kind: z.literal("food_chain"),
       chain: z.array(z.object({ icon: z.string(), label: z.string() })).min(3).max(5),
@@ -1564,7 +1564,8 @@ export const TEMPLATES = {
       void kind,
       {
         ...visual,
-        chain: visual.chain.map((link) => ({ ...link, icon: kitIcon(link.icon, link.label) })),
+        // The sun is drawn already, so a link for it would draw it twice.
+        chain: visual.chain.filter((link) => !/^(the )?sun(light)?$/i.test(link.label.trim())).map((link) => ({ ...link, icon: kitIcon(link.icon, link.label) })),
         energyLoss: /\b(energy (is )?(lost|wasted)|loses? (some |most )?(of its )?energy|less energy|(10|ten) ?(%|percent))\b/i.test(source ?? ""),
       }
     ),
@@ -1588,8 +1589,7 @@ export const TEMPLATES = {
     // Warm water, rising air and the spin round an eye are always drawn.
     fits: (scene) =>
       /\b(hurricanes?|typhoons?|tropical (storms?|cyclones?)|cyclones?)\b/i.test(scene.source) &&
-      /\bwarm\w*/i.test(scene.source) &&
-      /\b(spin\w*|rotat\w*|swirl\w*|eye)\b/i.test(scene.source),
+      /\b(warm\w*|spin\w*|rotat\w*|swirl\w*|eye|ris(es|ing) air|air rises)\b/i.test(scene.narration),
     options: {},
     // It turns clockwise, as in the south, only when the narration says so; counterclockwise otherwise, as in the north.
     params: (params, { source }) => ({
@@ -1632,12 +1632,14 @@ export const TEMPLATES = {
     prompt: '"black_hole" when the narration explains black holes. "fromStar" is true only when the narration tells how a star collapses into one. "labels" names the parts: star, collapse, supernova, blackHole, eventHorizon, disk.',
     parts: ["star", "collapse", "supernova", "blackHole", "eventHorizon", "disk"],
     // A disk of matter and light bending round it are always drawn.
-    fits: (scene) => /\bblack holes?\b/i.test(scene.source) && /\b(light|gravity|matter|disk|disc)\b/i.test(scene.source),
+    fits: (scene) => /\bblack holes?\b/i.test(scene.source) && /\b(light|gravity|matter|disk|disc|gas|absorb\w*|swallow\w*|collaps\w*)\b/i.test(scene.source),
     options: { fromStar: z.boolean() },
     cue: /\b(collaps\w*|implod\w*)\b/i,
     // The collapse ends in a supernova flash, so the narration must tell both.
     check: (visual, { source }) =>
-      visual.fromStar === true && !(/\b(collaps\w*|runs? out of fuel|dying star|implod\w*)\b/i.test(source) && /\b(supernova\w*|explod\w*|explosion)\b/i.test(source))
+      visual.fromStar === true &&
+      (!(/\b(collaps\w*|runs? out of fuel|dying star|implod\w*)\b/i.test(source) && /\b(supernova\w*|explod\w*|explosion)\b/i.test(source)) ||
+        /\b(without|no) (a )?supernova/i.test(source))
         ? ['The narration does not tell how a star collapses and explodes. Give "fromStar" false.']
         : [],
   }),

@@ -81,7 +81,7 @@ const ALIASES: Record<string, IconName> = {
   speaker: "megaphone", protest: "megaphone", town: "city", village: "house", home: "house",
   building: "factory", powerplant: "factory", industry: "factory", mine: "pickaxe",
   mining: "pickaxe", oil: "oilrig", petrol: "fuel", gasoline: "fuel", vehicle: "car", transport: "truck",
-  boat: "ship", sailing: "galleon", aircraft: "plane", airplane: "plane", jet: "plane", spacecraft: "rocket",
+  boat: "ship", cargo: "barrel", goods: "barrel", freight: "truck", sailing: "galleon", aircraft: "plane", airplane: "plane", jet: "plane", spacecraft: "rocket",
   space: "planet", sky: "cloud", sea: "ocean", stream: "river", hill: "mountain", ground: "soil",
   earthquake: "warning", world: "globe", country: "map", travel: "compass", direction: "compass", route: "road",
   human: "person", man: "person", woman: "person", worker: "person", crowd: "people",

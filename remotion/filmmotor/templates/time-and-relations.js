@@ -59,7 +59,19 @@ register('cause_chain', {
     let out = U.bg();
     if (p.direction === 'v') {
       const h = Math.min(110, 640 / N - 30), gap = (700 - N * h) / Math.max(1, N - 1);
-      Nd.forEach((n, k) => { const y = 200 + k * (h + gap), at = p.times?.[k] ?? 0.06 + k * step; out += `<g${U.A('pop', at, 0.05, { cx: 960, cy: y + h / 2 })}>${U.card(560, y, 800, h, { s: k === N - 1 ? th.accent : th.line, sw: 4 })}${U.T(960, y + h / 2 + 14, n.text, { s: 40, w: 600 })}</g>`; if (k < N - 1) out += arrow(U, th, 960, y + h + 6, 960, y + h + gap - 6, at + step * 0.6); });
+      // A long step gets smaller type, then two lines, so it stays inside its box (added for Meko).
+      const fit = (text) => {
+        const size = Math.max(28, Math.min(40, (40 * 740) / Math.max(1, U.tw(text, 40, { w: 600 }))));
+        if (U.tw(text, size, { w: 600 }) <= 740) return [[text], size];
+        const words = String(text).split(/\s+/), half = Math.ceil(words.length / 2);
+        return [[words.slice(0, half).join(' '), words.slice(half).join(' ')], Math.max(26, Math.min(34, (34 * 740) / Math.max(1, ...[words.slice(0, half).join(' '), words.slice(half).join(' ')].map((l) => U.tw(l, 34, { w: 600 })))))];
+      };
+      Nd.forEach((n, k) => {
+        const y = 200 + k * (h + gap), at = p.times?.[k] ?? 0.06 + k * step, [lines, size] = fit(n.text);
+        const text = lines.map((l, i) => U.T(960, y + h / 2 + size * 0.35 + (i - (lines.length - 1) / 2) * size * 1.15, l, { s: size, w: 600 })).join('');
+        out += `<g${U.A('pop', at, 0.05, { cx: 960, cy: y + h / 2 })}>${U.card(560, y, 800, h, { s: k === N - 1 ? th.accent : th.line, sw: 4 })}${text}</g>`;
+        if (k < N - 1) out += arrow(U, th, 960, y + h + 6, 960, y + h + gap - 6, at + step * 0.6);
+      });
       return out;
     }
     const gapX = 70, w = Math.min(300, (1600 - (N - 1) * gapX) / N), x0 = 960 - (N * w + (N - 1) * gapX) / 2;
@@ -86,7 +98,9 @@ register('cycle', {
       out += `<path d="M${s0[0].toFixed(1)} ${s0[1].toFixed(1)}A${rx} ${ry} 0 0 1 ${s1[0].toFixed(1)} ${s1[1].toFixed(1)}" stroke="${th.accent}" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="${len.toFixed(0)}" stroke-dashoffset="${len.toFixed(0)}"${U.A('draw', at + 0.06, 0.1, { l: len.toFixed(0) })}/>` +
         `<g${U.A('pop', at, 0.05, { cx: x, cy: y })}><circle cx="${x}" cy="${y}" r="78" fill="${th.surface}" stroke="${th.accent}" stroke-width="5"/>${n.icon ? U.icon(n.icon, x, y - 4, 80, th.accent) : ''}${U.T(x, y + 120, n.text, { s: 34, w: 600, halo: 8 })}</g>`;
     });
-    return out + (p.center ? U.T(cx, cy + 16, p.center, { fam: 'd', s: 50, w: 700, an: U.A('fade', 0.04, 0.1) }) : '');
+    // The center's name shrinks to stay clear of the labels of the stages beside it (added for Meko).
+    const centerSize = p.center ? Math.max(32, Math.min(50, (50 * 380) / Math.max(1, U.tw(p.center, 50, { fam: 'd', w: 700 })))) : 50;
+    return out + (p.center ? U.T(cx, cy + centerSize * 0.32, p.center, { fam: 'd', s: centerSize, w: 700, an: U.A('fade', 0.04, 0.1) }) : '');
   },
   init(g, p, c) { return { dot: g.querySelector('#' + c.id + 'dot') }; },
   render(l, st) { const a = -Math.PI / 2 + l.t * 0.9; st.dot.setAttribute('cx', (960 + 360 * Math.cos(a)).toFixed(1)); st.dot.setAttribute('cy', (560 + 270 * Math.sin(a)).toFixed(1)); st.dot.setAttribute('opacity', l.p > 0.7 ? 1 : 0); },
