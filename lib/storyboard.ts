@@ -7,6 +7,9 @@ import { THEME_NAMES } from "./themes.ts";
 export const FIGURE_LOOKS = ["person", "astronaut", "scientist", "soldier", "ruler", "worker", "explorer", "doctor"] as const;
 // What a space scene can show.
 export const SPACE_BODIES = ["earth", "moon", "sun", "mars"] as const;
+// Where a free picture takes place, drawn behind its items: under the ground (the surface at y 30), the sea (the water's
+// surface at y 30), the sky (the ground at the bottom), space, or inside a body (a body's outline filling the frame).
+export const BACKDROPS = ["underground", "sea", "sky", "space", "body"] as const;
 
 export const SourceSchema = z.object({
   id: z.string(),
@@ -183,6 +186,7 @@ const IllustrationSceneSchema = z.object({
     }),
   ),
   links: z.array(z.object({ from: z.number(), to: z.number(), label: z.string().optional() })).optional(),
+  backdrop: z.enum(BACKDROPS).optional(),
 });
 
 // An old name or status struck through and replaced by the new one, like Constantinople becoming Istanbul.
@@ -238,6 +242,7 @@ export type Fact = z.infer<typeof FactSchema>;
 export type Scene = z.infer<typeof SceneSchema>;
 export type FigureLook = (typeof FIGURE_LOOKS)[number];
 export type SpaceBody = (typeof SPACE_BODIES)[number];
+export type Backdrop = (typeof BACKDROPS)[number];
 export type Storyboard = z.infer<typeof StoryboardSchema>;
 
 // Rules zod cannot check on its own. Returns one line per problem, empty when all is fine.

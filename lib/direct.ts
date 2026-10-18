@@ -35,7 +35,7 @@ import {
   statedTogether,
   unitKey,
 } from "./grounding.ts";
-import { FIGURE_LOOKS, SPACE_BODIES, StoryboardSchema, storyboardProblems } from "./storyboard.ts";
+import { BACKDROPS, FIGURE_LOOKS, SPACE_BODIES, StoryboardSchema, storyboardProblems } from "./storyboard.ts";
 import { ICON_NAMES, iconKey } from "./icons.ts";
 import { MOON_SEAS, MOON_SITES, moonPlace } from "./moon.ts";
 import { TEMPLATES, TEMPLATE_NAMES, isTemplateName, templateParams, templateSpec } from "./templates.ts";
@@ -181,6 +181,7 @@ const SceneVisualSchema = z.discriminatedUnion("kind", [
       .min(2)
       .max(8),
     links: z.array(z.object({ from: z.number().int(), to: z.number().int(), label: z.string().optional() })).max(6),
+    backdrop: z.enum(BACKDROPS).optional(),
   }),
   z.object({ kind: z.literal("change"), from: z.string(), to: z.string(), year: z.number().int().optional() }),
 ]);
@@ -1290,6 +1291,15 @@ function tidyMap(visual: AnyVisual, source: string): AnyVisual {
   return { ...visual, highlights, arrows };
 }
 
+// The words that say where a free picture takes place, without which its backdrop is left out.
+const BACKDROP_WORDS: Record<(typeof BACKDROPS)[number], RegExp> = {
+  underground: /\b(underground|beneath|below|ground|crust|rocks?|magma|soil|roots?|caves?|mines?|wells?|layers?|buried|tunnels?|fossils?)\b/i,
+  sea: /\b(seas?|oceans?|underwater|fish|ships?|waves?|coral|seabed|seafloor|tides?)\b/i,
+  sky: /\b(sky|air|clouds?|birds?|planes?|flight|fly|flies|atmosphere|wind|rain|storms?)\b/i,
+  space: /\b(space|orbit\w*|planets?|stars?|moon|galax\w*|satellites?|rockets?)\b/i,
+  body: /\b(body|organs?|blood|heart|lungs?|stomach|brain|liver|kidneys?|muscles?|bones?|skin|immune|digest\w*)\b/i,
+};
+
 // People and figures as the narration speaks of them. They come in the order they are named, since the scene shows
 // each as it is spoken. A figure wears a look only when its words are said about that person (no crown for a
 // president), and holds a thing only when it is spoken of with them: three astronauts each holding a rocket say
@@ -1319,7 +1329,9 @@ function tidyPeople(visual: AnyVisual, narration: string, source: string): AnyVi
       return { ...item, figure: look, icon: item.icon && propFits(item.icon, source) ? item.icon : undefined };
     });
     const links = visual.links.map((link) => ({ ...link, from: order.indexOf(link.from), to: order.indexOf(link.to) }));
-    return { ...visual, items, links };
+    // A backdrop only where the narration or facts say the scene takes place there.
+    const backdrop = visual.backdrop && BACKDROP_WORDS[visual.backdrop].test(source) ? visual.backdrop : undefined;
+    return { ...visual, items, links, backdrop };
   }
   return visual;
 }

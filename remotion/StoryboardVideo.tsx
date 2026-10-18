@@ -249,7 +249,7 @@ function SceneView({
     case "space":
       return <SpaceScene view={scene.view} bodies={scene.bodies} craft={scene.craft} sites={scene.sites} {...timing} />;
     case "illustration":
-      return <IllustrationScene title={scene.title} items={scene.items} links={scene.links} {...timing} />;
+      return <IllustrationScene title={scene.title} items={scene.items} links={scene.links} backdrop={scene.backdrop} {...timing} />;
     case "template":
       return <TemplateScene template={scene.template} params={scene.params} {...timing} />;
   }

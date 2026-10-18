@@ -8,6 +8,7 @@ export const ICON_NAMES = [
   "house", "factory", "city", "temple", "church", "mosque", "pagoda", "pyramid", "tower", "bridge",
   // Nature
   "tree", "wheat", "leaf", "mountain", "drop", "wave", "flame", "cloud", "lightning", "snowflake", "sun",
+  "volcano", "rock", "fish", "bird", "bee", "sprout", "wind",
   // Space
   "moon", "star", "planet", "earth", "rocket", "satellite", "telescope",
   // Science and health

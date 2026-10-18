@@ -1,13 +1,14 @@
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 import { AbsoluteFill, Easing, interpolate, interpolateColors, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
-import type { FigureLook } from "@/lib/storyboard";
+import type { Backdrop, FigureLook } from "@/lib/storyboard";
 import { VIDEO } from "@/lib/theme";
 import { FIGURE_ASPECT, Figure } from "../figures";
 import { Icon } from "../icons";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
-import { useTheme } from "../theme";
+import { alpha, useTheme } from "../theme";
 
 type ItemSize = "small" | "medium" | "large";
 type Item = { icon?: string; figure?: FigureLook; label?: string; x: number; y: number; size?: ItemSize };
@@ -58,12 +59,14 @@ export function IllustrationScene({
   title,
   items,
   links,
+  backdrop,
   words,
   durationSec,
 }: {
   title?: string;
   items: Item[];
   links?: Link[];
+  backdrop?: Backdrop;
   words: TimedWord[];
   durationSec: number;
 }) {
@@ -76,6 +79,7 @@ export function IllustrationScene({
 
   return (
     <AbsoluteFill>
+      {backdrop ? <BackdropLayer kind={backdrop} gridY={plan.gridY} appear={ease(frame, fps, 0, 0.6)} /> : null}
       {plan.title ? (
         <div
           style={{
@@ -311,8 +315,15 @@ function planIllustration(title: string | undefined, items: Item[], links: Link[
     arrow.labelSec = Math.min(arrow.startSec + 0.4 * arrow.drawSec, doneBy - 0.3);
   }
 
+  // Where a height on the 0 to 100 grid lands on screen, as place() puts items, so a backdrop's ground or water line
+  // sits where the director put it.
+  const above = Math.max(...measured.map((item) => item.above));
+  const below = Math.max(...measured.map((item) => item.below));
+  const gridY = (share: number) => top + above + share * Math.max(0, BOTTOM - top - above - below);
+
   return {
     title: heading,
+    gridY,
     items: items.map((item, index) => ({
       item,
       point: points[index],
@@ -322,6 +333,90 @@ function planIllustration(title: string | undefined, items: Item[], links: Link[
     })),
     arrows,
   };
+}
+
+// Where the picture takes place, drawn calmly behind its items in the look's colors: the ground in layers under a
+// surface line, water under its surface, the ground along the bottom of the sky, stars, or the outline of a person.
+// Layers grow stronger with depth by laying the text color thinly over the ground, which works on dark and light looks.
+const WATER = "#3D85C6";
+function BackdropLayer({ kind, gridY, appear }: { kind: Backdrop; gridY: (share: number) => number; appear: number }) {
+  const { colors } = useTheme();
+  const { width, height } = VIDEO;
+  const line = alpha(colors.paper, 0.45);
+  const band = (from: number, to: number, opacity: number, color = colors.paper) => (
+    <rect x={0} y={from} width={width} height={Math.max(0, to - from)} fill={alpha(color, opacity)} />
+  );
+  let content: ReactNode = null;
+  if (kind === "underground") {
+    const surface = gridY(0.3);
+    content = (
+      <>
+        {band(surface, gridY(0.6), 0.06)}
+        {band(gridY(0.6), gridY(0.85), 0.1)}
+        {band(gridY(0.85), height, 0.15)}
+        <path d={`M0 ${surface}H${width}`} stroke={line} strokeWidth={5} />
+        <path d={`M0 ${gridY(0.6)}H${width}M0 ${gridY(0.85)}H${width}`} stroke={alpha(colors.paper, 0.18)} strokeWidth={2} strokeDasharray="14 12" />
+      </>
+    );
+  } else if (kind === "sea") {
+    const surface = gridY(0.3);
+    // A gentle wave along the surface, the same in every frame.
+    const wave = Array.from({ length: 25 }, (_, index) => `${index === 0 ? "M" : "L"}${(index * width) / 24} ${surface + (index % 2 ? 10 : -10)}`).join(" ");
+    content = (
+      <>
+        {band(surface, height, 0.16, WATER)}
+        {band(gridY(0.92), height, 0.12)}
+        <path d={wave} fill="none" stroke={line} strokeWidth={4} strokeLinejoin="round" />
+      </>
+    );
+  } else if (kind === "sky") {
+    const ground = gridY(0.88);
+    content = (
+      <>
+        {band(ground, height, 0.1)}
+        <path d={`M0 ${ground}H${width}`} stroke={line} strokeWidth={4} />
+      </>
+    );
+  } else if (kind === "space") {
+    // Stars scattered the same way every time.
+    let seed = 11;
+    const random = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 2 ** 32;
+    };
+    content = Array.from({ length: 90 }, (_, index) => (
+      <circle key={index} cx={random() * width} cy={random() * height} r={1.2 + random() * 2.2} fill={alpha(colors.paper, 0.25 + random() * 0.4)} />
+    ));
+  } else {
+    // A person seen from the front: the head at the top of the grid, the shoulders below it and the body down past
+    // the bottom, so the director can place organs where they are. Sizes are shares of the grid's height.
+    const top = gridY(0);
+    const span = gridY(1) - top;
+    const at = (share: number) => top + share * span;
+    const cx = width / 2;
+    const side = (share: number) => share * span;
+    const body = [
+      `M${cx - side(0.07)} ${at(0.15)}`,
+      `C${cx - side(0.08)} ${at(0.2)} ${cx - side(0.42)} ${at(0.18)} ${cx - side(0.46)} ${at(0.3)}`,
+      `C${cx - side(0.48)} ${at(0.36)} ${cx - side(0.36)} ${at(0.5)} ${cx - side(0.34)} ${at(0.75)}`,
+      `L${cx - side(0.38)} ${at(1.1)} L${cx + side(0.38)} ${at(1.1)} L${cx + side(0.34)} ${at(0.75)}`,
+      `C${cx + side(0.36)} ${at(0.5)} ${cx + side(0.48)} ${at(0.36)} ${cx + side(0.46)} ${at(0.3)}`,
+      `C${cx + side(0.42)} ${at(0.18)} ${cx + side(0.08)} ${at(0.2)} ${cx + side(0.07)} ${at(0.15)} Z`,
+    ].join(" ");
+    const fill = alpha(colors.paper, 0.06);
+    const stroke = alpha(colors.paper, 0.35);
+    content = (
+      <>
+        <path d={body} fill={fill} stroke={stroke} strokeWidth={4} strokeLinejoin="round" />
+        <circle cx={cx} cy={at(0.06)} r={side(0.1)} fill={fill} stroke={stroke} strokeWidth={4} />
+      </>
+    );
+  }
+  return (
+    <svg width={width} height={height} style={{ position: "absolute", left: 0, top: 0, opacity: appear }}>
+      {content}
+    </svg>
+  );
 }
 
 // The lines a text wraps to in a box `width` wide, since text cannot be measured here. Archivo and Fraunces are

@@ -415,6 +415,55 @@ const SHAPES: Record<IconName, (pen: Pen) => ReactNode> = {
       ))}
     </g>
   ),
+  volcano: (pen) => (
+    <>
+      <circle cx={42} cy={17} r={10} />
+      <circle cx={56} cy={12} r={12} />
+      <circle cx={67} cy={22} r={8} />
+      <path d="M4 94L36 40H64L96 94Z" {...pen.front()} />
+      <path d="M41 40Q47 51 42 61Q38 69 44 78" {...pen.detail(6)} />
+      <path d="M58 40Q54 52 61 63" {...pen.detail(5)} />
+    </>
+  ),
+  rock: (pen) => (
+    <>
+      <path d="M8 84L18 46L42 26L70 30L90 56L92 84Z" />
+      <path d="M42 26L50 54L90 56M50 54L30 84" {...pen.detail(4)} />
+    </>
+  ),
+  fish: (pen) => (
+    <>
+      <path d="M78 50L96 30V70Z" />
+      <path d="M6 50Q30 22 62 30Q76 34 84 50Q76 66 62 70Q30 78 6 50Z" {...pen.front()} />
+      <circle cx={24} cy={46} r={4.5} {...pen.hole} />
+      <path d="M48 36Q54 50 48 64" {...pen.detail(4)} />
+    </>
+  ),
+  bird: () => <path d="M4 44Q26 28 44 46L50 56L56 46Q74 28 96 44Q74 40 62 56Q57 63 50 66Q43 63 38 56Q26 40 4 44Z" />,
+  bee: (pen) => (
+    <>
+      <ellipse cx={36} cy={30} rx={16} ry={10} transform={turn(-30, 36, 30)} />
+      <ellipse cx={60} cy={30} rx={16} ry={10} transform={turn(30, 60, 30)} />
+      <ellipse cx={46} cy={62} rx={30} ry={21} {...pen.front()} />
+      <path d="M38 43V81M54 43V81" {...pen.detail(6)} />
+      <circle cx={83} cy={60} r={11} {...pen.front()} />
+    </>
+  ),
+  sprout: () => (
+    <>
+      <path d="M50 92V44" {...line(7)} />
+      <path d="M50 58Q20 60 14 30Q44 26 50 58Z" />
+      <path d="M50 46Q54 16 86 14Q88 44 50 46Z" />
+      <path d="M26 92H74" {...line(7)} />
+    </>
+  ),
+  wind: () => (
+    <g {...line(8)}>
+      <path d="M8 36H58A12 12 0 1 0 46 24" />
+      <path d="M8 56H76A12 12 0 1 1 64 68" />
+      <path d="M8 76H40" />
+    </g>
+  ),
   sun: () => (
     <>
       <circle cx={50} cy={50} r={20} />
