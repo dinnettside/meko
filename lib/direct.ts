@@ -1740,6 +1740,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
   const titleCall = orFallback<TitleVisual>(
     chatJson({
       step: `direct/${opening.id}`,
+      fast: true,
       schemaName: "title",
       schema: TitleVisualSchema,
       messages: directTitlePrompt(script.title, opening.narration, ICON_NAMES),
@@ -1914,7 +1915,12 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
           icons: ICON_NAMES,
           // The Moon's places only matter to a scene about space.
           moonPlaces: SPACE_WORDS.test(scene.narration) ? [...MOON_SEAS, ...MOON_SITES].map((place) => place.name) : [],
-          otherFacts: factList(videoFactIds.filter((id) => !scene.factIds.includes(id))),
+          // Only the other facts a timeline can use, those that state a year, and only when the scene may be a timeline:
+          // sending every fact of the video cost about a thousand tokens a call and drew labels from words the scene
+          // does not say.
+          otherFacts: blocked.includes("timeline")
+            ? []
+            : factList(videoFactIds.filter((id) => !scene.factIds.includes(id) && yearsIn(factMap.get(id)?.text ?? "").length > 0)),
           kinds: SCENE_KINDS.filter((other): other is OwnKind => other !== "text" && !blocked.includes(other)),
           templates: offered.map((name) => templateSpec(name).prompt),
           drawingExamples: drawingExamples.map(({ narration, drawing }) => ({ narration, drawing })),

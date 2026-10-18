@@ -154,7 +154,7 @@ export function directScenePrompt(input: {
   icons: readonly string[]; // the icon names the video can draw
   moonPlaces: string[]; // the seas and landing sites a Moon view can show
   quotable: { factId: string; sentence: string }[]; // whole sentences of the scene's source words that a quote may show
-  otherFacts: Fact[];
+  otherFacts: Fact[]; // other facts of the video a timeline may use
   kinds: OwnKind[]; // the director's own kinds this scene may use, besides text
   templates: string[]; // how to fill each template offered to this scene
   drawingExamples: { narration: string; drawing: unknown }[]; // drawings made before for similar scenes
@@ -200,13 +200,13 @@ export function directScenePrompt(input: {
               ...input.drawingExamples.map((example) => `- For "${example.narration}": ${JSON.stringify(example.drawing)}`),
             ]
           : []),
-        `Moon places: ${input.moonPlaces.join(", ")}`,
+        ...(input.moonPlaces.length > 0 ? [`Moon places: ${input.moonPlaces.join(", ")}`] : []),
         "",
         "Facts behind this scene, with their source words:",
         ...input.sceneFacts.map((fact) => `${fact.id}: ${fact.text} (source words: "${fact.quote}")`),
-        "",
-        "Other facts in the video:",
-        ...input.otherFacts.map((fact) => `${fact.id}: ${fact.text}`),
+        ...(input.otherFacts.length > 0
+          ? ["", "Other facts in the video that state a year, for a timeline:", ...input.otherFacts.map((fact) => `${fact.id}: ${fact.text}`)]
+          : []),
       ].join("\n"),
     },
   ];

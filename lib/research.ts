@@ -117,6 +117,7 @@ async function readSource(
 ): Promise<{ source: ReadSource; usage: Usage }> {
   const { data, usage } = await chatJson({
     step: "research/extract",
+    fast: true,
     schemaName: "facts",
     schema: ExtractedSchema,
     messages: extractFactsPrompt(request, { title: result.title, text: result.content }),
