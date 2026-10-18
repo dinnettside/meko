@@ -967,8 +967,11 @@ export const TEMPLATES = {
     plan: "a cutaway of a volcano: magma rising from its chamber up the vent and erupting, when the scene explains an eruption or what is inside a volcano",
     prompt: '"volcano_cutaway" when the narration explains how a volcano erupts or what is inside it: a cutaway with the crust, the magma chamber, the conduit up to the crater, and the eruption with ash and lava. "labels" names the parts: chamber, conduit, crater, ash, lava, crust. "erupts" is false when the scene is only about magma gathering below, else true.',
     parts: ["chamber", "conduit", "crater", "ash", "lava", "crust"],
-    fits: (scene) => /\b(magma|volcano\w*|erupt\w*|lava|crater)\b/i.test(scene.narration),
+    fits: (scene) => /\bvolcan\w*/i.test(scene.source) && /\b(magma|erupt\w*|lava)\b/i.test(scene.narration),
     options: { erupts: z.boolean() },
+    // The drawing bursts into an eruption only when the narration or facts speak of one.
+    check: (visual, { source }) =>
+      visual.erupts === true && !/\b(erupt\w*|burst\w*|explod\w*|explosi\w*)\b/i.test(source) ? ['The narration does not speak of an eruption. Give "erupts" false.'] : [],
   }),
   plate_boundary: labelDiagram({
     name: "plate_boundary",
@@ -1003,7 +1006,7 @@ export const TEMPLATES = {
     plan: "an earthquake: the ground slipping along a fault, with the focus underground, the epicenter above it and waves spreading out",
     prompt: '"earthquake" when the narration explains how an earthquake happens: a block of ground slipping along a fault, the focus below, the epicenter above it and the seismic waves spreading. "labels" names the parts: fault, focus, epicenter, waves.',
     parts: ["fault", "focus", "epicenter", "waves"],
-    fits: (scene) => /\b(earthquake\w*|seismic|epicent\w*|tremors?|fault)\b/i.test(scene.narration),
+    fits: (scene) => /\b(earthquakes?|quakes?)\b/i.test(scene.source) && /\bfaults?\b/i.test(scene.source),
     options: {},
   }),
   heart_pump: labelDiagram({
@@ -1079,7 +1082,7 @@ export const TEMPLATES = {
     plan: "the Earth with a quarter cut away, showing the crust, the mantle, the outer core and the inner core",
     prompt: '"layers_of_earth_cutaway" when the narration names the layers inside the Earth: the Earth cut open to show them from the outside in. "labels" names the layers: crust, mantle, outerCore, innerCore. "focus" is the layer the scene is about, or "none".',
     parts: ["crust", "mantle", "outerCore", "innerCore"],
-    fits: (scene) => /\b(mantle|inner core|outer core|earth's core)\b/i.test(scene.narration),
+    fits: (scene) => [/\bcrust\b/i, /\bmantle\b/i, /\bcores?\b/i].filter((layer) => layer.test(scene.narration)).length >= 2,
     options: { focus: z.enum(["none", "crust", "mantle", "outerCore", "innerCore"]) },
     params: ({ focus, ...params }) => (focus === "none" ? params : { ...params, focus }),
   }),
