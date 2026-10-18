@@ -11,9 +11,6 @@ export function SiteHeader() {
           <span className="hidden text-sm text-muted sm:inline">Fact-checked explainer videos</span>
         </Link>
         <nav className="flex items-center gap-5 text-sm">
-          <a href="#examples" className="text-muted transition-colors hover:text-fg">
-            Examples
-          </a>
           <a href="#how" className="text-muted transition-colors hover:text-fg">
             How it works
           </a>

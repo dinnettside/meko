@@ -34,6 +34,7 @@ export type Example = {
   madeAt: string; // ISO date
   ms: number; // how long the whole pipeline took
   costUsd: number; // Token Factory cost of the run
+  tokens?: number; // tokens the models read and wrote for it, which watching it again saves
   storyboard: Storyboard;
   words: Record<string, TimedWord[]>; // by scene ID
   report: FactCheckReport;

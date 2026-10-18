@@ -42,6 +42,7 @@ export const SaveInputSchema = z.object({
   facts: ResearchFactListSchema,
   sources: SourceListSchema,
   costUsd: z.number(),
+  tokens: z.number().optional(),
   ms: z.number(),
 });
 
@@ -77,6 +78,7 @@ export async function saveVideo(input: z.infer<typeof SaveInputSchema>): Promise
     madeAt: new Date().toISOString(),
     ms: input.ms,
     costUsd: input.costUsd,
+    tokens: input.tokens,
     storyboard,
     words: Object.fromEntries(storyboard.scenes.map((scene) => [scene.id, voice[scene.id].words])),
     report: input.report,

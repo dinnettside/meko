@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { DirectResult } from "@/lib/direct";
 import { EXAMPLES } from "@/lib/example";
-import type { Example, ExampleMeta } from "@/lib/example";
+import type { Example } from "@/lib/example";
 import type { LibraryVideo } from "@/lib/library";
 import type { FactCheckResult } from "@/lib/factcheck";
 import type { FactCheckReport as Report, ResearchFact, VideoRequest } from "@/lib/pipeline";
@@ -14,7 +14,6 @@ import type { ScriptResult } from "@/lib/script";
 import type { Source, Storyboard } from "@/lib/storyboard";
 import type { SceneVoice, VoiceResult } from "@/lib/voice";
 import { FactCheckReport } from "./FactCheckReport";
-import { Gallery } from "./Gallery";
 import { HowItWorks } from "./HowItWorks";
 import { sentenceSpans } from "./sentence-timing";
 import { SiteFooter, SiteHeader } from "./SiteChrome";
@@ -47,6 +46,7 @@ type Finished = {
   facts: ResearchFact[];
   sources: Source[]; // every source research read
   costUsd: number;
+  tokens?: number; // tokens the models read and wrote for it
   ms: number;
   example?: { topic: string; madeAt: string };
   library?: { madeAt: string }; // when the video comes from the library, made earlier for the same request
@@ -92,6 +92,7 @@ function fromLibrary(video: LibraryVideo): Finished {
     facts: video.facts,
     sources: video.sources,
     costUsd: video.costUsd,
+    tokens: video.tokens,
     ms: video.ms,
     library: { madeAt: video.madeAt },
   };
@@ -135,6 +136,9 @@ async function loadExample(slug: string): Promise<Finished> {
   };
 }
 
+// A step the server refused for its demo code, so the form can ask for one.
+class CodeError extends Error {}
+
 // Turns network and server errors into a sentence people can act on.
 async function postJson<T>(url: string, body: unknown, timeoutMs: number, demoCode: string): Promise<Timed<T>> {
   let response: Response;
@@ -153,7 +157,9 @@ async function postJson<T>(url: string, body: unknown, timeoutMs: number, demoCo
   }
   const json = await response.json().catch(() => null);
   const message: string = json?.error ?? "";
-  if (response.status === 401) throw new Error("That demo code is not right. Check it and try again.");
+  if (response.status === 401) {
+    throw new CodeError(demoCode ? "That demo code is not right. Check it and try again." : "Making a video needs the demo code. Enter it next to the button.");
+  }
   // The site has no demo code set up, so no code can work. Its message says so, rather than blaming the code typed.
   if (response.status === 503 && message) throw new Error(message);
   if (response.status === 429 || /\b429\b/.test(message)) {
@@ -168,7 +174,7 @@ async function postJson<T>(url: string, body: unknown, timeoutMs: number, demoCo
 const DEMO_CODE_KEY = "meko-demo-code";
 
 // `codeRequired` is true on the hosted demo, where making a video needs a demo code.
-export function MakeVideo({ codeRequired, examples }: { codeRequired: boolean; examples: ExampleMeta[] }) {
+export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
   const [topic, setTopic] = useState("");
   // Remembered from the last code the server accepted in this browser. The page is prerendered without it, so the
   // field fills in on the client; storage can be blocked, and then it starts empty.
@@ -189,6 +195,8 @@ export function MakeVideo({ codeRequired, examples }: { codeRequired: boolean; e
   const [finished, setFinished] = useState<Finished | null>(null);
   const [activeSentence, setActiveSentence] = useState<string | null>(null);
   const [tab, setTab] = useState<"factcheck" | "sources">("factcheck");
+  // Whether the form shows the demo code field: on the hosted demo from the start, and anywhere once a step asks for it.
+  const [needsCode, setNeedsCode] = useState(codeRequired);
   const [asked, setAsked] = useState<VideoRequest | null>(null); // what the video being made is about
   const [now, setNow] = useState(() => Date.now());
   const progress = useRef<Progress | null>(null);
@@ -230,7 +238,7 @@ export function MakeVideo({ codeRequired, examples }: { codeRequired: boolean; e
   // never kept, also when it is fixed before "Try again". Storage can be blocked, and that is fine.
   function rememberCode(code: string) {
     try {
-      if (codeRequired) localStorage.setItem(DEMO_CODE_KEY, code);
+      if (code) localStorage.setItem(DEMO_CODE_KEY, code);
     } catch {}
   }
 
@@ -245,6 +253,7 @@ export function MakeVideo({ codeRequired, examples }: { codeRequired: boolean; e
       return result;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      if (error instanceof CodeError) setNeedsCode(true);
       setStep(id, { status: "failed", detail: message });
       setFailed({ step: id, message });
       throw error;
@@ -307,7 +316,8 @@ export function MakeVideo({ codeRequired, examples }: { codeRequired: boolean; e
       state.directed = directed;
 
       const costUsd = [research, script, checked, directed].reduce((total, step) => total + step.usage.costUsd, 0);
-      const base = { report: checked.report, facts: research.facts, sources, costUsd };
+      const tokens = [research, script, checked, directed].reduce((total, step) => total + step.usage.promptTokens + step.usage.completionTokens, 0);
+      const base = { report: checked.report, facts: research.facts, sources, costUsd, tokens };
       // The video works without a voice too: silent, with captions. So a failed voice still shows the video.
       try {
         const voiced = await runStep<VoiceResult>("voice", "/api/voice", { storyboard: directed.storyboard }, (result) => {
@@ -371,16 +381,6 @@ export function MakeVideo({ codeRequired, examples }: { codeRequired: boolean; e
     void runFrom(failed.step, progress.current);
   }
 
-  async function watchExample(slug: string) {
-    if (running) return;
-    setStarted(false);
-    setFailed(null);
-    setActiveSentence(null);
-    setTab("factcheck");
-    setFinished(await loadExample(slug));
-    document.getElementById("result")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
   // A link to /?example opens the first example straight away, and /?example=black-death that one.
   useEffect(() => {
     const wanted = new URLSearchParams(window.location.search).get("example");
@@ -434,20 +434,6 @@ export function MakeVideo({ codeRequired, examples }: { codeRequired: boolean; e
             <span>.</span>
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
-            {codeRequired ? (
-              <label className="flex items-center gap-2 text-sm text-muted">
-                Demo code
-                <input
-                  value={demoCode}
-                  onChange={(event) => setDemoCode(event.target.value)}
-                  required
-                  autoComplete="off"
-                  spellCheck={false}
-                  suppressHydrationWarning
-                  className="w-36 rounded-md border border-rule bg-bg px-2.5 py-1.5 font-mono text-sm text-fg outline-none focus:border-fg"
-                />
-              </label>
-            ) : null}
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
               <span>Try</span>
               {SUGGESTIONS.map((suggestion, index) => (
@@ -459,16 +445,36 @@ export function MakeVideo({ codeRequired, examples }: { codeRequired: boolean; e
                 </span>
               ))}
             </p>
-            <button
-              type="submit"
-              disabled={running}
-              className="ml-auto rounded-full bg-fg px-6 py-3 font-medium text-bg transition-opacity hover:opacity-85 disabled:opacity-50"
-            >
-              {running ? "Making video…" : "Make video"}
-            </button>
+            <div className="ml-auto flex flex-wrap items-center gap-3">
+              {needsCode ? (
+                <label className="flex items-center gap-2 text-sm text-muted">
+                  Demo code
+                  <input
+                    value={demoCode}
+                    onChange={(event) => setDemoCode(event.target.value)}
+                    required
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder="From the submission"
+                    suppressHydrationWarning
+                    className="w-44 rounded-full border border-rule bg-bg px-4 py-2.5 font-mono text-sm text-fg outline-none placeholder:font-sans placeholder:text-muted/70 focus:border-fg"
+                  />
+                </label>
+              ) : null}
+              <button
+                type="submit"
+                disabled={running}
+                className="rounded-full bg-fg px-6 py-3 font-medium text-bg transition-opacity hover:opacity-85 disabled:opacity-50"
+              >
+                {running ? "Making video…" : "Make video"}
+              </button>
+            </div>
           </div>
-          {codeRequired ? (
-            <p className="mt-4 text-sm text-muted">Making a new video needs the demo code from the Meko submission. The finished videos below play without it.</p>
+          {needsCode ? (
+            <p className="mt-4 text-sm text-muted">
+              On this site, making a new video needs the demo code from the Meko submission, so strangers cannot spend the API
+              credits. Videos already made play without it.
+            </p>
           ) : null}
         </form>
 
@@ -510,8 +516,10 @@ export function MakeVideo({ codeRequired, examples }: { codeRequired: boolean; e
               {finished.library ? (
                 <p className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted">
                   <span>
-                    Made for the same topic on {new Date(finished.library.madeAt).toLocaleDateString("en-GB", { dateStyle: "long" })}, checked
-                    the same way.
+                    Meko made this video for the same request on{" "}
+                    {new Date(finished.library.madeAt).toLocaleDateString("en-GB", { dateStyle: "long" })}, so it plays again without new
+                    research or model calls. That saved about ${finished.costUsd.toFixed(2)}
+                    {finished.tokens ? ` and ${Math.round(finished.tokens / 1000)},000 tokens of model work` : ""}.
                   </span>
                   <button
                     type="button"
@@ -592,7 +600,6 @@ export function MakeVideo({ codeRequired, examples }: { codeRequired: boolean; e
           </section>
         ) : null}
 
-        <Gallery examples={examples} onWatch={(slug) => void watchExample(slug)} disabled={running} />
         <HowItWorks />
       </main>
       <SiteFooter />

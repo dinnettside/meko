@@ -32,6 +32,7 @@ const example: Example = {
   madeAt: new Date().toISOString(),
   ms: run.totalMs,
   costUsd: run.costUsd,
+  tokens: [run.research, run.script, run.factcheck, run.directed].reduce((total, step) => total + step.usage.promptTokens + step.usage.completionTokens, 0),
   storyboard: run.voiced.storyboard,
   words: Object.fromEntries(Object.entries(run.voiced.voice).map(([sceneId, voice]) => [sceneId, voice.words])),
   report: run.factcheck.report,
