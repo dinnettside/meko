@@ -18,10 +18,13 @@ import {
   yearRangesIn,
   yearsIn,
 } from "./numbers.ts";
-import { isCountryName, labelMismatch, namesAPlace, namesCity, namesCountry } from "./regions.ts";
+import { isCountryName, isCountryOwnName, labelMismatch, namesAPlace, namesCity, namesCountry } from "./regions.ts";
 import { questionProblems } from "./script.ts";
 import { claimWords, contentWords, groundedWords, isSentenceOf, sameWords, sentencesOf, wholeSentencesOf } from "./words.ts";
-import { StoryboardSchema, storyboardProblems } from "./storyboard.ts";
+import { FIGURE_LOOKS, SPACE_BODIES, StoryboardSchema, storyboardProblems } from "./storyboard.ts";
+import { ICON_NAMES, isIconName } from "./icons.ts";
+import { MOON_SEAS, MOON_SITES, moonPlace } from "./moon.ts";
+import { placeOf } from "./places.ts";
 import { geoDistance } from "d3-geo";
 import { canDraw, countryCenter, countryContains } from "./world.ts";
 import type { Storyboard } from "./storyboard.ts";
@@ -76,6 +79,10 @@ const SceneVisualSchema = z.discriminatedUnion("kind", [
     markers: z
       .array(z.object({ label: z.string(), lon: z.number(), lat: z.number(), country: z.string() }))
       .max(3),
+    // Routes drawn along their way. Stops are city names the code places from its own table, or marker labels.
+    routes: z
+      .array(z.object({ stops: z.array(z.string()).min(2).max(6), by: z.enum(["land", "sea"]), label: z.string().optional() }))
+      .max(2),
   }),
   z.object({
     kind: z.literal("timeline"),
@@ -105,21 +112,71 @@ const SceneVisualSchema = z.discriminatedUnion("kind", [
   }),
   // The quote names its fact; the code checks the words are in that fact's quote, then uses the fact's source.
   z.object({ kind: z.literal("quote"), text: z.string(), factId: z.string() }),
-  z.object({ kind: z.literal("steps"), steps: z.array(z.string()).min(2).max(5) }),
+  // Icons are names from lib/icons.ts; an unknown one is dropped, never worth a retry.
+  z.object({ kind: z.literal("steps"), steps: z.array(z.string()).min(2).max(5), icons: z.array(z.string()).max(5) }),
   z.object({
     kind: z.literal("list"),
-    items: z.array(z.object({ title: z.string(), detail: z.string().optional() })).min(2).max(4),
+    items: z.array(z.object({ title: z.string(), detail: z.string().optional(), icon: z.string().optional() })).min(2).max(4),
   }),
   z.object({
     kind: z.literal("versus"),
     left: z.string(),
     right: z.string(),
+    leftIcon: z.string().optional(),
+    rightIcon: z.string().optional(),
     rows: z.array(z.object({ label: z.string(), left: z.string(), right: z.string() })).min(2).max(4),
+  }),
+  z.object({
+    kind: z.literal("people"),
+    people: z
+      .array(z.object({ name: z.string(), role: z.string().optional(), look: z.enum(FIGURE_LOOKS), prop: z.string().optional() }))
+      .min(1)
+      .max(4),
+  }),
+  z.object({
+    kind: z.literal("space"),
+    view: z.enum(["journey", "moon"]),
+    bodies: z.array(z.enum(SPACE_BODIES)).max(4),
+    craft: z.object({ from: z.enum(SPACE_BODIES), to: z.enum(SPACE_BODIES), label: z.string().optional() }).optional(),
+    // Seas and landing sites on the Moon, by name; the code places them.
+    sites: z.array(z.string()).max(4),
+  }),
+  z.object({
+    kind: z.literal("illustration"),
+    title: z.string().optional(),
+    items: z
+      .array(
+        z.object({
+          icon: z.string().optional(),
+          figure: z.enum(FIGURE_LOOKS).optional(),
+          label: z.string().optional(),
+          x: z.number(),
+          y: z.number(),
+          size: z.enum(["small", "medium", "large"]).optional(),
+        }),
+      )
+      .min(2)
+      .max(8),
+    links: z.array(z.object({ from: z.number().int(), to: z.number().int(), label: z.string().optional() })).max(6),
   }),
   z.object({ kind: z.literal("change"), from: z.string(), to: z.string(), year: z.number().int().optional() }),
 ]);
 
-const SCENE_KINDS = ["map", "timeline", "stat", "compare", "quote", "steps", "list", "versus", "change", "text"] as const;
+const SCENE_KINDS = [
+  "map",
+  "timeline",
+  "stat",
+  "compare",
+  "quote",
+  "steps",
+  "list",
+  "versus",
+  "change",
+  "people",
+  "space",
+  "illustration",
+  "text",
+] as const;
 type SceneKind = (typeof SCENE_KINDS)[number];
 
 // How often each kind may appear among a video's scenes. Maps are the strongest picture and follow on from each
@@ -137,6 +194,9 @@ function kindLimits(scenes: number, geographic: boolean): Record<SceneKind, numb
     list: 2,
     versus: 1,
     change: 1,
+    people: 2,
+    space: 2,
+    illustration: 2,
     text: 2,
   };
 }
@@ -308,6 +368,23 @@ const hasWholeSentence = (quote: string) => quotableSentences(quote).length > 0;
 const SEQUENCE_WORDS =
   /\b(led|leads?|leading|caus(e|ed|es|ing)|so|then|next|after(wards)?|because|result(s|ed|ing)?|until|before|first|finally|eventually|began|begin(s|ning)?|start(s|ed|ing)?|made|mak(e|es|ing)|turn(s|ed|ing)?|forc(e|es|ed|ing)|push(es|ed|ing)?|allow(s|ed|ing)?|enabl(e|es|ed|ing)|weaken(s|ed|ing)?|brought|bring(s|ing)?|trigger(s|ed|ing)?|spark(s|ed|ing)?|became|become(s)?|becoming|grew|grow(s|ing|n)?|cut(s|ting)?|end(s|ed|ing)?|clos(e|es|ed|ing)|drove|driv(e|es|ing)|spur(s|red|ring)?|prompt(s|ed|ing)?|fuel(s|led|ed|ling|ing)?|activat(e|es|ed|ing)|produc(e|es|ed|ing)|releas(e|es|ed|ing)|therefore|thus)\b/i;
 
+// Words that start with a capital but are not names of people.
+const NOT_NAMES = new Set(
+  "i the a an in on at by of to from for and but or so it its this that these those he she they his her their we our you your there then when after before during while since until as with into over under between january february march april may june july august september october november december monday tuesday wednesday thursday friday saturday sunday god".split(
+    " ",
+  ),
+);
+
+// Whether a narration names someone: a capitalized word that is not the first of a sentence, a place or a month,
+// like "Neil Armstrong" or "Robespierre". A loose test; the people check then wants every name in the narration.
+function namesAPerson(text: string): boolean {
+  return [...text.matchAll(/\p{Lu}[\p{Ll}'’-]+/gu)].some((match) => {
+    const before = text.slice(0, match.index);
+    const startsSentence = before.trim() === "" || /[.!?:"“]\s*$/.test(before);
+    return !startsSentence && !NOT_NAMES.has(match[0].toLowerCase()) && !namesAPlace(match[0]);
+  });
+}
+
 // Words that set two things side by side. A scoreboard compares two sides, so a narration without such a word
 // gets none: "The Wall came down over days and weeks" has no two sides to score.
 const VERSUS_WORDS =
@@ -332,6 +409,8 @@ function kindsWithoutData(scene: NarratedScene, facts: FactMap, videoYears: numb
   if (!scene.factIds.some((id) => hasWholeSentence(facts.get(id)?.quote ?? ""))) missing.push("quote");
   if (!SEQUENCE_WORDS.test(scene.narration)) missing.push("steps");
   if (!VERSUS_WORDS.test(scene.narration)) missing.push("versus");
+  if (!SPACE_WORDS.test(scene.narration)) missing.push("space");
+  if (!namesAPerson([scene.narration, ...factTexts].join(" "))) missing.push("people");
   if (!CHANGE_WORDS.test(scene.narration)) missing.push("change");
   return missing;
 }
@@ -407,6 +486,7 @@ function shownText(visual: SceneVisual): string[] {
         ...visual.highlights.map((h) => h.label ?? ""),
         ...visual.arrows.map((a) => a.label ?? ""),
         ...visual.markers.map((m) => m.label),
+        ...visual.routes.flatMap((route) => [route.label ?? "", ...route.stops]),
       ];
     case "stat":
       return [
@@ -428,7 +508,148 @@ function shownText(visual: SceneVisual): string[] {
       return [visual.left, visual.right, ...visual.rows.flatMap((row) => [row.label, row.left, row.right])];
     case "change":
       return [visual.from, visual.to, visual.year === undefined ? "" : String(visual.year)];
+    case "people":
+      return visual.people.flatMap((person) => [person.name, person.role ?? ""]);
+    case "space":
+      return [visual.craft?.label ?? "", ...visual.sites];
+    case "illustration":
+      return [visual.title ?? "", ...visual.items.map((item) => item.label ?? ""), ...visual.links.map((link) => link.label ?? "")];
   }
+}
+
+// The words a narration uses for each body a space scene can show. Earth needs none: a launch starts there.
+const BODY_WORDS: Record<(typeof SPACE_BODIES)[number], RegExp> = {
+  earth: /./,
+  moon: /\b(moon|lunar)\b/i,
+  sun: /\b(sun|solar)\b/i,
+  mars: /\b(mars|martian)\b/i,
+};
+
+// An icon name from lib/icons.ts, whatever its case or spaces ("Gold" is "gold"), or undefined when there is none.
+const iconKey = (name?: string) => {
+  const key = name?.trim().toLowerCase();
+  return key && isIconName(key) ? key : undefined;
+};
+
+// Words that tell of a journey along a way: a voyage, a trade route, a march. Such a map draws a route.
+const TRAVEL_WORDS =
+  /\b(sail(s|ed|ing)?|voyages?|routes?|roads?|caravans?|journey(s|ed)?|travell?(ed|ing)?|march(es|ed|ing)?|shipped)\b/i;
+
+// The words that show a figure would hold a thing: a flask for an experiment, a flag for a flag. Other icons need
+// their own name in the narration.
+const PROP_WORDS: Partial<Record<string, RegExp>> = {
+  flask: /\b(experiment|laborator|lab\b|chemi|scien)/i,
+  microscope: /\b(microscop|cells?\b|bacteri|germs?\b)/i,
+  book: /\b(books?|wrote|writ|author|reads?\b|read\b)/i,
+  scroll: /\b(laws?\b|decree|treaty|declar|document|charter|edict)/i,
+  letter: /\b(letters?|wrote)/i,
+  sword: /\b(swords?|battles?|fought|knights?|wars?\b)/i,
+  shield: /\b(shields?|defen)/i,
+  syringe: /\b(vaccin|inject|inocul)/i,
+  telescope: /\b(telescopes?|astronom|observ)/i,
+  map: /\b(maps?|mapped|explor)/i,
+  compass: /\b(compass|navigat)/i,
+  crown: /\b(crowns?|crowned|kings?|queens?|emperors?|empress|monarch)/i,
+  gavel: /\b(courts?|judges?|trials?|verdict)/i,
+  ballot: /\b(votes?|voted|voting|elect|ballots?)/i,
+};
+const propFits = (prop: string, source: string) => {
+  const key = iconKey(prop);
+  return key !== undefined && (PROP_WORDS[key] ?? new RegExp(`\\b${key}`, "i")).test(source);
+};
+
+// Places in COUNTRIES small enough that the country is its city or its island, so a route may stop there by that name.
+const CITY_STATES = new Set(["SGP", "HKG", "MAC", "VAT", "MCO", "SMR", "BHR", "MLT", "KWT", "LUX", "DJI", "BMU", "CUW", "GUM", "FLK", "SHN", "PRI"]);
+const namesACountry = (text: string) => Object.keys(COUNTRIES).some((code) => !CITY_STATES.has(code) && isCountryOwnName(text, code));
+
+// A stop's own name, without the note after it: "Kaffa" for "Kaffa (Crimea)" or "Calicut, India".
+const stopName = (stop: string) => stop.replace(/\s*\([^)]*\)/g, "").split(",")[0].trim();
+
+// Words of the sea, without which a route is not a sea route.
+const SEA_WORDS = /\b(sail(s|ed|ing|ors?)?|ships?|fleets?|voyages?|seas?|ocean|ports?|navy|naval|boats?|maritime|harbou?rs?|coasts?|galleons?)\b/i;
+
+// The clauses of a text, split at commas (not those in "17,000"), semicolons and words like "and", so a role or a
+// label is tied to the person or thing it is said about.
+const clausesOf = (text: string) => sentencesOf(text).flatMap((sentence) => sentence.split(/(?<!\d),|,(?!\d)|[;:]|\b(?:and|but|while|whereas)\b/));
+const statedTogether = (name: string, words: string, source: string) =>
+  clausesOf(source).some((clause) => groundedWords(name, clause).matched > 0 && isGrounded(words, clause));
+// A person's role, word for word in a clause that names them: "Commander" under Michael Collins is not "Command
+// Module Pilot", though the two share a stem.
+const roleOf = (name: string, role: string, source: string) =>
+  clausesOf(source).some((clause) => groundedWords(name, clause).matched > 0 && hasPhrase(role, clause));
+
+// Whether a name or phrase appears as a whole in a text, word for word, ignoring case, punctuation and small words
+// like "the", "landing" or "site": "Sea of Tranquility" needs all of it, not only "Sea".
+const phraseWords = (text: string) =>
+  text.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter((word) => word && !["the", "landing", "site", "area"].includes(word));
+function hasPhrase(phrase: string, text: string): boolean {
+  const wanted = phraseWords(phrase).join(" ");
+  return wanted !== "" && ` ${phraseWords(text).join(" ")} `.includes(` ${wanted} `);
+}
+
+// Words that show a figure's look is right for the person it stands for: a crown only for a king, queen or emperor,
+// and not for Martin Luther King, a spacesuit only in a story about space. A plain figure needs nothing.
+const LOOK_WORDS: Record<(typeof FIGURE_LOOKS)[number], RegExp | null> = {
+  person: null,
+  astronaut: /\b(astronauts?|cosmonauts?|spacewalk|moonwalk|lunar|module|apollo|space|spacecraft|orbit|moon)\b/i,
+  scientist: /\b(scientists?|physicists?|chemists?|biologists?|researchers?|discover(ed|y|ies)?|experiments?|laborator(y|ies)|inventors?|invented|mathematicians?)\b/i,
+  soldier: /\b(soldiers?|army|armies|troops|generals?|fought|military|marines?|officers?|commanders?|legions?|warriors?|knights?)\b/i,
+  ruler: /\b(kings?|queens?|emperors?|empress|sultans?|tsars?|czars?|pharaohs?|khans?|shahs?|caliphs?|monarchs?|princes?|princess|dukes?|duchess|kaiser|regent)\b/i,
+  worker: /\b(workers?|miners?|builders?|labou?rers?|strikers?|strike|factory|craftsmen|peasants?|farmers?)\b/i,
+  explorer: /\b(explorers?|expeditions?|navigators?|voyages?|sailed|discovered|reached|climbers?|mountaineers?)\b/i,
+  doctor: /\b(doctors?|physicians?|surgeons?|nurses?|medics?|medicine|treated)\b/i,
+};
+// The sentences that name a person, without the person's own name, so "King" in "Martin Luther King" is no title.
+const aboutPerson = (name: string, source: string) => {
+  const nameWords = new Set(phraseWords(name));
+  return sentencesOf(source)
+    .filter((sentence) => groundedWords(name, sentence).matched > 0)
+    .map((sentence) => sentence.split(/\s+/).filter((word) => !nameWords.has(word.toLowerCase().replace(/[^\p{L}\p{N}]/gu, ""))).join(" "))
+    .join(" ");
+};
+function lookFits(look: (typeof FIGURE_LOOKS)[number], name: string, role: string | undefined, source: string): boolean {
+  const words = LOOK_WORDS[look];
+  if (!words) return true;
+  // A spacesuit fits anyone in a story about space; other looks need their words next to the person.
+  return words.test(`${aboutPerson(name, source)} ${role ?? ""}`) || (look === "astronaut" && words.test(source));
+}
+
+// Words that tell a name is an animal's or a thing's, like "the dog Laika" or "Columbia, the command module".
+const NOT_PEOPLE = "dogs?|monkeys?|chimpanzees?|chimps?|apes?|sheep|cats?|horses?|mice|mouse|rats?|ships?|probes?|satellites?|rockets?|spacecraft|modules?|capsules?|landers?|rovers?";
+const isNotAPerson = (name: string, source: string) => {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`\\b(?:${NOT_PEOPLE})\\s+${escaped}\\b|\\b${escaped},?\\s+(?:the|a|an|our)\\s+(?:${NOT_PEOPLE})\\b`, "i").test(source);
+};
+
+// Where a text is first named in the narration (then the facts), so things can come in the order they are spoken.
+const firstMention = (text: string, narration: string, source: string) => {
+  const words = claimWords(text).filter((word) => word.length > 2);
+  const at = (where: string) => Math.min(...words.map((word) => where.toLowerCase().indexOf(word)).filter((index) => index >= 0), Infinity);
+  const inNarration = at(narration);
+  return Number.isFinite(inNarration) ? inNarration : narration.length + at(source);
+};
+
+// Whether a route stop is a city the map can place: one of the scene's markers, or a city in the code's own table.
+const stopMarker = (visual: MapVisual, stop: string) =>
+  visual.markers.find((marker) => marker.label.trim().toLowerCase() === stop.trim().toLowerCase());
+
+// What is wrong with a route stop: it must be one of the scene's markers, or a city (not a country) in the code's
+// table, named in the narration or facts, in a country the map shows. Memphis on a map of the United States is not
+// the Memphis in Egypt the table holds; the model then gives it as a marker.
+function stopProblems(visual: MapVisual, stop: string, source: string, facts: FactMap): string[] {
+  if (stopMarker(visual, stop)) return [];
+  if (namesACountry(stopName(stop))) return [`"${stop}" names a country. A route stops at cities and ports: name one, or give it as a marker.`];
+  const place = placeOf(stop);
+  if (!place) return [`The route stop "${stop}" is not a city the map knows. Use a city the narration or facts name, or give it as a marker.`];
+  const factText = [...facts.values()].map((fact) => fact.text).join(" ");
+  if (!isFullyGrounded(stopName(stop), source) && !isFullyGrounded(stopName(stop), factText)) {
+    return [`"${stop}" says something the narration does not. Use the narration's own words.`];
+  }
+  const shown = new Set([...visual.frame, ...visual.highlights.map((h) => h.country), ...visual.markers.map((m) => m.country)]);
+  if (!shown.has(place.country)) {
+    return [`"${stop}" is placed in ${COUNTRIES[place.country]?.name ?? place.country}, which this map does not show. Add that country to the frame if it is right, or give the city as a marker.`];
+  }
+  return [];
 }
 
 // Labels that state something (steps, stats, charts, timeline events) need more than half their words backed by the
@@ -525,6 +746,23 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
       if (unknown.length > 0) {
         const antarctica = unknown.includes("ATA") ? " The map cannot show Antarctica." : "";
         problems.push(`Unknown country codes: ${unknown.join(", ")}. Use ISO 3166-1 alpha-3 codes of today's countries.${antarctica}`);
+      }
+      for (const route of visual.routes) {
+        if (route.label && (!mapLabelIsGrounded({ text: route.label }, source, facts) || !directionIsBacked(route.label, source))) {
+          problems.push(ungrounded(route.label));
+        }
+        if (route.by === "sea" && !SEA_WORDS.test(source)) problems.push('The narration says nothing of the sea. Give this route "by" land, or use arrows.');
+        for (const stop of route.stops) problems.push(...stopProblems(visual, stop, source, facts));
+        if (new Set(route.stops.map((stop) => stop.trim().toLowerCase())).size < route.stops.length) {
+          problems.push(`The route through ${route.stops.join(", ")} visits a stop twice.`);
+        }
+      }
+      // A voyage or a trade route through known places is drawn along its way, with a ship or a camel on it, not as
+      // arrows between countries.
+      if (visual.routes.length === 0 && visual.arrows.length > 0 && visual.markers.length >= 2 && TRAVEL_WORDS.test(source)) {
+        problems.push(
+          'This is a journey along a way. Give it as "routes": its stops in order (your markers or cities the narration names), by land or sea, instead of arrows.',
+        );
       }
       for (const marker of visual.markers) {
         if (!isPlaceLabel(marker.label)) {
@@ -734,6 +972,69 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
         }
       }
       break;
+    case "people": {
+      const names = visual.people.map((person) => person.name.trim().toLowerCase());
+      if (new Set(names).size < names.length) problems.push("Two people have the same name. Show each person once.");
+      for (const person of visual.people) {
+        // Every word of a name must be the narration's or the facts': a figure never stands for someone they do not name.
+        if (tooLong(person.name, 4) || !isFullyGrounded(person.name, source)) {
+          problems.push(`"${person.name}" is not a name the narration or facts give. Show only the people they name, as they write the name.`);
+        }
+        if (isNotAPerson(person.name, source)) problems.push(`"${person.name}" is not a person here. Show only people.`);
+        // A role belongs to the person it is said about, in the same clause, so roles cannot be swapped between people.
+        if (person.role && (tooLong(person.role, 4) || !roleOf(person.name, person.role, source))) {
+          problems.push(`The role "${person.role}" must be what the narration or facts call ${person.name}, at most 4 words, in their words.`);
+        }
+      }
+      break;
+    }
+    case "space": {
+      if (visual.view === "journey") {
+        const bodies = new Set([...visual.bodies, ...(visual.craft ? [visual.craft.from, visual.craft.to] : [])]);
+        if (bodies.size < 2) problems.push("A journey shows at least two bodies, like earth and moon, or a craft flying between them.");
+        if (visual.craft && visual.craft.from === visual.craft.to) problems.push("The craft must fly from one body to another.");
+        const label = visual.craft?.label;
+        if (label && (tooLong(label, MAX_LABEL_WORDS) || !isFullyGrounded(label, source) || numbersIn(label).some((number) => !numbersIn(source).includes(number)))) {
+          problems.push(ungrounded(label));
+        }
+        for (const body of bodies) {
+          if (!BODY_WORDS[body].test(source)) problems.push(`The narration does not mention the ${body}. Show only the bodies it names.`);
+        }
+      } else {
+        if (visual.sites.length === 0) problems.push("A Moon view needs at least one sea or landing site the narration names.");
+        for (const site of visual.sites) {
+          if (!moonPlace(site)) problems.push(`"${site}" is not a place on the Moon the map knows. Use one from the list.`);
+          else if (!hasPhrase(site, source)) problems.push(`The narration and facts do not name "${site}". Show only the seas and sites they name, as they write them.`);
+        }
+      }
+      break;
+    }
+    case "illustration": {
+      if (visual.title && (tooLong(visual.title, MAX_LINE_WORDS) || !isGrounded(visual.title, source))) problems.push(ungrounded(visual.title));
+      visual.items.forEach((item, index) => {
+        if (!item.icon && !item.figure) problems.push(`Item ${index} needs an icon or a figure.`);
+        if (item.icon && !iconKey(item.icon)) problems.push(`"${item.icon}" is not an icon. Use one from the list.`);
+        if (item.label && tooLong(item.label, MAX_LABEL_WORDS)) problems.push(`The label "${item.label}" is too long. Use at most 4 words.`);
+        // A figure stands for people, so its label is held to the people rule: every word in the narration or facts.
+        if (item.label && !(item.figure ? isFullyGrounded(item.label, source) : isGrounded(item.label, source))) problems.push(ungrounded(item.label));
+      });
+      if (!visual.items.some((item) => item.label)) problems.push("Label the items in the narration's words, so the picture says what it says.");
+      // Items on top of each other cannot be read.
+      if (visual.items.some((item, index) => visual.items.slice(0, index).some((other) => Math.hypot(item.x - other.x, item.y - other.y) < 12))) {
+        problems.push("Two items sit on top of each other. Spread them out over the grid.");
+      }
+      for (const link of visual.links) {
+        if (!visual.items[link.from] || !visual.items[link.to] || link.from === link.to) {
+          problems.push(`A link joins items ${link.from} and ${link.to}, but items are counted from 0 and a link joins two different items.`);
+        }
+        // A link's label is said about one of the two things it joins, in the same clause.
+        const ends = [visual.items[link.from]?.label ?? "", visual.items[link.to]?.label ?? ""].filter(Boolean);
+        if (link.label && (tooLong(link.label, MAX_LABEL_WORDS) || !ends.some((end) => statedTogether(end, link.label ?? "", source)))) {
+          problems.push(`The arrow label "${link.label}" must be what the narration or facts say about the things it joins.`);
+        }
+      }
+      break;
+    }
   }
   return problems;
 }
@@ -839,8 +1140,19 @@ function repairScene(
         .filter((marker) => countryContains(marker.country, marker.lon, marker.lat))
         .filter((marker) => mapLabel(marker.label));
       const frame = visual.frame.flatMap((place) => resolvePlace(visual, place) ?? []);
+      const keptMarkers = { ...visual, markers };
+      // A sea route that loses a stop in the middle would take another way, so it goes whole; a land route keeps the
+      // stops that pass.
+      const routes = visual.routes
+        .map((route) => ({
+          ...route,
+          label: directionIsBacked(route.label, source) ? mapLabel(route.label) : undefined,
+          kept: route.stops.filter((stop) => stopProblems(keptMarkers, stop, source, facts).length === 0),
+        }))
+        .filter((route) => route.kept.length >= 2 && (route.by === "land" || route.kept.length === route.stops.length) && (route.by === "land" || SEA_WORDS.test(source)))
+        .map(({ kept, ...route }) => ({ ...route, stops: kept }));
       if (highlights.length === 0) return fallback;
-      return { kind: "map", frame: frame.length > 0 ? frame : highlights.map((h) => h.country), highlights, arrows, markers };
+      return { kind: "map", frame: frame.length > 0 ? frame : highlights.map((h) => h.country), highlights, arrows, markers, routes };
     }
     case "versus": {
       // Points the narration does not back go; two or more good ones still make a scoreboard of two different sides.
@@ -857,7 +1169,9 @@ function repairScene(
         .filter((item) => countWords(item.title) <= 4 && isGrounded(item.title, source) && safe(item.title))
         .filter((item) => yearsIn(item.title).length === 0 && datesIn(item.title).length === 0)
         .filter((item, index, all) => all.findIndex((other) => other === item || sameTitle(other, item)) === index)
-        .map((item) => (item.detail && countWords(item.detail) <= 7 && isGrounded(item.detail, source) && safe(item.detail) ? item : { title: item.title }));
+        .map((item) =>
+          item.detail && countWords(item.detail) <= 7 && isGrounded(item.detail, source) && safe(item.detail) ? item : { title: item.title, icon: item.icon },
+        );
       return items.length >= 2 ? { kind: "list", items } : fallback;
     }
     case "compare": {
@@ -871,6 +1185,42 @@ function repairScene(
       const tries = [visual, { ...visual, total: undefined }, { ...visual, valueMax: undefined }, { ...visual, total: undefined, valueMax: undefined }];
       return tries.find((attempt) => visualProblems(attempt, allowed, facts, source).length === 0) ?? fallback;
     }
+    case "people": {
+      // People the narration does not name go; the others stay, with their role only if it is backed.
+      const people = visual.people
+        .filter((person) => countWords(person.name) <= 4 && isFullyGrounded(person.name, source) && safe(person.name) && !isNotAPerson(person.name, source))
+        .filter((person, index, all) => all.findIndex((other) => other.name.trim().toLowerCase() === person.name.trim().toLowerCase()) === index)
+        .map((person) =>
+          person.role && countWords(person.role) <= 4 && roleOf(person.name, person.role, source) && safe(person.role)
+            ? person
+            : { ...person, role: undefined },
+        );
+      return people.length > 0 ? { ...visual, people } : fallback;
+    }
+    case "space": {
+      const sites = visual.sites.filter((site) => moonPlace(site) !== null && hasPhrase(site, source));
+      const craftLabel = visual.craft?.label;
+      const label =
+        craftLabel && isFullyGrounded(craftLabel, source) && numbersIn(craftLabel).every((number) => numbersIn(source).includes(number)) ? craftLabel : undefined;
+      const repaired = { ...visual, sites, craft: visual.craft ? { ...visual.craft, label } : undefined };
+      return visualProblems(repaired, allowed, facts, source).length === 0 ? repaired : fallback;
+    }
+    case "illustration": {
+      // Labels and links the narration does not back go; the picture stays if it still says something.
+      const labelOk = (label: string | undefined, strict: boolean) =>
+        label && countWords(label) <= MAX_LABEL_WORDS && (strict ? isFullyGrounded(label, source) : isGrounded(label, source)) && safe(label);
+      const items = visual.items.map((item) => (labelOk(item.label, item.figure !== undefined) ? item : { ...item, label: undefined }));
+      const links = visual.links
+        .filter((link) => items[link.from] && items[link.to] && link.from !== link.to)
+        .map((link) => {
+          const ends = [items[link.from].label ?? "", items[link.to].label ?? ""].filter(Boolean);
+          const stated = link.label && countWords(link.label) <= MAX_LABEL_WORDS && ends.some((end) => statedTogether(end, link.label ?? "", source));
+          return stated ? link : { ...link, label: undefined };
+        });
+      const title = visual.title && countWords(visual.title) <= MAX_LINE_WORDS && isGrounded(visual.title, source) ? visual.title : undefined;
+      const repaired = { ...visual, title, items, links };
+      return visualProblems(repaired, allowed, facts, source).length === 0 ? repaired : fallback;
+    }
     default:
       return visualProblems(visual, allowed, facts, source).length === 0 ? visual : fallback;
   }
@@ -880,7 +1230,7 @@ function repairScene(
 function sameAs(a: SceneVisual, b: SceneVisual): boolean {
   if (a.kind === "map" && b.kind === "map") {
     const countries = (visual: typeof a) => visual.highlights.map((h) => h.country).sort().join(",");
-    return countries(a) === countries(b) && a.arrows.length === 0 && b.arrows.length === 0;
+    return countries(a) === countries(b) && a.arrows.length + a.routes.length === 0 && b.arrows.length + b.routes.length === 0;
   }
   if (a.kind === "timeline" && b.kind === "timeline") {
     return a.events.map((e) => e.year).join(",") === b.events.map((e) => e.year).join(",");
@@ -922,6 +1272,40 @@ function tidyMap(visual: SceneVisual, source: string): SceneVisual {
   return { ...visual, highlights, arrows };
 }
 
+// People and figures as the narration speaks of them. They come in the order they are named, since the scene shows
+// each as it is spoken. A figure wears a look only when its words are said about that person (no crown for a
+// president), and holds a thing only when it is spoken of with them: three astronauts each holding a rocket say
+// nothing.
+function tidyPeople(visual: SceneVisual, narration: string, source: string): SceneVisual {
+  if (visual.kind === "people") {
+    const people = visual.people
+      .map((person) => ({
+        ...person,
+        look: lookFits(person.look, person.name, person.role, source) ? person.look : ("person" as const),
+        // A role that only repeats the name says nothing.
+        role: person.role && !sameWords(person.role, person.name) && groundedWords(person.role, person.name).matched < claimWords(person.role).length ? person.role : undefined,
+        prop: person.prop && propFits(person.prop, aboutPerson(person.name, source)) ? person.prop : undefined,
+      }))
+      .sort((a, b) => firstMention(a.name, narration, source) - firstMention(b.name, narration, source));
+    return { ...visual, people };
+  }
+  if (visual.kind === "illustration") {
+    const order = visual.items
+      .map((item, index) => ({ index, at: item.label ? firstMention(item.label, narration, source) : -1 }))
+      .sort((a, b) => a.at - b.at || a.index - b.index)
+      .map(({ index }) => index);
+    const items = order.map((index) => {
+      const item = visual.items[index];
+      if (!item.figure) return item;
+      const look = lookFits(item.figure, item.label ?? "", undefined, source) ? item.figure : ("person" as const);
+      return { ...item, figure: look, icon: item.icon && propFits(item.icon, source) ? item.icon : undefined };
+    });
+    const links = visual.links.map((link) => ({ ...link, from: order.indexOf(link.from), to: order.indexOf(link.to) }));
+    return { ...visual, items, links };
+  }
+  return visual;
+}
+
 // The last scene of a video with maps, when it would only show lines: every place the maps showed, and the camera
 // pulls back over them. The country the first map was about stays amber. It shows the whole picture and claims
 // nothing new, so it has no labels on countries or arrows.
@@ -939,12 +1323,21 @@ function recapMap(maps: MapVisual[]): MapVisual {
     .flatMap((map) => map.markers)
     .filter((marker, index, all) => all.findIndex((other) => other.label === marker.label) === index)
     .slice(0, 6);
+  // Land routes by city name only, since a stop at a marker of another map has no marker here; without labels. Sea
+  // routes stay out, because their way depends on the year of their own scene.
+  const routes = maps
+    .flatMap((map) => map.routes)
+    .filter((route) => route.by === "land")
+    .map((route) => ({ stops: route.stops.filter((stop) => placeOf(stop) !== null), by: route.by }))
+    .filter((route) => route.stops.length >= 2)
+    .slice(0, 2);
   return {
     kind: "map",
     frame: countries,
     highlights: countries.map((country) => ({ country, tone: country === origin ? "primary" : "secondary" })),
     arrows,
     markers,
+    routes,
   };
 }
 
@@ -1001,17 +1394,62 @@ async function verifyMarkers(
         return km <= MAX_MARKER_GAP_KM;
       });
       if (markers.length < visual.markers.length) console.warn(`[direct/places] Dropped ${visual.markers.length - markers.length} marker(s)`);
-      return { ...visual, markers };
+      // A route stop at a dropped marker goes too, rather than being looked up by name in the table, where the same
+      // name may be another city.
+      const dropped = new Set(visual.markers.filter((marker) => !markers.includes(marker)).map((marker) => marker.label.trim().toLowerCase()));
+      const routes = visual.routes.map((route) => ({ ...route, stops: route.stops.filter((stop) => !dropped.has(stop.trim().toLowerCase())) }));
+      return { ...visual, markers, routes };
     }),
   };
 }
 
 // The storyboard contract has no fact IDs on timeline events and no countries on markers, and a quote points to
 // its source instead of its fact.
-function forStoryboard(visual: SceneVisual, facts: FactMap) {
-  // An empty detail would draw an empty line under a card's title.
+// The year a route's journey took place: the earliest year in the sentences that name its stops. A route about today,
+// or one that names a canal without a year, is modern; with no year at all, it stays undated and takes no canal.
+function routeYear(stops: string[], source: string): number | undefined {
+  const years = sentencesOf(source)
+    .filter((sentence) => stops.some((stop) => groundedWords(stopName(stop), sentence).matched > 0))
+    .flatMap((sentence) => yearsIn(sentence));
+  if (years.length > 0) return Math.min(...years);
+  return /\b(today|nowadays|modern|currently|suez canal|panama canal)\b/i.test(source) ? new Date().getFullYear() : undefined;
+}
+
+// What travels along a route: a ship by sea, and by land only what the narration names, else a plain arrowhead.
+function routeIcon(by: "land" | "sea", source: string): string | undefined {
+  if (by === "sea") return "ship";
+  if (/\b(camels?|caravans?)\b/i.test(source)) return "camel";
+  if (/\b(horses?|cavalry|horseback|mounted)\b/i.test(source)) return "horse";
+  if (/\b(trains?|railways?|railroads?)\b/i.test(source)) return "train";
+  if (/\b(cars?|trucks?|drove|motorcade)\b/i.test(source)) return "car";
+  return undefined;
+}
+
+function forStoryboard(visual: SceneVisual, facts: FactMap, source: string) {
+  // An empty detail would draw an empty line under a card's title, and an unknown icon would draw a dot.
   if (visual.kind === "list") {
-    return { kind: "list" as const, items: visual.items.map(({ title, detail }) => (detail?.trim() ? { title, detail } : { title })) };
+    return {
+      kind: "list" as const,
+      items: visual.items.map(({ title, detail, icon }) => ({ title, ...(detail?.trim() ? { detail } : {}), ...(iconKey(icon) ? { icon: iconKey(icon) } : {}) })),
+    };
+  }
+  if (visual.kind === "steps") {
+    const icons = visual.steps.map((_, index) => iconKey(visual.icons[index]) ?? "");
+    return { kind: "steps" as const, steps: visual.steps, ...(icons.some(Boolean) ? { icons } : {}) };
+  }
+  if (visual.kind === "versus") {
+    const { leftIcon, rightIcon, ...rest } = visual;
+    return { ...rest, ...(iconKey(leftIcon) ? { leftIcon: iconKey(leftIcon) } : {}), ...(iconKey(rightIcon) ? { rightIcon: iconKey(rightIcon) } : {}) };
+  }
+  if (visual.kind === "people") {
+    return { kind: "people" as const, people: visual.people.map(({ prop, ...person }) => ({ ...person, ...(iconKey(prop) ? { prop: iconKey(prop) } : {}) })) };
+  }
+  if (visual.kind === "space") {
+    return { ...visual, sites: visual.sites.filter((site) => moonPlace(site) !== null) };
+  }
+  if (visual.kind === "illustration") {
+    const clamp = (value: number) => Math.max(0, Math.min(100, value));
+    return { ...visual, items: visual.items.map((item) => ({ ...item, icon: iconKey(item.icon), x: clamp(item.x), y: clamp(item.y) })) };
   }
   if (visual.kind === "timeline") {
     const eras = visual.eras.map(({ start, end, label }) => ({ start, end, label }));
@@ -1032,6 +1470,20 @@ function forStoryboard(visual: SceneVisual, facts: FactMap) {
         return from && to ? [{ from, to, label: arrow.label }] : [];
       }),
       markers: visual.markers.map(({ lon, lat, label }) => ({ lon, lat, label })),
+      // Each stop at a marker's point or at the city's place in the code's table, never at the model's coordinates.
+      routes: visual.routes
+        .map((route) => ({
+          by: route.by,
+          ...(route.label ? { label: route.label } : {}),
+          ...(routeYear(route.stops, source) !== undefined ? { year: routeYear(route.stops, source) } : {}),
+          ...(routeIcon(route.by, source) ? { icon: routeIcon(route.by, source) } : {}),
+          stops: route.stops.flatMap((stop) => {
+            const marker = stopMarker(visual, stop);
+            const place = marker ? { lon: marker.lon, lat: marker.lat } : placeOf(stop);
+            return place ? [{ lon: place.lon, lat: place.lat, label: marker ? marker.label : stop }] : [];
+          }),
+        }))
+        .filter((route) => route.stops.length >= 2),
     };
   }
   if (visual.kind === "quote") return { kind: "quote", text: visual.text, sourceId: facts.get(visual.factId)?.sourceId ?? "" };
@@ -1167,6 +1619,9 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
           narration: scene.narration,
           sceneFacts: factList(scene.factIds),
           quotable: scene.factIds.flatMap((id) => quotableSentences(factMap.get(id)?.quote ?? "").map((sentence) => ({ factId: id, sentence }))),
+          icons: ICON_NAMES,
+          // The Moon's places only matter to a scene about space.
+          moonPlaces: SPACE_WORDS.test(scene.narration) ? [...MOON_SEAS, ...MOON_SITES].map((place) => place.name) : [],
           otherFacts: factList(videoFactIds.filter((id) => !scene.factIds.includes(id))),
           plannedKind: plannedKinds[index],
           avoidKinds: avoidFor(index),
@@ -1198,7 +1653,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     rest.map((scene) => scene.narration),
     deadline,
   );
-  const tidied = checked.visuals.map((visual, index) => tidyMap(visual, sourceFor(rest[index])));
+  const tidied = checked.visuals.map((visual, index) => tidyPeople(tidyMap(visual, sourceFor(rest[index])), rest[index].narration, sourceFor(rest[index])));
   const usage = [title, ...scenes, checked, plan].reduce((total, call) => addUsage(total, call.usage), emptyUsage());
 
   // The calls ran apart, so a map or timeline can repeat the one before, the same kind can come too often in a row,
@@ -1216,7 +1671,8 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     const sameKind = previous !== undefined && !["map", "text"].includes(visual.kind) && previous.kind === visual.kind;
     const overLimit = visual.kind !== "text" && visuals.filter((other) => other.kind === visual.kind).length >= limits[visual.kind];
     // A map with nothing colored, marked or moving shows nothing.
-    const emptyMap = visual.kind === "map" && visual.markers.length === 0 && visual.arrows.length === 0 && visual.highlights.every((h) => h.tone === "muted");
+    const emptyMap =
+      visual.kind === "map" && visual.markers.length + visual.arrows.length + visual.routes.length === 0 && visual.highlights.every((h) => h.tone === "muted");
     const why = repeats
       ? "repeats the scene before"
       : fourthMap
@@ -1261,7 +1717,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     scenes: narrated.map((scene, index) => ({
       ...(index === 0
         ? { kind: "title", heading: title.data.heading, subheading: question || title.data.subheading }
-        : forStoryboard(visuals[index - 1], videoFacts)),
+        : forStoryboard(visuals[index - 1], videoFacts, sourceFor(rest[index - 1]))),
       id: scene.id,
       narration: scene.narration,
       factIds: scene.factIds,

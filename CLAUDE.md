@@ -89,16 +89,21 @@ type Scene =
       highlights: { country: string; label?: string; tone: "primary" | "secondary" | "muted" }[];
       arrows?: { from: string; to: string; label?: string }[];
       markers?: { lon: number; lat: number; label: string }[];
+      routes?: { stops: { lon: number; lat: number; label?: string }[]; by: "land" | "sea"; label?: string; year?: number; icon?: string }[]; // added Oct 15, 2026 with Trym's OK: a route drawn along its way, by land through its stops or by sea through water; `year` (canals only after they opened) and `icon` (what travels along it) added Oct 18, 2026 as part of it
     })
   | (SceneBase & { kind: "timeline"; events: { year: number; label: string; date?: string }[]; focusIndex: number; eras?: { start: number; end: number; label: string }[] }) // `date` (added Oct 14, 2026 with Trym's OK) is a day and month like "20 July", for events in the same year; `eras` (added Oct 14, 2026 with Trym's OK) are periods drawn as bands under the events
   // Added Oct 14, 2026 with Trym's OK:
   | (SceneBase & { kind: "stat"; value: number; valueMax?: number; unit?: string; label: string; total?: number }) // one big number; `total` draws value out of total as dots; `valueMax` (added Oct 14, 2026 with Trym's OK) is the high end when the number is a range, like 25 to 50 million
   | (SceneBase & { kind: "compare"; title: string; unit?: string; bars: { label: string; value: number }[] }) // a bar chart
   | (SceneBase & { kind: "quote"; text: string; sourceId: string }) // a source's exact words
-  | (SceneBase & { kind: "steps"; steps: string[] }) // a process or a chain of causes
-  | (SceneBase & { kind: "list"; items: { title: string; detail?: string }[] }) // added Oct 14, 2026 with Trym's OK: 2-4 things of one kind side by side, as cards without arrows
-  | (SceneBase & { kind: "versus"; left: string; right: string; rows: { label: string; left: string; right: string }[] }) // added Oct 14, 2026 with Trym's OK: two sides compared point by point, as a scoreboard
-  | (SceneBase & { kind: "change"; from: string; to: string; year?: number }); // added Oct 14, 2026 with Trym's OK: an old name or status struck through and replaced
+  | (SceneBase & { kind: "steps"; steps: string[]; icons?: string[] }) // a process or a chain of causes; `icons` (added Oct 15, 2026 with Trym's OK) is an icon name per step
+  | (SceneBase & { kind: "list"; items: { title: string; detail?: string; icon?: string }[] }) // added Oct 14, 2026 with Trym's OK: 2-4 things of one kind side by side, as cards without arrows; `icon` added Oct 15, 2026
+  | (SceneBase & { kind: "versus"; left: string; right: string; leftIcon?: string; rightIcon?: string; rows: { label: string; left: string; right: string }[] }) // added Oct 14, 2026 with Trym's OK: two sides compared point by point, as a scoreboard; icons added Oct 15, 2026
+  | (SceneBase & { kind: "change"; from: string; to: string; year?: number }) // added Oct 14, 2026 with Trym's OK: an old name or status struck through and replaced
+  // Added Oct 15, 2026 with Trym's OK:
+  | (SceneBase & { kind: "people"; people: { name: string; role?: string; look: FigureLook; prop?: string }[] }) // the people the narration names, as simple figures; FigureLook = "person" | "astronaut" | "scientist" | "soldier" | "ruler" | "worker" | "explorer" | "doctor", by role, never by gender or skin color
+  | (SceneBase & { kind: "space"; view: "journey" | "moon"; bodies?: SpaceBody[]; craft?: { from: SpaceBody; to: SpaceBody; label?: string }; sites?: string[] }) // a craft flying between bodies, or the Moon with its seas and named sites; SpaceBody = "earth" | "moon" | "sun" | "mars"
+  | (SceneBase & { kind: "illustration"; title?: string; items: { icon?: string; figure?: FigureLook; label?: string; x: number; y: number; size?: "small" | "medium" | "large" }[]; links?: { from: number; to: number; label?: string }[] }); // a free picture of icons and figures on a 0-100 grid, with arrows
 
 type Storyboard = {
   title: string;
@@ -111,7 +116,7 @@ type Storyboard = {
 };
 ```
 
-Phase 1 renders only `title` and `text`. `map` and `timeline` come in Phase 2. `stat`, `compare`, `quote`, `steps`, `list`, `versus` and `change` were added after Phase 2 so the videos feel less like slides.
+Phase 1 renders only `title` and `text`. `map` and `timeline` come in Phase 2. `stat`, `compare`, `quote`, `steps`, `list`, `versus` and `change` were added after Phase 2 so the videos feel less like slides. Icons, `people`, `space`, `illustration` and map `routes` were added on Oct 15, 2026, after Trym asked for pictures instead of text boxes and for less template-bound videos. Icon names come from a fixed list in `lib/icons.ts`; all of it is drawn in code.
 Known limitation: the map data has modern borders. Historical borders are out of scope (say so in the README).
 
 ## Phases

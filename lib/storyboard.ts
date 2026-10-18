@@ -2,6 +2,11 @@ import { z } from "zod";
 
 // Zod version of the storyboard contract in CLAUDE.md. Change only with Trym's OK.
 
+// How a person is drawn: by the role the narration gives them, never by gender or skin color.
+export const FIGURE_LOOKS = ["person", "astronaut", "scientist", "soldier", "ruler", "worker", "explorer", "doctor"] as const;
+// What a space scene can show.
+export const SPACE_BODIES = ["earth", "moon", "sun", "mars"] as const;
+
 export const SourceSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -52,6 +57,20 @@ const MapSceneSchema = z.object({
   markers: z
     .array(z.object({ lon: z.number(), lat: z.number(), label: z.string() }))
     .optional(),
+  // Trade and travel routes drawn along their way: a land route through the places it passed, a sea route through
+  // water from port to port. `year` is when the journey took place, so a sea route only uses canals open then, and
+  // `icon` is what travels along it (a ship, a camel, a horse), or a plain arrowhead without one.
+  routes: z
+    .array(
+      z.object({
+        stops: z.array(z.object({ lon: z.number(), lat: z.number(), label: z.string().optional() })),
+        by: z.enum(["land", "sea"]),
+        label: z.string().optional(),
+        year: z.number().optional(),
+        icon: z.string().optional(),
+      }),
+    )
+    .optional(),
 });
 
 // `date` is a day and month like "20 July", so events from the same year can share a timeline. `eras` are periods,
@@ -93,18 +112,20 @@ const QuoteSceneSchema = z.object({
   sourceId: z.string(),
 });
 
-// A process or a chain of causes, drawn as boxes with arrows.
+// A process or a chain of causes, drawn as boxes with arrows. `icons` has an icon name per step, or none.
 const StepsSceneSchema = z.object({
   ...sceneBase,
   kind: z.literal("steps"),
   steps: z.array(z.string()),
+  icons: z.array(z.string()).optional(),
 });
 
-// Two to four things of one kind side by side, like types, goods or effects, drawn as cards without arrows.
+// Two to four things of one kind side by side, like types, goods or effects, drawn as cards without arrows. A card
+// can show an icon, like gold bars for "Gold".
 const ListSceneSchema = z.object({
   ...sceneBase,
   kind: z.literal("list"),
-  items: z.array(z.object({ title: z.string(), detail: z.string().optional() })),
+  items: z.array(z.object({ title: z.string(), detail: z.string().optional(), icon: z.string().optional() })),
 });
 
 // Two sides compared point by point, like a scoreboard: each row names a point and what it is for each side.
@@ -113,7 +134,49 @@ const VersusSceneSchema = z.object({
   kind: z.literal("versus"),
   left: z.string(),
   right: z.string(),
+  leftIcon: z.string().optional(),
+  rightIcon: z.string().optional(),
   rows: z.array(z.object({ label: z.string(), left: z.string(), right: z.string() })),
+});
+
+// The people the narration names, as simple figures with their names, like the crew of Apollo 11. A figure can hold
+// something, like a scientist with a flask.
+const PeopleSceneSchema = z.object({
+  ...sceneBase,
+  kind: z.literal("people"),
+  people: z.array(
+    z.object({ name: z.string(), role: z.string().optional(), look: z.enum(FIGURE_LOOKS), prop: z.string().optional() }),
+  ),
+});
+
+// Space: a craft flying between bodies ("journey"), or the Moon's near side with its large seas and the sites the
+// narration names ("moon"). Sites are names from a fixed table, placed by the code.
+const SpaceSceneSchema = z.object({
+  ...sceneBase,
+  kind: z.literal("space"),
+  view: z.enum(["journey", "moon"]),
+  bodies: z.array(z.enum(SPACE_BODIES)).optional(),
+  craft: z.object({ from: z.enum(SPACE_BODIES), to: z.enum(SPACE_BODIES), label: z.string().optional() }).optional(),
+  sites: z.array(z.string()).optional(),
+});
+
+// A free picture the director composes from icons and figures with labels, placed on a 0-100 grid across the free
+// part of the frame, with arrows between them.
+const IllustrationSceneSchema = z.object({
+  ...sceneBase,
+  kind: z.literal("illustration"),
+  title: z.string().optional(),
+  items: z.array(
+    z.object({
+      icon: z.string().optional(),
+      figure: z.enum(FIGURE_LOOKS).optional(),
+      label: z.string().optional(),
+      x: z.number(),
+      y: z.number(),
+      size: z.enum(["small", "medium", "large"]).optional(),
+    }),
+  ),
+  links: z.array(z.object({ from: z.number(), to: z.number(), label: z.string().optional() })).optional(),
 });
 
 // An old name or status struck through and replaced by the new one, like Constantinople becoming Istanbul.
@@ -137,6 +200,9 @@ export const SceneSchema = z.discriminatedUnion("kind", [
   ListSceneSchema,
   VersusSceneSchema,
   ChangeSceneSchema,
+  PeopleSceneSchema,
+  SpaceSceneSchema,
+  IllustrationSceneSchema,
 ]);
 
 export const StoryboardSchema = z.object({
@@ -152,6 +218,8 @@ export const StoryboardSchema = z.object({
 export type Source = z.infer<typeof SourceSchema>;
 export type Fact = z.infer<typeof FactSchema>;
 export type Scene = z.infer<typeof SceneSchema>;
+export type FigureLook = (typeof FIGURE_LOOKS)[number];
+export type SpaceBody = (typeof SPACE_BODIES)[number];
 export type Storyboard = z.infer<typeof StoryboardSchema>;
 
 // Rules zod cannot check on its own. Returns one line per problem, empty when all is fine.

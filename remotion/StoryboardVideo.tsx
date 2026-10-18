@@ -11,6 +11,9 @@ import type { CheckCounts } from "./Credits";
 import { YearMark } from "./YearMark";
 import { SourceChip } from "./SourceChip";
 import { CompareScene } from "./scenes/CompareScene";
+import { IllustrationScene } from "./scenes/IllustrationScene";
+import { PeopleScene } from "./scenes/PeopleScene";
+import { SpaceScene } from "./scenes/SpaceScene";
 import { ChangeScene } from "./scenes/ChangeScene";
 import { ListScene } from "./scenes/ListScene";
 import { VersusScene } from "./scenes/VersusScene";
@@ -171,12 +174,18 @@ function SceneView({
         <QuoteScene text={scene.text} source={storyboard.sources.find((source) => source.id === scene.sourceId)} durationSec={scene.durationSec} />
       );
     case "steps":
-      return <StepsScene steps={scene.steps} {...timing} />;
+      return <StepsScene steps={scene.steps} icons={scene.icons} {...timing} />;
     case "list":
       return <ListScene items={scene.items} summary={isLast} {...timing} />;
     case "versus":
-      return <VersusScene left={scene.left} right={scene.right} rows={scene.rows} {...timing} />;
+      return <VersusScene left={scene.left} right={scene.right} leftIcon={scene.leftIcon} rightIcon={scene.rightIcon} rows={scene.rows} {...timing} />;
     case "change":
       return <ChangeScene from={scene.from} to={scene.to} year={scene.year} {...timing} />;
+    case "people":
+      return <PeopleScene people={scene.people} {...timing} />;
+    case "space":
+      return <SpaceScene view={scene.view} bodies={scene.bodies} craft={scene.craft} sites={scene.sites} {...timing} />;
+    case "illustration":
+      return <IllustrationScene title={scene.title} items={scene.items} links={scene.links} {...timing} />;
   }
 }

@@ -1,6 +1,7 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
 import { COLORS, FONTS, VIDEO } from "@/lib/theme";
+import { Icon } from "../icons";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
 
@@ -8,8 +9,8 @@ const GAP = 80; // room for the arrow between two boxes
 const BOX_HEIGHT = 300;
 
 // A process or a chain of causes. The steps appear one by one as the narration gets to them, and the newest step
-// is marked in amber.
-export function StepsScene({ steps, words, durationSec }: { steps: string[]; words: TimedWord[]; durationSec: number }) {
+// is marked in amber. A step can show an icon next to its number.
+export function StepsScene({ steps, icons, words, durationSec }: { steps: string[]; icons?: string[]; words: TimedWord[]; durationSec: number }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const usable = VIDEO.width - 2 * VIDEO.sideMargin;
@@ -25,7 +26,7 @@ export function StepsScene({ steps, words, durationSec }: { steps: string[]; wor
   const fontSize = (steps.length > 4 ? 40 : steps.length > 3 ? 44 : 50) - (longest > 36 ? 6 : 0);
 
   return (
-    <AbsoluteFill style={{ justifyContent: "center", padding: `0 ${VIDEO.sideMargin}px ${VIDEO.captionSpace}px` }}>
+    <AbsoluteFill style={{ justifyContent: "center", padding: `${VIDEO.topSpace}px ${VIDEO.sideMargin}px ${VIDEO.captionSpace}px` }}>
       {/* The boxes stretch to the tallest one, so a long step makes the whole row taller instead of spilling out. */}
       <div style={{ display: "flex", alignItems: "stretch" }}>
         {steps.map((step, index) => {
@@ -56,8 +57,13 @@ export function StepsScene({ steps, words, durationSec }: { steps: string[]; wor
                   gap: 18,
                 }}
               >
-                <div style={{ fontFamily: FONTS.display, fontSize: 64, fontWeight: 700, lineHeight: 1, color: isNewest ? COLORS.signal : COLORS.dim }}>
-                  {index + 1}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ fontFamily: FONTS.display, fontSize: 64, fontWeight: 700, lineHeight: 1, color: isNewest ? COLORS.signal : COLORS.dim }}>
+                    {index + 1}
+                  </div>
+                  {icons?.[index] ? (
+                    <Icon name={icons[index]} size={Math.min(84, Math.round(boxWidth * 0.3))} color={isNewest ? COLORS.signal : COLORS.paper} cut={COLORS.land} />
+                  ) : null}
                 </div>
                 {/* A narrower cut of Archivo, so long words fit even with five boxes in a row. */}
                 <div

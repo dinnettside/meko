@@ -1,6 +1,7 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
 import { COLORS, FONTS, VIDEO } from "@/lib/theme";
+import { Icon } from "../icons";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
 
@@ -32,12 +33,16 @@ function linesOf(text: string, fontSize: number, width: number): number {
 export function VersusScene({
   left,
   right,
+  leftIcon,
+  rightIcon,
   rows,
   words,
   durationSec,
 }: {
   left: string;
   right: string;
+  leftIcon?: string;
+  rightIcon?: string;
   rows: { label: string; left: string; right: string }[];
   words: TimedWord[];
   durationSec: number;
@@ -70,10 +75,15 @@ export function VersusScene({
         <div style={{ display: "grid", gridTemplateColumns: columns, columnGap: GAP, opacity: headersIn, marginBottom: 28 }}>
           <div />
           {[
-            { name: left, color: COLORS.teal },
-            { name: right, color: COLORS.signal },
+            { name: left, color: COLORS.teal, icon: leftIcon },
+            { name: right, color: COLORS.signal, icon: rightIcon },
           ].map((side) => (
             <div key={side.name} style={{ fontFamily: FONTS.display, fontSize: 64, fontWeight: 700, color: COLORS.paper, lineHeight: 1.05 }}>
+              {side.icon ? (
+                <div style={{ marginBottom: 14 }}>
+                  <Icon name={side.icon} size={84} color={side.color} />
+                </div>
+              ) : null}
               {side.name}
               <div style={{ marginTop: 16, height: 10, width: `${headersIn * 100}%`, backgroundColor: side.color }} />
             </div>

@@ -1,6 +1,7 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
 import { COLORS, FONTS, VIDEO } from "@/lib/theme";
+import { Icon } from "../icons";
 import { ease } from "../motion";
 import { revealTimes } from "../spoken";
 
@@ -11,14 +12,15 @@ const CARD_HEIGHT = 300;
 // names it, and the newest gets the amber rule. There are no arrows and no numbers, because the items do not lead
 // to each other: that is what steps are for.
 //
-// As the last scene, the list sums up the video, and each card gets a check mark as it comes in.
+// As the last scene, the list sums up the video, and each card gets a check mark as it comes in. A card can show an
+// icon above its title, like gold bars for "Gold".
 export function ListScene({
   items,
   words,
   durationSec,
   summary = false,
 }: {
-  items: { title: string; detail?: string }[];
+  items: { title: string; detail?: string; icon?: string }[];
   words: TimedWord[];
   durationSec: number;
   summary?: boolean;
@@ -38,9 +40,10 @@ export function ListScene({
   const longestWord = Math.max(...items.flatMap((item) => item.title.split(/\s+/).map((word) => word.length)));
   const textWidth = cardWidth - 64 - (summary ? 64 : 0);
   const titleSize = Math.min(items.length > 3 ? 58 : 70, Math.floor(textWidth / (longestWord * 0.6)));
+  const iconSize = Math.min(140, Math.round(cardWidth * 0.36));
 
   return (
-    <AbsoluteFill style={{ justifyContent: "center", padding: `0 ${VIDEO.sideMargin}px ${VIDEO.captionSpace}px` }}>
+    <AbsoluteFill style={{ justifyContent: "center", padding: `${VIDEO.topSpace}px ${VIDEO.sideMargin}px ${VIDEO.captionSpace}px` }}>
       {/* The cards stretch to the tallest one, so a long detail makes the whole row taller instead of spilling out. */}
       <div style={{ display: "flex", alignItems: "stretch", gap: GAP }}>
         {items.map((item, index) => {
@@ -92,6 +95,11 @@ export function ListScene({
                   }}
                 >
                   ✓
+                </div>
+              ) : null}
+              {item.icon ? (
+                <div style={{ marginBottom: 22, transform: `scale(${0.8 + 0.2 * appear})`, transformOrigin: "left bottom" }}>
+                  <Icon name={item.icon} size={iconSize} color={isNewest ? COLORS.signal : COLORS.paper} cut={COLORS.land} />
                 </div>
               ) : null}
               <div

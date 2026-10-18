@@ -162,6 +162,19 @@ const COMMON_NAMES: Record<string, string[]> = {
   MKD: ["north macedonia"],
 };
 
+// Whether a text names a region or a part of the country, like "Crimea" for Ukraine or "Texas" for the US.
+export function namesRegionOf(text: string, code: string): boolean {
+  const lower = text.toLowerCase();
+  return Object.entries(REGIONS).some(([region, members]) => members.includes(code) && names(lower, region)) || partPoint(text, code) !== null;
+}
+
+// Whether a text is the name of the country itself, as COUNTRIES or common English gives it ("Panama", "Turkey"),
+// not one of its other names, some of which are cities, like Constantinople or Rome.
+export function isCountryOwnName(text: string, code: string): boolean {
+  const lower = text.trim().toLowerCase().replace(/^the\s+/, "");
+  return [COUNTRIES[code]?.name.toLowerCase() ?? "", ...(COMMON_NAMES[code] ?? [])].includes(lower);
+}
+
 // Whether a map label is just the name of the country it is on: its name in COUNTRIES, another name for it or its
 // common English name, like "Turkey" on TUR. A country may always carry its own name.
 export function isCountryName(label: string, code: string): boolean {

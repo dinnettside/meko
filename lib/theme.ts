@@ -15,6 +15,11 @@ export const COLORS = {
   signal: "#FFB627", // the one thing to look at
   teal: "#4FC3B4", // second highlight
   alert: "#FF7A6B", // errors and removed sentences
+  moon: "#5E6D83", // the Moon's highlands in space scenes
+  moonSea: "#33425A", // the Moon's seas, darker, like the real ones
+  sun: "#F7CF6E", // the Sun, warm but softer than the signal amber
+  mars: "#B8603F",
+  marsDark: "#A2533A", // Mars's darker ground
   captionBackground: "rgba(6, 12, 22, 0.82)",
   captionUpcoming: "rgba(147, 161, 181, 0.6)", // words the voice has not said yet
 };
