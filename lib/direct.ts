@@ -182,8 +182,8 @@ const SceneVisualSchema = z.discriminatedUnion("kind", [
         }),
       )
       .min(2)
-      .max(8),
-    links: z.array(z.object({ from: z.number().int(), to: z.number().int(), label: z.string().optional() })).max(6),
+      .max(6),
+    links: z.array(z.object({ from: z.number().int(), to: z.number().int(), label: z.string().optional() })).max(4),
     backdrop: z.enum(BACKDROPS).optional(),
   }),
   z.object({ kind: z.literal("change"), from: z.string(), to: z.string(), year: z.number().int().optional() }),
@@ -785,6 +785,10 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
         problems.push(
           'This is a journey along a way. Give it as "routes": its stops in order (your markers or cities the narration names), by land or sea, instead of arrows.',
         );
+      }
+      // Countries the scene does not name are muted later, so a map of places it never names would show nothing.
+      if (showsNothing(tidyMap(visual, source))) {
+        problems.push("Nothing on this map is a place the narration or facts name, so it would show nothing. Color or mark a place they name.");
       }
       for (const marker of visual.markers) {
         if (!isPlaceLabel(marker.label)) {
@@ -1392,6 +1396,10 @@ function tidyMap(visual: AnyVisual, source: string): AnyVisual {
   return { ...visual, highlights, arrows };
 }
 
+// A map with nothing colored, marked or moving shows nothing.
+const showsNothing = (visual: AnyVisual) =>
+  visual.kind === "map" && visual.markers.length + visual.arrows.length + visual.routes.length === 0 && visual.highlights.every((h) => h.tone === "muted");
+
 // Whether every arrow label in a free picture says something no item and no other arrow says.
 type IllustrationVisual = Extract<SceneVisual, { kind: "illustration" }>;
 const linkLabelsAreNew = (visual: IllustrationVisual) =>
@@ -1949,18 +1957,20 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
   // A scene whose picture still broke a rule after the retries shows its lines. If the plan ranked another kind for it
   // that fits among the scenes around it, and there is time, it gets one more call with that kind, all such scenes at
   // once, so fewer scenes end as plain text.
+  // A map that is left with nothing the scene names would show its lines too, so it gets the second call as well.
+  const failed = (visual: AnyVisual, index: number) => visual.kind === "text" || showsNothing(tidyMap(visual, sourceFor(rest[index])));
   const shownKinds = firstTries.map(({ data }) => data.visual.kind);
   const scenes = await Promise.all(
     firstTries.map(async (first, index) => {
       const planned = plannedKinds[index];
-      if (first.data.visual.kind !== "text" || planned === undefined || planned === "text") return first;
+      if (!failed(first.data.visual, index) || planned === undefined || planned === "text") return first;
       if (Date.now() > deadline - MARKER_CHECK_MS - SECOND_TRY_MS) return first;
       const next = (plan.data?.scenes[index]?.kinds ?? []).find((kind) => kind !== planned && kind !== "text" && kindFits(kind, index, shownKinds, rules, false));
       if (!next) return first;
       console.log(`[direct] ${rest[index].id} tries a ${next}, since its ${planned} did not work`);
       const second = await sceneCall(index, next);
       const usage = addUsage(first.usage, second.usage);
-      return second.data.visual.kind === "text" ? { ...first, usage } : { ...second, usage };
+      return failed(second.data.visual, index) ? { ...first, usage } : { ...second, usage };
     }),
   );
   // Markers are checked before the maps are tidied, so a country kept bright only by a wrong marker is muted too.
@@ -1991,9 +2001,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     // Two steps, stats, quotes, charts or timelines in a row look the same; two maps of different places do not.
     const sameKind = previous !== undefined && !["map", "text"].includes(visual.kind) && previous.kind === visual.kind;
     const overLimit = visual.kind !== "text" && visuals.filter((other) => other.kind === visual.kind).length >= limits[visual.kind];
-    // A map with nothing colored, marked or moving shows nothing.
-    const emptyMap =
-      visual.kind === "map" && visual.markers.length + visual.arrows.length + visual.routes.length === 0 && visual.highlights.every((h) => h.tone === "muted");
+    const emptyMap = showsNothing(visual);
     const why = repeats
       ? "repeats the scene before"
       : fourthMap
