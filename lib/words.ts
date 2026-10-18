@@ -43,6 +43,26 @@ export function groundedWords(text: string, source: string, { strict = false } =
   return { matched: claims.filter((word) => keys.has(wordKey(word))).length, total: claims.length };
 }
 
+// Words that say a claim may not hold, as in "may have helped end feudalism". "Could" and "estimated" are left out:
+// "peasants could demand higher wages" is no hedge, and an estimated number is shown as the number.
+const HEDGE = /\b(may|might|possibly|probably|perhaps|likely|reportedly|allegedly|believed|thought to|suggests?)\b/i;
+
+// Whether a text on screen states as certain what the narration only says may be true: most of its words come from a
+// hedged part of the narration, but it keeps no hedge. "End of feudalism" drops the "may" of "may have helped end
+// feudalism".
+export function dropsHedge(text: string, narration: string): boolean {
+  if (HEDGE.test(text)) return false;
+  const textKeys = [...new Set(contentWords(text).map(wordKey))];
+  if (textKeys.length === 0) return false;
+  return narration
+    .split(/[.;:!?,]|\band\b|\bbut\b/i)
+    .filter((clause) => HEDGE.test(clause))
+    .some((clause) => {
+      const keys = new Set(contentWords(clause).map(wordKey));
+      return textKeys.filter((key) => keys.has(key)).length >= Math.ceil(textKeys.length / 2);
+    });
+}
+
 // Whether two labels say the same thing in other forms of the same words, like "Europe population killed" and
 // "European population killed".
 export function sameWords(a: string, b: string): boolean {

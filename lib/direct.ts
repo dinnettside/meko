@@ -20,7 +20,7 @@ import {
 } from "./numbers.ts";
 import { isCountryName, isCountryOwnName, labelMismatch, namesAPlace, namesCity, namesCountry } from "./regions.ts";
 import { questionProblems } from "./script.ts";
-import { claimWords, contentWords, groundedWords, isSentenceOf, sameWords, sentencesOf, wholeSentencesOf } from "./words.ts";
+import { claimWords, contentWords, dropsHedge, groundedWords, isSentenceOf, sameWords, sentencesOf, wholeSentencesOf } from "./words.ts";
 import {
   amountsFor,
   barIsStated,
@@ -183,7 +183,7 @@ const SceneVisualSchema = z.discriminatedUnion("kind", [
       )
       .min(2)
       .max(6),
-    links: z.array(z.object({ from: z.number().int(), to: z.number().int(), label: z.string().optional() })).max(4),
+    links: z.array(z.object({ from: z.number().int(), to: z.number().int(), label: z.string().optional() })).max(5),
     backdrop: z.enum(BACKDROPS).optional(),
   }),
   z.object({ kind: z.literal("change"), from: z.string(), to: z.string(), year: z.number().int().optional() }),
@@ -786,10 +786,6 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
           'This is a journey along a way. Give it as "routes": its stops in order (your markers or cities the narration names), by land or sea, instead of arrows.',
         );
       }
-      // Countries the scene does not name are muted later, so a map of places it never names would show nothing.
-      if (showsNothing(tidyMap(visual, source))) {
-        problems.push("Nothing on this map is a place the narration or facts name, so it would show nothing. Color or mark a place they name.");
-      }
       for (const marker of visual.markers) {
         if (!isPlaceLabel(marker.label)) {
           problems.push(`The marker "${marker.label}" names a country or region. Markers are for cities; highlight countries instead.`);
@@ -1060,6 +1056,10 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
         problems.push("Draw one clear picture: at most 4 tubes, flows and arrows together, for the one thing that moves.");
       }
       if (visual.parts.filter((part) => part.shape === "band").length > 3) problems.push("Use at most 3 layers.");
+      // Labeled boxes and blobs alone picture nothing: "Immune memory" came out as a box and two ovals.
+      if (visual.parts.every((part) => part.shape === "box" || part.shape === "blob")) {
+        problems.push("Draw the thing itself, with layers, tubes, flows, cones or icons, not only labeled boxes and blobs.");
+      }
       // The model once gave every place as a fraction from 0 to 1, which squeezed the drawing into a corner.
       if (onUnitGrid(visual)) problems.push("Give x, y, w, h, y1 and y2 as numbers from 0 to 100, not as fractions from 0 to 1.");
       break;
@@ -1142,6 +1142,15 @@ function sceneProblems(
     return [`A ${visual.kind} does not fit this scene${why}. Use ${others.join(" or ") || "text"} instead.`, ...lineProblems];
   }
   const problems = isTemplateVisual(visual) ? templateProblems(visual, allowed, source, narration, quotable) : visualProblems(visual, allowed, facts, source);
+  // Countries the scene does not name are muted later, so a map of places it never names would show nothing.
+  if (visual.kind === "map" && showsNothing(tidyMap(visual, source), narration)) {
+    problems.push("Nothing on this map is a place this scene's narration names, so it would show nothing. Color or mark a place it names, or use another kind.");
+  }
+  // Words on screen keep the narration's hedges: "End of feudalism" may not stand for "may have helped end feudalism".
+  const texts = isTemplateVisual(visual) ? templateSpec(visual.kind).shown(visual).map((item) => item.text ?? "") : shownText(visual);
+  for (const text of texts) {
+    if (text && dropsHedge(text, narration)) problems.push(`"${text}" states as certain what the narration says only may be true. Keep its "may" or leave it out.`);
+  }
   // A quote is read while the scene's narration is spoken: 22 words under a 4-second sentence could not be read.
   if (visual.kind === "quote") {
     const most = Math.max(12, Math.ceil(countWords(narration) * 1.5));
@@ -1157,7 +1166,9 @@ function sceneProblems(
 // The scene's plain lines, or the start of its narration if none of them is safe.
 function textVisual(lines: string[], scene: NarratedScene, allowed: Set<string>): SceneVisual {
   // A line cut off at a comma, like "The water cycle, also known as the hydrologic cycle,", ends without it.
-  const safeLines = lines.filter((line) => lineIsSafe(line, allowed, scene.narration)).map((line) => line.trim().replace(/[,;:]+$/, ""));
+  const safeLines = lines
+    .filter((line) => lineIsSafe(line, allowed, scene.narration) && !dropsHedge(line, scene.narration))
+    .map((line) => line.trim().replace(/[,;:]+$/, ""));
   return { kind: "text", lines: safeLines.length > 0 ? safeLines : [narrationLine(scene.narration)] };
 }
 
@@ -1274,11 +1285,13 @@ function repairScene(
       // Items the narration does not back go, and so do dates and repeats; two or more good ones still make a list.
       const sameTitle = (a: { title: string }, b: { title: string }) => sameWords(a.title, b.title);
       const items = visual.items
-        .filter((item) => countWords(item.title) <= 4 && isGrounded(item.title, source) && safe(item.title))
+        .filter((item) => countWords(item.title) <= 4 && isGrounded(item.title, source) && safe(item.title) && !dropsHedge(item.title, scene.narration))
         .filter((item) => yearsIn(item.title).length === 0 && datesIn(item.title).length === 0)
         .filter((item, index, all) => all.findIndex((other) => other === item || sameTitle(other, item)) === index)
         .map((item) =>
-          item.detail && countWords(item.detail) <= 7 && isGrounded(item.detail, source) && safe(item.detail) ? item : { title: item.title, icon: item.icon },
+          item.detail && countWords(item.detail) <= 7 && isGrounded(item.detail, source) && safe(item.detail) && !dropsHedge(item.detail, scene.narration)
+            ? item
+            : { title: item.title, icon: item.icon },
         );
       return items.length >= 2 ? { kind: "list", items } : fallback;
     }
@@ -1401,17 +1414,29 @@ function tidyMap(visual: AnyVisual, source: string): AnyVisual {
   const highlights = visual.highlights.map((highlight) =>
     highlight.tone === "muted" || countryIsNamed(visual, highlight, source) ? highlight : { ...highlight, tone: "muted" as const },
   );
+  // Two markers on one spot, like "Caffa" and "Kaffa", would be drawn on top of each other, so the later one goes
+  // unless an arrow or a route names it.
+  const linked = new Set([...visual.arrows.flatMap((arrow) => [arrow.from, arrow.to]), ...visual.routes.flatMap((r) => r.stops)].map((name) => name.trim().toLowerCase()));
+  const markers = visual.markers.filter(
+    (marker, index) =>
+      linked.has(marker.label.trim().toLowerCase()) ||
+      !visual.markers.slice(0, index).some((other) => Math.abs(other.lon - marker.lon) < 0.5 && Math.abs(other.lat - marker.lat) < 0.5),
+  );
   // A map needs one main country: the first named one takes over when the model's choice was muted.
   if (!highlights.some((highlight) => highlight.tone === "primary")) {
     const first = highlights.findIndex((highlight) => highlight.tone === "secondary");
     if (first >= 0) highlights[first] = { ...highlights[first], tone: "primary" };
   }
-  return { ...visual, highlights, arrows };
+  return { ...visual, highlights, arrows, markers };
 }
 
-// A map with nothing colored, marked or moving shows nothing.
-const showsNothing = (visual: AnyVisual) =>
-  visual.kind === "map" && visual.markers.length + visual.arrows.length + visual.routes.length === 0 && visual.highlights.every((h) => h.tone === "muted");
+// A map shows nothing when it colors no country the scene names and marks, joins or follows no place its narration
+// names. A map of Sicily under a sentence about Caffa showed only a place from another scene.
+const showsNothing = (visual: AnyVisual, narration: string) =>
+  visual.kind === "map" &&
+  visual.arrows.length + visual.routes.length === 0 &&
+  visual.highlights.every((h) => h.tone === "muted") &&
+  !visual.markers.some((marker) => isGrounded(marker.label, narration));
 
 // Whether every arrow label in a free picture says something no item and no other arrow says.
 type IllustrationVisual = Extract<SceneVisual, { kind: "illustration" }>;
@@ -1971,7 +1996,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
   // that fits among the scenes around it, and there is time, it gets one more call with that kind, all such scenes at
   // once, so fewer scenes end as plain text.
   // A map that is left with nothing the scene names would show its lines too, so it gets the second call as well.
-  const failed = (visual: AnyVisual, index: number) => visual.kind === "text" || showsNothing(tidyMap(visual, sourceFor(rest[index])));
+  const failed = (visual: AnyVisual, index: number) => visual.kind === "text" || showsNothing(tidyMap(visual, sourceFor(rest[index])), rest[index].narration);
   const shownKinds = firstTries.map(({ data }) => data.visual.kind);
   const scenes = await Promise.all(
     firstTries.map(async (first, index) => {
@@ -2014,7 +2039,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
     // Two steps, stats, quotes, charts or timelines in a row look the same; two maps of different places do not.
     const sameKind = previous !== undefined && !["map", "text"].includes(visual.kind) && previous.kind === visual.kind;
     const overLimit = visual.kind !== "text" && visuals.filter((other) => other.kind === visual.kind).length >= limits[visual.kind];
-    const emptyMap = showsNothing(visual);
+    const emptyMap = showsNothing(visual, rest[index].narration);
     const why = repeats
       ? "repeats the scene before"
       : fourthMap

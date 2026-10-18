@@ -122,18 +122,26 @@ register('cell_diagram', {
   },
 });
 register('supply_demand', {
-  cat: CE, title: 'Supply and demand', desc: 'The supply and demand curves cross at the equilibrium. Demand can shift, and the new equilibrium is shown.', use: 'How prices are set, markets, and what happens when demand changes.',
-  params: 'shift (shift in demand, like 120 or −120), at', example: { shift: 140 },
+  cat: CE, title: 'Supply and demand', desc: 'The supply and demand curves cross at the equilibrium. Demand or supply can shift, and the new equilibrium is shown.', use: 'How prices are set, markets, and what happens when demand or supply changes.',
+  params: 'shift (shift in demand, like 120 or −120), supplyShift (shift in supply, like −140 when supply falls), at', example: { shift: 140 },
   build(p, c) {
-    const { U, th } = c, L = 420, R = 1320, T = 200, B = 880, sh = p.shift ?? 0, at = p.at ?? 0.55;
-    const inter = (dx) => { const x = (L + 100 + R - 100 + dx) / 2, y = (T + 80 + B - 80) / 2 - dx / 2; return [x, y]; };
-    const e0 = inter(0), e1 = inter(sh);
+    const { U, th } = c, L = 420, R = 1320, T = 200, B = 880, sh = p.shift ?? 0, ss = p.supplyShift ?? 0, at = p.at ?? 0.55;
+    // Where demand moved dx to the right and supply sx to the right cross. The supply shift was added for Meko: a
+    // narration about a labor supply that collapsed was drawn as rising demand.
+    const k = (B - 80 - (T + 80)) / (R - 100 - (L + 100));
+    const inter = (dx, sx) => { const x = (L + 100 + R - 100 + dx + sx) / 2; return [x, T + 80 + k * (x - dx - (L + 100))]; };
+    const e0 = inter(0, 0), e1 = inter(sh, ss);
+    const moved = (dx, x1, y1, x2, y2, col) => `<g opacity="0"${U.A('fade', at, 0.05)}><g${U.A('move', at, 0.15, { x0: 0, y0: 0, x1: dx, y1: 0 })}><path d="M${x1} ${y1}L${x2} ${y2}" stroke="${col}" stroke-width="7" stroke-dasharray="16 10"/></g></g>`;
+    const [title, note] = sh && !ss ? (sh > 0 ? ['Higher demand:', 'higher price and quantity'] : ['Lower demand:', 'lower price and quantity'])
+      : ss && !sh ? (ss < 0 ? ['Less supply:', 'higher price, lower quantity'] : ['More supply:', 'lower price, higher quantity'])
+      : ['New balance:', 'a new price and quantity'];
     let o = U.bg() + H.arrow(U, th.ink, L, B, L, T - 40, 0.02, 4) + H.arrow(U, th.ink, L, B, R + 60, B, 0.02, 4) + U.T(L - 20, T - 50, 'Price', { a: 'end', s: 30, w: 700 }) + U.T(R + 60, B + 50, 'Quantity', { a: 'end', s: 30, w: 700 }) +
       H.line(U, L + 100, T + 80, R - 100, B - 80, th.accent, 7, 0.08, 0.15) + U.T(R - 90, B - 90, 'Demand', { a: 'start', s: 30, w: 700, f: th.accent }) +
       H.line(U, L + 100, B - 80, R - 100, T + 80, th.accent2, 7, 0.2, 0.15) + U.T(R - 90, T + 80, 'Supply', { a: 'start', s: 30, w: 700, f: th.accent2 }) +
       `<g opacity="0"${U.A('fade', 0.38, 0.06)}><path d="M${e0[0]} ${e0[1]}V${B}M${e0[0]} ${e0[1]}H${L}" stroke="${th.muted}" stroke-width="3" stroke-dasharray="10 8"/><circle cx="${e0[0]}" cy="${e0[1]}" r="14" fill="${th.ink}"/>${U.T(L - 14, e0[1] + 10, 'P₁', { a: 'end', s: 30, w: 700 })}${U.T(e0[0], B + 44, 'Q₁', { s: 30, w: 700 })}</g>`;
-    if (sh) o += `<g opacity="0"${U.A('fade', at, 0.05)}><g${U.A('move', at, 0.15, { x0: 0, y0: 0, x1: sh, y1: 0 })}><path d="M${L + 100} ${T + 80}L${R - 100} ${B - 80}" stroke="${th.accent}" stroke-width="7" stroke-dasharray="16 10"/></g></g>` +
-      `<g opacity="0"${U.A('fade', at + 0.18, 0.06)}><path d="M${e1[0]} ${e1[1]}V${B}M${e1[0]} ${e1[1]}H${L}" stroke="${th.bad}" stroke-width="3" stroke-dasharray="10 8"/><circle cx="${e1[0]}" cy="${e1[1]}" r="14" fill="${th.bad}"/>${U.T(L - 14, e1[1] + 10, 'P₂', { a: 'end', s: 30, w: 700, f: th.bad })}${U.T(e1[0], B + 44, 'Q₂', { s: 30, w: 700, f: th.bad })}</g>` + U.T(1500, 400, sh > 0 ? 'Higher demand:' : 'Lower demand:', { a: 'start', s: 32, w: 700, an: U.A('fade', at + 0.2, 0.06) }) + U.T(1500, 450, sh > 0 ? 'higher price and quantity' : 'lower price and quantity', { a: 'start', s: 30, f: th.muted, an: U.A('fade', at + 0.22, 0.06) });
+    if (sh) o += moved(sh, L + 100, T + 80, R - 100, B - 80, th.accent);
+    if (ss) o += moved(ss, L + 100, B - 80, R - 100, T + 80, th.accent2);
+    if (sh || ss) o += `<g opacity="0"${U.A('fade', at + 0.18, 0.06)}><path d="M${e1[0]} ${e1[1]}V${B}M${e1[0]} ${e1[1]}H${L}" stroke="${th.bad}" stroke-width="3" stroke-dasharray="10 8"/><circle cx="${e1[0]}" cy="${e1[1]}" r="14" fill="${th.bad}"/>${U.T(L - 14, e1[1] + 10, 'P₂', { a: 'end', s: 30, w: 700, f: th.bad })}${U.T(e1[0], B + 44, 'Q₂', { s: 30, w: 700, f: th.bad })}</g>` + U.T(1500, 400, title, { a: 'start', s: 32, w: 700, an: U.A('fade', at + 0.2, 0.06) }) + U.T(1500, 450, note, { a: 'start', s: 30, f: th.muted, an: U.A('fade', at + 0.22, 0.06) });
     return o;
   },
 });

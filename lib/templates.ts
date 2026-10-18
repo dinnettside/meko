@@ -86,6 +86,13 @@ const pointIsStated = (point: { year: number; value: number }, source: string) =
   point.value !== point.year && sentencesOf(source).some((sentence) => yearsIn(sentence).includes(point.year) && numbersIn(sentence).includes(String(point.value)));
 
 // Whether a sentence names both things, so a line may join them.
+// Demand and supply as nouns that go up or down. "Peasants could demand higher wages" uses demand as a verb, which
+// once drew a rise in demand for a scene about a labor supply that collapsed.
+const DEMAND_RISES = /\b(demand\s+(?:\w+\s+){0,2}(?:rose|rises|rising|increas\w*|grew|grows|growing|jumped|soared|surged|went up)|(?:rising|higher|greater|growing|increased|increasing|more)\s+demand)\b/i;
+const DEMAND_FALLS = /\b(demand\s+(?:\w+\s+){0,2}(?:fell|falls|falling|dropp\w*|drops|decreas\w*|declin\w*|shr[ai]nk\w*|collaps\w*|went down)|(?:falling|lower|less|weaker|decreased|declining)\s+demand)\b/i;
+const SUPPLY_RISES = /\b(supply\s+(?:\w+\s+){0,2}(?:rose|rises|rising|increas\w*|grew|grows|growing|jumped|soared|surged|went up)|(?:rising|higher|greater|growing|increased|bigger|more)\s+(?:\w+\s+)?supply|surplus|glut)\b/i;
+const SUPPLY_FALLS = /\b(supply\s+(?:\w+\s+){0,2}(?:fell|falls|falling|dropp\w*|drops|decreas\w*|declin\w*|shr[ai]nk\w*|collaps\w*|went down|ran out)|(?:shatter\w*|collaps\w*|cut|reduc\w*|shr[ai]nk\w*|disrupt\w*)\s+(?:\w+\s+){0,2}supply|(?:falling|lower|less|smaller|reduced|shrinking)\s+(?:\w+\s+)?supply|shortages?|scarc\w*)\b/i;
+
 const namedTogether = (a: string, b: string, source: string) =>
   sentencesOf(source).some((sentence) => groundedWords(a, sentence).matched > 0 && groundedWords(b, sentence).matched > 0);
 
@@ -814,16 +821,20 @@ export const TEMPLATES = {
     family: "chart",
     plan: "supply and demand curves meeting at a price, when the scene explains how prices are set",
     prompt:
-      '"supply_demand" when the scene explains supply and demand: the two curves and where they meet, drawn by the video. "demand" is "rises" or "falls" when the narration says demand goes up or down, else "same".',
-    schema: z.object({ kind: z.literal("supply_demand"), demand: z.enum(["rises", "falls", "same"]) }),
-    fits: (scene) => /\bsupply\b/i.test(scene.narration) && /\bdemand\b/i.test(scene.narration),
+      '"supply_demand" when the scene explains supply and demand: the two curves and where they meet, drawn by the video. "demand" is "rises" or "falls" when the narration says demand goes up or down, and "supply" is "rises" or "falls" when it says the supply goes up or down, like workers growing scarce; each is "same" otherwise.',
+    schema: z.object({ kind: z.literal("supply_demand"), demand: z.enum(["rises", "falls", "same"]), supply: z.enum(["rises", "falls", "same"]) }),
+    fits: (scene) => /\bsupply\b/i.test(scene.narration) && /\b(demand|prices?|wages?|costs?)\b/i.test(scene.narration),
     shown: () => [],
-    check: (visual, { narration }) => {
-      if (visual.demand === "rises" && !/\bdemand\b[^.]*\b(ris\w*|rose|increas\w*|grow\w*|grew|up|higher|more)\b/i.test(narration)) return ['The narration does not say demand rises. Use "same".'];
-      if (visual.demand === "falls" && !/\bdemand\b[^.]*\b(fall\w*|fell|drop\w*|decreas\w*|declin\w*|down|lower|less)\b/i.test(narration)) return ['The narration does not say demand falls. Use "same".'];
-      return [];
-    },
-    params: (visual) => ({ shift: visual.demand === "rises" ? 140 : visual.demand === "falls" ? -140 : 0 }),
+    check: (visual, { narration }) => [
+      ...(visual.demand === "rises" && !DEMAND_RISES.test(narration) ? ['The narration does not say demand rises. Use "same".'] : []),
+      ...(visual.demand === "falls" && !DEMAND_FALLS.test(narration) ? ['The narration does not say demand falls. Use "same".'] : []),
+      ...(visual.supply === "rises" && !SUPPLY_RISES.test(narration) ? ['The narration does not say the supply rises. Use "same".'] : []),
+      ...(visual.supply === "falls" && !SUPPLY_FALLS.test(narration) ? ['The narration does not say the supply falls. Use "same".'] : []),
+    ],
+    params: (visual) => ({
+      shift: visual.demand === "rises" ? 140 : visual.demand === "falls" ? -140 : 0,
+      supplyShift: visual.supply === "rises" ? 140 : visual.supply === "falls" ? -140 : 0,
+    }),
   }),
   wave: template({
     family: "picture",
@@ -1088,7 +1099,15 @@ export const TEMPLATES = {
       ...(visual.boxLabel ? { boxLabel: visual.boxLabel } : {}),
       ...(visual.setting === "ground" || visual.setting === "sea" ? { layers: visual.layers } : {}),
       items: visual.items.map((item) => ({ ...item, icon: kitIcon(item.icon, item.label) })),
-      flows: visual.flows,
+      // A flow label that repeats an item's label, or an earlier flow's, is clutter: "Crystals form" stood on an item
+      // and on the flow next to it.
+      flows: visual.flows.map((flow, index) =>
+        flow.label &&
+        (visual.items.some((item) => item.label && sameWords(item.label, flow.label ?? "")) ||
+          visual.flows.slice(0, index).some((other) => other.label && sameWords(other.label, flow.label ?? "")))
+          ? { from: flow.from, to: flow.to }
+          : flow,
+      ),
     }),
   }),
   journey: template({
@@ -1263,8 +1282,11 @@ export const TEMPLATES = {
     plan: "the heart beating, with blood flowing through its four chambers to the lungs and the body",
     prompt: '"heart_pump" when the narration explains how the heart pumps blood: the four chambers beating, blood without oxygen to the lungs and blood with oxygen out to the body. "labels" names the parts: rightAtrium, rightVentricle, leftAtrium, leftVentricle, lungs, body, and the two kinds of blood, withOxygen and withoutOxygen.',
     parts: ["rightAtrium", "rightVentricle", "leftAtrium", "leftVentricle", "lungs", "body", "withOxygen", "withoutOxygen"],
-    // The drawing shows both loops, to the lungs and to the body.
-    fits: (scene) => /\bhearts?\b/i.test(scene.narration) && /\bblood\b/i.test(scene.narration) && /\b(lungs?|oxygen)\b/i.test(scene.source),
+    // The drawing shows both loops, to the lungs and to the body. A scene in a video about the heart often names only a
+    // chamber or the aorta, not the heart itself: "Oxygen-rich blood travels through the pulmonary veins to the left
+    // atrium" got no diagram when the heart had to be named.
+    fits: (scene) =>
+      /\bblood\b/i.test(scene.narration) && /\b(hearts?|atri(um|a)|ventricles?|aorta|chambers?)\b/i.test(scene.narration) && /\b(lungs?|oxygen)\b/i.test(scene.source),
     options: {},
   }),
   lungs_breathing: labelDiagram({

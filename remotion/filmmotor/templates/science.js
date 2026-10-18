@@ -99,7 +99,20 @@ register('icon_chain', {
   build(p, c) {
     const { U, th } = c, Nd = (p.nodes || []).slice(0, 6), n = Math.max(1, Nd.length), w = 1600 / n, cols = th.series;
     let o = U.bg() + H.title(U, th, p.title, 250);
-    Nd.forEach((q, k) => { const x = 160 + w * (k + 0.5), at = p.times?.[k] ?? 0.08 + k * (0.65 / n); o += `<g${U.A('pop', at, 0.05, { cx: x, cy: 540 })}><circle cx="${x}" cy="540" r="${Math.min(110, w * 0.32)}" fill="${th.surface}" stroke="${cols[k % 6]}" stroke-width="6"/>${U.icon(q.icon || 'dot', x, 540, Math.min(130, w * 0.38), cols[k % 6])}</g>` + U.T(x, 720, q.label || '', { s: 36, w: 700, an: U.A('fade', at + 0.03, 0.05) }); if (k < n - 1) o += H.arrow(U, th.muted, x + Math.min(110, w * 0.32) + 12, 540, x + w - Math.min(110, w * 0.32) - 12, 540, at + 0.06, 6) + (p.arrowLabel ? U.T(x + w / 2, 510, p.arrowLabel, { s: 22, f: th.muted }) : ''); });
+    // A long label wraps to two lines and shrinks to fit its column, so it does not run into the next one (added for
+    // Meko: "Left ventricle contracts" ran into "Blood passes aortic valve").
+    const room = w - 30;
+    const wrapAt = (text, size) => String(text).split(/\s+/).filter(Boolean).reduce((lines, word) => {
+      const last = lines[lines.length - 1];
+      if (last && U.tw(last + ' ' + word, size, { w: 700 }) <= room) lines[lines.length - 1] = last + ' ' + word; else lines.push(word);
+      return lines;
+    }, []);
+    const fit = (text) => {
+      for (let size = 36; size > 26; size -= 2) { const lines = wrapAt(text, size); if (lines.length <= 2 && lines.every((l) => U.tw(l, size, { w: 700 }) <= room)) return { lines, size }; }
+      return { lines: wrapAt(text, 26), size: 26 };
+    };
+    const label = (text, x, at) => { const { lines, size } = fit(text || ''); return lines.map((l, i) => U.T(x, 720 + i * size * 1.15, l, { s: size, w: 700, an: U.A('fade', at + 0.03, 0.05) })).join(''); };
+    Nd.forEach((q, k) => { const x = 160 + w * (k + 0.5), at = p.times?.[k] ?? 0.08 + k * (0.65 / n); o += `<g${U.A('pop', at, 0.05, { cx: x, cy: 540 })}><circle cx="${x}" cy="540" r="${Math.min(110, w * 0.32)}" fill="${th.surface}" stroke="${cols[k % 6]}" stroke-width="6"/>${U.icon(q.icon || 'dot', x, 540, Math.min(130, w * 0.38), cols[k % 6])}</g>` + label(q.label, x, at); if (k < n - 1) o += H.arrow(U, th.muted, x + Math.min(110, w * 0.32) + 12, 540, x + w - Math.min(110, w * 0.32) - 12, 540, at + 0.06, 6) + (p.arrowLabel ? U.T(x + w / 2, 510, p.arrowLabel, { s: 22, f: th.muted }) : ''); });
     return o;
   },
 });
