@@ -7,6 +7,7 @@ import type { Storyboard } from "@/lib/storyboard";
 import type { CheckCounts } from "@/remotion/Credits";
 import type { SceneVoice } from "@/lib/voice";
 import { StoryboardVideo, storyboardFrames } from "@/remotion/StoryboardVideo";
+import { APP_COLORS } from "@/lib/theme";
 
 export function StoryboardPlayer({
   storyboard,
@@ -39,12 +40,18 @@ export function StoryboardPlayer({
   );
 }
 
-// Shown before the first play, since the video opens on a dark frame while the title fades in.
+// Shown before the first play, since the video opens on a dark frame while the title fades in. It is drawn in the app's
+// dark mode in both modes, like a screen that is off.
 function Poster({ title }: { title: string }) {
   return (
-    <div className="flex h-full w-full flex-col items-start justify-center gap-6 bg-ink px-[11%] pb-[10%] text-paper">
-      <p className="font-display text-[clamp(1.5rem,4vw,3.5rem)] font-bold leading-tight">{title}</p>
-      <span className="rounded bg-signal px-4 py-2 text-sm font-semibold text-ink">▶ Play</span>
+    <div
+      className="flex h-full w-full flex-col items-start justify-center gap-6 px-[9%] pb-[8%]"
+      style={{ background: APP_COLORS.dark.bg, color: APP_COLORS.dark.fg }}
+    >
+      <p className="font-serif text-[clamp(1.5rem,4vw,3.5rem)] leading-tight">{title}</p>
+      <span className="rounded-full px-5 py-2 text-sm font-medium" style={{ background: APP_COLORS.dark.fg, color: APP_COLORS.dark.bg }}>
+        ▶ Play
+      </span>
     </div>
   );
 }

@@ -10,6 +10,23 @@ export const EXAMPLES = [
   { slug: "apollo-11", topic: "The Apollo 11 Moon landing" },
 ];
 
+// What the gallery shows under an example: how long it is, how many sources it cites and how its sentences fared.
+export type ExampleMeta = { slug: string; topic: string; seconds: number; sources: number; supported: number; sentences: number };
+
+// Six seconds of credits follow the last scene.
+const CREDITS_SEC = 6;
+
+export function exampleMeta(slug: string, example: Example): ExampleMeta {
+  return {
+    slug,
+    topic: example.request.topic,
+    seconds: Math.round(example.storyboard.scenes.reduce((total, scene) => total + scene.durationSec, 0) + CREDITS_SEC),
+    sources: example.storyboard.sources.length,
+    supported: example.report.supported,
+    sentences: example.report.checks.length,
+  };
+}
+
 // A finished video saved as files, for "Watch an example". Made by scripts/make-example.ts.
 // The MP3 for each scene sits next to the JSON, in public/examples/<slug>/<scene id>.mp3.
 export type Example = {

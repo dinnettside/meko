@@ -5,9 +5,9 @@ import type { FactCheckReport as Report, ResearchFact, SentenceCheck } from "@/l
 import type { Source } from "@/lib/storyboard";
 
 const STATUS = {
-  supported: { label: "Supported", className: "text-teal" },
-  revised: { label: "Revised", className: "text-signal" },
-  removed: { label: "Removed", className: "text-alert" },
+  supported: { label: "Supported", className: "text-ok" },
+  revised: { label: "Revised", className: "text-warn" },
+  removed: { label: "Removed", className: "text-bad" },
 };
 
 type Props = {
@@ -19,8 +19,9 @@ type Props = {
   onSelect: (sentenceId: string) => void; // jump the video to this sentence
 };
 
-// Every sentence of the narration with its fact-check result and the quotes and sources behind it.
-// The sentence being spoken is marked, and clicking a sentence plays the video from there.
+// Every sentence of the narration with its fact-check result, read like a transcript with footnotes: the numbers point
+// to the sources, and the quotes behind each sentence open under it. The sentence being spoken is marked with the
+// highlighter, and clicking a sentence plays the video from there.
 export function FactCheckReport({ report, facts, sources, numbered, activeSentenceId, onSelect }: Props) {
   const panel = useRef<HTMLOListElement>(null);
   const rows = useRef(new Map<string, HTMLLIElement>());
@@ -40,26 +41,23 @@ export function FactCheckReport({ report, facts, sources, numbered, activeSenten
 
   return (
     <section className="flex min-h-0 min-w-0 flex-col break-words">
-      <h2 className="font-display text-2xl font-bold">Fact-check</h2>
-      <p className="mt-1 text-sm text-dim">
-        Each sentence was checked against the exact words in its sources.{" "}
-        <span className="text-teal">{report.supported} supported</span>,{" "}
-        <span className="text-signal">{report.revised} revised</span>,{" "}
-        <span className="text-alert">{report.removed} removed</span>.
+      <p className="mt-4 text-sm leading-relaxed text-muted">
+        Each sentence was checked against the exact words in its sources:{" "}
+        <span className="text-ok">{report.supported} supported</span>, <span className="text-warn">{report.revised} revised</span>,{" "}
+        <span className="text-bad">{report.removed} removed</span>. Click a sentence to hear it.
       </p>
-      <ol ref={panel} className="relative mt-4 flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-2">
+      <ol ref={panel} className="relative mt-4 flex max-h-[68vh] flex-col overflow-y-auto pr-2">
         {report.checks.map((check) => (
           <li
             key={check.sentenceId}
             ref={(element) => {
               if (element) rows.current.set(check.sentenceId, element);
             }}
-            className={`border-l-4 py-1 pl-4 transition-colors ${
-              check.sentenceId === activeSentenceId ? "border-signal" : "border-line"
-            }`}
+            className="border-b border-rule py-4 last:border-b-0"
           >
             <SentenceRow
               check={check}
+              active={check.sentenceId === activeSentenceId}
               factById={factById}
               sourceById={sourceById}
               numberOf={numberOf}
@@ -74,12 +72,14 @@ export function FactCheckReport({ report, facts, sources, numbered, activeSenten
 
 function SentenceRow({
   check,
+  active,
   factById,
   sourceById,
   numberOf,
   onSelect,
 }: {
   check: SentenceCheck;
+  active: boolean;
   factById: Map<string, ResearchFact>;
   sourceById: Map<string, Source>;
   numberOf: Map<string, number>;
@@ -88,21 +88,35 @@ function SentenceRow({
   const status = STATUS[check.status];
   const cited = check.factIds.flatMap((id) => factById.get(id) ?? []);
   const sourceIds = [...new Set(cited.map((fact) => fact.sourceId))];
+  const text = check.status === "revised" ? check.revised : check.original;
   return (
     <>
-      <p className={`text-xs font-semibold ${status.className}`}>{status.label}</p>
+      <p className={`flex items-center gap-1.5 text-xs font-medium ${status.className}`}>
+        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+        {status.label}
+      </p>
       {check.status === "removed" ? (
-        <p className="text-dim line-through">{check.original}</p>
+        <p className="mt-1 font-serif text-lg leading-snug text-muted line-through">{check.original}</p>
       ) : (
-        <button type="button" onClick={() => onSelect(check.sentenceId)} className="text-left hover:underline">
-          {check.status === "revised" ? check.revised : check.original}
-        </button>
-      )}
-      {check.status === "revised" ? <p className="mt-1 text-sm text-dim line-through">{check.original}</p> : null}
-      {check.reason ? <p className="mt-1 text-sm text-dim">{check.reason}</p> : null}
-      <details className="mt-1 text-sm text-dim">
-        <summary className="cursor-pointer">
-          Sources{" "}
+        <p className="mt-1 font-serif text-lg leading-snug">
+          {/* A span, not a button, so the footnote numbers follow the last word on its line; a button always breaks as a
+              block. The highlighter is dark text on yellow, in both modes. */}
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={() => onSelect(check.sentenceId)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onSelect(check.sentenceId);
+              }
+            }}
+            className={`cursor-pointer box-decoration-clone rounded-sm px-0.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-fg ${
+              active ? "bg-mark text-[#111111]" : "hover:bg-surface"
+            }`}
+          >
+            {text}
+          </span>
           {sourceIds.map((id) => {
             const source = sourceById.get(id);
             const number = numberOf.get(id);
@@ -112,21 +126,29 @@ function SentenceRow({
                 href={source.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mr-1 underline decoration-line underline-offset-2 hover:decoration-signal"
+                title={source.title}
+                className="ml-0.5 align-super font-mono text-xs text-muted hover:text-fg"
               >
-                {number ? `[${number}]` : source.title}
+                {number ?? "↗"}
               </a>
             ) : null;
           })}
-        </summary>
-        <ul className="mt-2 flex flex-col gap-2">
-          {cited.map((fact) => (
-            <li key={fact.id}>
-              “{fact.quote}” <span className="text-dim/70">({sourceById.get(fact.sourceId)?.title ?? "source"})</span>
-            </li>
-          ))}
-        </ul>
-      </details>
+        </p>
+      )}
+      {check.status === "revised" ? <p className="mt-1 text-sm text-muted line-through">{check.original}</p> : null}
+      {check.reason ? <p className="mt-1 text-sm text-muted">{check.reason}</p> : null}
+      {cited.length > 0 ? (
+        <details className="mt-2 text-sm text-muted">
+          <summary className="cursor-pointer select-none hover:text-fg">Show the source words</summary>
+          <ul className="mt-2 flex flex-col gap-2 border-l-2 border-rule pl-3">
+            {cited.map((fact) => (
+              <li key={fact.id} className="font-serif text-base italic leading-snug">
+                “{fact.quote}” <span className="font-sans text-xs not-italic text-muted">{sourceById.get(fact.sourceId)?.title ?? "source"}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </>
   );
 }

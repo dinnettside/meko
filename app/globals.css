@@ -1,11 +1,17 @@
 @import "tailwindcss";
 
-/* The colors come from lib/theme.ts, which app/layout.tsx sets as CSS variables on <html>. */
-:root {
-  color-scheme: dark;
-}
-
+/* The app's colors come from lib/theme.ts (APP_COLORS), set as CSS variables in app/layout.tsx, with a light and a dark
+   mode. The Night atlas colors (ink, paper, signal and the rest) are for the parts drawn in the video's own style. */
 @theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-rule: var(--rule);
+  --color-surface: var(--surface);
+  --color-mark: var(--mark);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
   --color-ink: var(--ink);
   --color-land: var(--land);
   --color-line: var(--border);
@@ -14,12 +20,20 @@
   --color-signal: var(--signal);
   --color-teal: var(--teal);
   --color-alert: var(--alert);
-  --font-sans: var(--font-archivo);
+  --font-sans: var(--font-geist), Helvetica, Arial, sans-serif;
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-display: var(--font-fraunces);
 }
 
 body {
-  background: var(--ink);
-  color: var(--paper);
-  font-family: var(--font-archivo), Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-geist), Helvetica, Arial, sans-serif;
+}
+
+/* The highlighter: dark text on yellow in both modes, like a marker on paper. */
+::selection {
+  background: var(--mark);
+  color: #111111;
 }

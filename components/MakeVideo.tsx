@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { DirectResult } from "@/lib/direct";
 import { EXAMPLES } from "@/lib/example";
-import type { Example } from "@/lib/example";
+import type { Example, ExampleMeta } from "@/lib/example";
 import type { LibraryVideo } from "@/lib/library";
 import type { FactCheckResult } from "@/lib/factcheck";
 import type { FactCheckReport as Report, ResearchFact, VideoRequest } from "@/lib/pipeline";
@@ -14,7 +14,10 @@ import type { ScriptResult } from "@/lib/script";
 import type { Source, Storyboard } from "@/lib/storyboard";
 import type { SceneVoice, VoiceResult } from "@/lib/voice";
 import { FactCheckReport } from "./FactCheckReport";
+import { Gallery } from "./Gallery";
+import { HowItWorks } from "./HowItWorks";
 import { sentenceSpans } from "./sentence-timing";
+import { SiteFooter, SiteHeader } from "./SiteChrome";
 import { StoryboardPlayer } from "./StoryboardPlayer";
 import { sceneSites } from "@/remotion/SourceChip";
 
@@ -58,8 +61,13 @@ const STEPS: { id: StepId; label: string; timeoutMs: number }[] = [
   { id: "voice", label: "Record the voice-over", timeoutMs: 100_000 },
 ];
 
-const AUDIENCES = ["Kids (8 to 12)", "High school", "Adults"];
-const SUGGESTIONS = ["The Black Death", "How vaccines work", "The fall of the Berlin Wall"];
+// The audiences as the form's sentence says them ("Explain ... to high school students") and as the pipeline gets them.
+const AUDIENCES = [
+  { value: "Kids (8 to 12)", label: "kids aged 8 to 12" },
+  { value: "High school", label: "high school students" },
+  { value: "Adults", label: "adults" },
+];
+const SUGGESTIONS = ["The Black Death", "How vaccines work", "How do airplanes fly?", "The fall of the Berlin Wall"];
 const LENGTHS = [60, 90, 120];
 
 const waitingSteps = () =>
@@ -160,7 +168,7 @@ async function postJson<T>(url: string, body: unknown, timeoutMs: number, demoCo
 const DEMO_CODE_KEY = "meko-demo-code";
 
 // `codeRequired` is true on the hosted demo, where making a video needs a demo code.
-export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
+export function MakeVideo({ codeRequired, examples }: { codeRequired: boolean; examples: ExampleMeta[] }) {
   const [topic, setTopic] = useState("");
   // Remembered from the last code the server accepted in this browser. The page is prerendered without it, so the
   // field fills in on the client; storage can be blocked, and then it starts empty.
@@ -172,7 +180,7 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
       return "";
     }
   });
-  const [audience, setAudience] = useState(AUDIENCES[1]);
+  const [audience, setAudience] = useState(AUDIENCES[1].value);
   const [lengthSec, setLengthSec] = useState(90);
   const [steps, setSteps] = useState(waitingSteps);
   const [started, setStarted] = useState(false);
@@ -180,6 +188,8 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
   const [failed, setFailed] = useState<{ step: StepId; message: string } | null>(null);
   const [finished, setFinished] = useState<Finished | null>(null);
   const [activeSentence, setActiveSentence] = useState<string | null>(null);
+  const [tab, setTab] = useState<"factcheck" | "sources">("factcheck");
+  const [asked, setAsked] = useState<VideoRequest | null>(null); // what the video being made is about
   const [now, setNow] = useState(() => Date.now());
   const progress = useRef<Progress | null>(null);
   const playerRef = useRef<PlayerRef>(null);
@@ -335,6 +345,8 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
     event?.preventDefault();
     if (running) return;
     const request: VideoRequest = { topic: topic.trim(), audience, lengthSec, language: "en" };
+    setAsked(request);
+    setTab("factcheck");
     setFinished(null);
     setActiveSentence(null);
     setFailed(null);
@@ -364,7 +376,9 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
     setStarted(false);
     setFailed(null);
     setActiveSentence(null);
+    setTab("factcheck");
     setFinished(await loadExample(slug));
+    document.getElementById("result")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   // A link to /?example opens the first example straight away, and /?example=black-death that one.
@@ -375,228 +389,278 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
     void loadExample(slug).then(setFinished);
   }, []);
 
-  return (
-    <main className="mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-8 px-4 py-10 sm:px-8">
-      <header>
-        <h1 className="font-display text-5xl font-bold">Meko</h1>
-        <p className="mt-3 text-lg text-dim">Turn a topic into a short, fact-checked explainer video.</p>
-      </header>
+  const home = !started && !finished;
+  const audienceLabel = (value: string) => AUDIENCES.find((option) => option.value === value)?.label ?? value;
 
-      <div className="flex flex-col gap-3">
-        <form onSubmit={(event) => void makeVideo(event)} className="flex flex-col gap-4 sm:flex-row sm:items-end">
-          <label className="flex flex-1 flex-col gap-1">
-            <span className="text-sm font-medium text-dim">Topic</span>
+  return (
+    <>
+      <SiteHeader />
+      <main className="mx-auto flex w-full min-w-0 max-w-6xl flex-1 flex-col px-5 sm:px-8">
+        {home ? (
+          <section className="pt-14 sm:pt-20">
+            <h1 className="max-w-3xl font-serif text-5xl leading-[1.05] tracking-tight sm:text-7xl">Explainer videos you can check.</h1>
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
+              Meko researches a topic on the web, writes a script where every sentence cites its source, checks each claim, and
+              animates it with maps, diagrams and a voice-over in about a minute.
+            </p>
+          </section>
+        ) : null}
+
+        <form
+          onSubmit={(event) => void makeVideo(event)}
+          className={`rounded-2xl border border-rule bg-surface p-5 sm:p-7 ${home ? "mt-10" : "mt-8"}`}
+        >
+          <div className="font-serif text-2xl leading-[1.7] sm:text-3xl">
+            <span>Explain </span>
             <input
               value={topic}
               onChange={(event) => setTopic(event.target.value)}
               required
               minLength={3}
               maxLength={200}
-              placeholder="The French Revolution"
-              className="rounded border border-line bg-ink px-3 py-2 text-paper"
+              placeholder="the French Revolution"
+              aria-label="Topic"
+              className="w-full border-b-2 border-rule bg-transparent px-1 outline-none transition-colors placeholder:text-muted/60 focus:border-fg sm:w-[22ch]"
             />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-dim">Audience</span>
-            <select
-              value={audience}
-              onChange={(event) => setAudience(event.target.value)}
-              className="rounded border border-line bg-ink px-3 py-2 text-paper"
-            >
-              {AUDIENCES.map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-dim">Length</span>
-            <select
-              value={lengthSec}
-              onChange={(event) => setLengthSec(Number(event.target.value))}
-              className="rounded border border-line bg-ink px-3 py-2 text-paper"
-            >
-              {LENGTHS.map((seconds) => (
-                <option key={seconds} value={seconds}>
-                  About {seconds} seconds
-                </option>
-              ))}
-            </select>
-          </label>
-          {codeRequired ? (
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-dim">Demo code</span>
-              <input
-                value={demoCode}
-                onChange={(event) => setDemoCode(event.target.value)}
-                required
-                autoComplete="off"
-                spellCheck={false}
-                suppressHydrationWarning
-                className="w-full rounded border border-line bg-ink px-3 py-2 text-paper sm:w-36"
-              />
-            </label>
-          ) : null}
-          <button
-            type="submit"
-            disabled={running}
-            className="rounded bg-signal px-5 py-2 font-semibold text-ink disabled:opacity-50"
-          >
-            {running ? "Making video…" : "Make video"}
-          </button>
-        </form>
-        {codeRequired ? (
-          <p className="text-sm text-dim">Making a new video needs the demo code from the Meko submission. The example works without it.</p>
-        ) : null}
-        <p className="flex flex-wrap items-center gap-2 text-sm text-dim">
-          Try:
-          {SUGGESTIONS.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => setTopic(suggestion)}
-              className="rounded border border-line px-2 py-0.5 hover:border-signal hover:text-paper"
-            >
-              {suggestion}
-            </button>
-          ))}
-        </p>
-        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-dim">
-          <span>Takes under a minute. Watch an example:</span>
-          {EXAMPLES.map((example) => (
-            <button
-              key={example.slug}
-              type="button"
-              onClick={() => void watchExample(example.slug)}
-              disabled={running}
-              className="underline decoration-line underline-offset-4 hover:decoration-signal disabled:opacity-50"
-            >
-              {example.topic}
-            </button>
-          ))}
-        </p>
-      </div>
-
-      {!started && !finished ? (
-        <section className="max-w-3xl">
-          <h2 className="font-display text-2xl font-bold">How Meko keeps it honest</h2>
-          <ol className="mt-3 flex list-decimal flex-col gap-2 pl-5 text-dim">
-            <li>Every fact comes with the exact words from its source, and Meko checks that those words are really there.</li>
-            <li>Every sentence of the script is checked claim by claim against those words before it is spoken.</li>
-            <li>Next to the video you see the verdict, the quotes and the sources for every sentence.</li>
-          </ol>
-        </section>
-      ) : null}
-
-      {started ? (
-        <div className="flex flex-col gap-3">
-          <ol className="flex flex-col gap-2" aria-live="polite">
-            {STEPS.map(({ id, label }) => (
-              <StepRow key={id} label={label} state={steps[id]} now={now} />
-            ))}
-          </ol>
-          {failed && !running ? (
-            <div className="flex flex-wrap items-center gap-3 border-l-4 border-alert py-1 pl-4" role="alert">
-              <span>
-                {failed.step === "voice"
-                  ? "The voice-over failed, so the video plays without sound."
-                  : `${STEPS.find((step) => step.id === failed.step)?.label} failed.`}
-              </span>
-              <button
-                type="button"
-                onClick={tryAgain}
-                className="rounded border border-line px-3 py-1 text-sm font-semibold hover:border-signal"
-              >
-                Try again
-              </button>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {finished ? (
-        <section className="grid gap-8 lg:grid-cols-[3fr_2fr]">
-          <div className="flex min-w-0 flex-col gap-4">
-            {finished.example ? (
-              <p className="text-sm text-dim">
-                Example: “{finished.example.topic}”, made by Meko on{" "}
-                {new Date(finished.example.madeAt).toLocaleDateString("en-GB", { dateStyle: "long" })}.
-              </p>
-            ) : null}
-            {finished.library ? (
-              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-dim">
-                <span>
-                  From the library: made for the same topic on{" "}
-                  {new Date(finished.library.madeAt).toLocaleDateString("en-GB", { dateStyle: "long" })}, checked the same way.
-                </span>
-                <button
-                  type="button"
-                  onClick={() => void makeVideo(undefined, true)}
-                  disabled={running}
-                  className="rounded border border-line px-3 py-1 text-sm font-semibold text-paper hover:border-signal disabled:opacity-50"
-                >
-                  Make a new one
-                </button>
-              </p>
-            ) : null}
-            <StoryboardPlayer
-              storyboard={finished.storyboard}
-              voice={finished.voice}
-              sites={sites}
-              checks={finished.report}
-              playerRef={playerRef}
+            <span> to </span>
+            <InlineSelect label="Audience" value={audience} onChange={setAudience} options={AUDIENCES} />
+            <span> in about </span>
+            <InlineSelect
+              label="Length"
+              value={String(lengthSec)}
+              onChange={(value) => setLengthSec(Number(value))}
+              options={LENGTHS.map((seconds) => ({ value: String(seconds), label: `${seconds} seconds` }))}
             />
-            <p className="text-sm text-dim">
-              Made in {Math.round(finished.ms / 1000)} seconds. Model cost ${finished.costUsd.toFixed(3)}.
-            </p>
-            <div>
-              <h2 className="font-display text-2xl font-bold">Sources</h2>
-              <ol className="mt-2 flex list-decimal flex-col gap-2 pl-5 break-words">
-                {finished.storyboard.sources.map((source) => (
-                  <li key={source.id}>
-                    <a
-                      href={source.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline decoration-line underline-offset-4 hover:decoration-signal"
-                    >
-                      {source.title}
-                    </a>{" "}
-                    <span className="text-sm text-dim">{hostname(source.url)}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
+            <span>.</span>
           </div>
-          <FactCheckReport
-            report={finished.report}
-            facts={finished.facts}
-            sources={finished.sources}
-            numbered={finished.storyboard.sources}
-            activeSentenceId={activeSentence}
-            onSelect={playFrom}
-          />
-        </section>
-      ) : null}
-    </main>
+          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
+            {codeRequired ? (
+              <label className="flex items-center gap-2 text-sm text-muted">
+                Demo code
+                <input
+                  value={demoCode}
+                  onChange={(event) => setDemoCode(event.target.value)}
+                  required
+                  autoComplete="off"
+                  spellCheck={false}
+                  suppressHydrationWarning
+                  className="w-36 rounded-md border border-rule bg-bg px-2.5 py-1.5 font-mono text-sm text-fg outline-none focus:border-fg"
+                />
+              </label>
+            ) : null}
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+              <span>Try</span>
+              {SUGGESTIONS.map((suggestion, index) => (
+                <span key={suggestion} className="flex items-center gap-2">
+                  {index > 0 ? <span aria-hidden>·</span> : null}
+                  <button type="button" onClick={() => setTopic(suggestion)} className="text-fg underline decoration-rule underline-offset-4 hover:decoration-fg">
+                    {suggestion}
+                  </button>
+                </span>
+              ))}
+            </p>
+            <button
+              type="submit"
+              disabled={running}
+              className="ml-auto rounded-full bg-fg px-6 py-3 font-medium text-bg transition-opacity hover:opacity-85 disabled:opacity-50"
+            >
+              {running ? "Making video…" : "Make video"}
+            </button>
+          </div>
+          {codeRequired ? (
+            <p className="mt-4 text-sm text-muted">Making a new video needs the demo code from the Meko submission. The finished videos below play without it.</p>
+          ) : null}
+        </form>
+
+        {started && !finished && asked ? (
+          <section className="mt-12 max-w-2xl" aria-live="polite">
+            <h2 className="font-serif text-3xl">Making “{asked.topic}”</h2>
+            <p className="mt-2 text-muted">
+              For {audienceLabel(asked.audience)}, about {asked.lengthSec} seconds. This takes about a minute.
+            </p>
+            <ol className="mt-8 flex flex-col">
+              {STEPS.map(({ id, label }, index) => (
+                <StepRow key={id} label={label} state={steps[id]} now={now} last={index === STEPS.length - 1} />
+              ))}
+            </ol>
+            {failed && !running ? (
+              <div className="mt-6 flex flex-wrap items-center gap-4 rounded-xl border border-bad/40 px-4 py-3" role="alert">
+                <span>
+                  {failed.step === "voice"
+                    ? "The voice-over failed, so the video plays without sound."
+                    : `${STEPS.find((step) => step.id === failed.step)?.label} failed.`}
+                </span>
+                <button type="button" onClick={tryAgain} className="rounded-full border border-fg px-4 py-1.5 text-sm font-medium hover:bg-fg hover:text-bg">
+                  Try again
+                </button>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
+        {finished ? (
+          <section id="result" className="mt-12 scroll-mt-6">
+            <div className="flex flex-col gap-2 border-b border-rule pb-5">
+              <h2 className="font-serif text-3xl leading-tight sm:text-4xl">{finished.storyboard.title}</h2>
+              <p className="font-mono text-sm text-muted">
+                {finished.example ? "Example · " : finished.library ? "From the library · " : ""}
+                Made in {Math.round(finished.ms / 1000)} s · ${finished.costUsd.toFixed(3)} · {finished.storyboard.sources.length} sources ·{" "}
+                {finished.report.supported} of {finished.report.checks.length} sentences supported
+              </p>
+              {finished.library ? (
+                <p className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted">
+                  <span>
+                    Made for the same topic on {new Date(finished.library.madeAt).toLocaleDateString("en-GB", { dateStyle: "long" })}, checked
+                    the same way.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void makeVideo(undefined, true)}
+                    disabled={running}
+                    className="rounded-full border border-fg px-4 py-1.5 font-medium text-fg hover:bg-fg hover:text-bg disabled:opacity-50"
+                  >
+                    Make a new one
+                  </button>
+                </p>
+              ) : null}
+            </div>
+            <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+              <div className="min-w-0">
+                <div className="overflow-hidden rounded-xl border border-rule">
+                  <StoryboardPlayer
+                    storyboard={finished.storyboard}
+                    voice={finished.voice}
+                    sites={sites}
+                    checks={finished.report}
+                    playerRef={playerRef}
+                  />
+                </div>
+              </div>
+              <aside className="flex min-w-0 flex-col">
+                <div role="tablist" className="flex gap-6 border-b border-rule">
+                  {(
+                    [
+                      ["factcheck", "Fact-check"],
+                      ["sources", `Sources (${finished.storyboard.sources.length})`],
+                    ] as const
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      aria-selected={tab === id}
+                      onClick={() => setTab(id)}
+                      className={`-mb-px border-b-2 pb-2.5 text-sm font-medium transition-colors ${
+                        tab === id ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {tab === "factcheck" ? (
+                  <FactCheckReport
+                    report={finished.report}
+                    facts={finished.facts}
+                    sources={finished.sources}
+                    numbered={finished.storyboard.sources}
+                    activeSentenceId={activeSentence}
+                    onSelect={playFrom}
+                  />
+                ) : (
+                  <ol className="mt-4 flex flex-col">
+                    {finished.storyboard.sources.map((source, index) => (
+                      <li key={source.id} className="flex gap-3 border-b border-rule py-3 last:border-b-0">
+                        <span className="w-6 shrink-0 font-mono text-sm text-muted">{index + 1}</span>
+                        <span className="min-w-0 break-words">
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline decoration-rule underline-offset-4 hover:decoration-fg"
+                          >
+                            {source.title}
+                          </a>
+                          <span className="mt-0.5 block font-mono text-xs text-muted">{hostname(source.url)}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </aside>
+            </div>
+          </section>
+        ) : null}
+
+        <Gallery examples={examples} onWatch={(slug) => void watchExample(slug)} disabled={running} />
+        <HowItWorks />
+      </main>
+      <SiteFooter />
+    </>
   );
 }
 
-function StepRow({ label, state, now }: { label: string; state: StepState; now: number }) {
+// A choice inside the form's sentence, drawn as an underlined word with a small arrow instead of a box.
+function InlineSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <span className="relative inline-block">
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        aria-label={label}
+        className="cursor-pointer appearance-none border-b-2 border-rule bg-transparent py-0 pl-1 pr-7 outline-none transition-colors focus:border-fg"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value} className="bg-bg font-sans text-base text-fg">
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <span aria-hidden className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-base text-muted">
+        ▾
+      </span>
+    </span>
+  );
+}
+
+// One step of making a video, on a line down the left: a circle that fills in when the step is done, its name, and
+// what it found or how long it has run.
+function StepRow({ label, state, now, last }: { label: string; state: StepState; now: number; last: boolean }) {
   const elapsed = state.startedAt ? Math.max(0, (now - state.startedAt) / 1000) : 0;
-  const status = {
-    waiting: { mark: "○", text: "" },
-    running: { mark: "…", text: `${elapsed.toFixed(0)} s` },
-    done: { mark: "✓", text: `${((state.ms ?? 0) / 1000).toFixed(1)} s · ${state.detail ?? ""}` },
-    skipped: { mark: "–", text: state.detail ?? "Skipped" },
-    failed: { mark: "✕", text: state.detail ?? "Failed" },
+  const detail = {
+    waiting: "",
+    running: `${elapsed.toFixed(0)} s`,
+    done: `${((state.ms ?? 0) / 1000).toFixed(1)} s · ${state.detail ?? ""}`,
+    skipped: state.detail ?? "Skipped",
+    failed: state.detail ?? "Failed",
+  }[state.status];
+  const dot = {
+    waiting: "border-rule bg-bg",
+    running: "border-fg bg-bg animate-pulse",
+    done: "border-fg bg-fg",
+    skipped: "border-rule bg-rule",
+    failed: "border-bad bg-bad",
   }[state.status];
   return (
-    <li className={`flex gap-3 ${state.status === "waiting" ? "text-dim/60" : ""}`}>
-      <span className={`w-4 shrink-0 text-center ${state.status === "done" ? "text-teal" : ""}`} aria-hidden>
-        {status.mark}
+    <li className="flex gap-4">
+      <span className="flex w-4 flex-col items-center" aria-hidden>
+        <span className={`mt-1.5 h-3.5 w-3.5 shrink-0 rounded-full border-2 ${dot}`} />
+        {last ? null : <span className="w-px flex-1 bg-rule" />}
       </span>
-      <span className="shrink-0 font-medium">{label}</span>
-      <span className={state.status === "failed" ? "text-alert" : "text-dim"}>{status.text}</span>
+      <span className={`flex min-w-0 flex-col pb-6 ${state.status === "waiting" ? "text-muted" : ""}`}>
+        <span className="font-medium">{label}</span>
+        {detail ? <span className={`mt-0.5 font-mono text-sm ${state.status === "failed" ? "text-bad" : "text-muted"}`}>{detail}</span> : null}
+      </span>
     </li>
   );
 }

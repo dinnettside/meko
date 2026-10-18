@@ -83,7 +83,54 @@ export const MOTION = {
   ],
 };
 
-// The colors as CSS variables for the app. app/globals.css maps them to Tailwind classes like bg-ink.
+// The app around the videos, "Editorial" (picked by Trym on Oct 19, 2026): black and white like a well-sourced
+// article, in a light and a dark mode, so the videos' own looks stand out. One accent, a highlighter yellow, marks what
+// is being said and quoted, like the marker that sweeps over a source's words in the videos.
+export const APP_COLORS = {
+  light: {
+    bg: "#FFFFFF", // the page
+    fg: "#111111", // text and the main button
+    muted: "#6F6F6F", // secondary text
+    rule: "#E6E6E6", // lines and borders
+    surface: "#F5F5F5", // fields and cards
+    mark: "#FFE45C", // the highlighter, always with dark text on it
+    ok: "#1F7A4D", // supported sentences
+    warn: "#A15C00", // revised sentences
+    bad: "#B42318", // removed sentences and errors
+  },
+  dark: {
+    bg: "#0B0B0B",
+    fg: "#F2F2F2",
+    muted: "#A0A0A0",
+    rule: "#262626",
+    surface: "#151515",
+    mark: "#FFE45C",
+    ok: "#5BC08A",
+    warn: "#E0A04A",
+    bad: "#F07167",
+  },
+};
+
+// The app's fonts, loaded by next/font in app/layout.tsx: Newsreader for headings, Geist for everything else and Geist
+// Mono for numbers like times and costs.
+export const APP_FONTS = {
+  serif: "var(--font-newsreader), Georgia, serif",
+  sans: "var(--font-geist), Helvetica, Arial, sans-serif",
+  mono: "var(--font-geist-mono), ui-monospace, monospace",
+};
+
+// The app's colors as CSS variables: light by default, dark when the system asks for it, and either one when the
+// reader picks it with the switch in the header (data-theme on <html>).
+export function appThemeCss(): string {
+  const vars = (colors: Record<string, string>) => Object.entries(colors).map(([name, value]) => `--${name}:${value};`).join("");
+  return (
+    `:root{${vars(APP_COLORS.light)}color-scheme:light;}` +
+    `@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${vars(APP_COLORS.dark)}color-scheme:dark;}}` +
+    `:root[data-theme="dark"]{${vars(APP_COLORS.dark)}color-scheme:dark;}`
+  );
+}
+
+// The colors of the Night atlas look as CSS variables, for the parts of the app that draw in the video's style.
 export const cssVariables = {
   "--ink": COLORS.ink,
   "--land": COLORS.land,
