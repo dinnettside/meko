@@ -9,17 +9,18 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runPipeline } from "./pipeline-client.ts";
 
+// Ten topics across history, science, nature, the body and technology, none of them in the feed.
 const TOPICS = [
   "The French Revolution",
-  "The Silk Road",
-  "How vaccines train the immune system",
-  "The fall of the Berlin Wall",
   "The voyages of Christopher Columbus",
-  "How the Panama Canal was built",
-  "The Black Death",
-  "The Apollo 11 Moon landing",
-  "The rise and fall of the Roman Republic",
   "The partition of India in 1947",
+  "How the Panama Canal was built",
+  "How the human eye sees",
+  "How photosynthesis works",
+  "Why we have seasons",
+  "How batteries store energy",
+  "How hurricanes form",
+  "How the internet sends data",
 ];
 const count = Math.min(Number(process.argv[2]) || TOPICS.length, TOPICS.length);
 const saveDir = process.argv[3];

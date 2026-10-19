@@ -17,8 +17,15 @@ export const EXAMPLES = [
   { slug: "airplanes", topic: "How do airplanes fly?" },
 ];
 
-// What the gallery shows under an example: how long it is, how many sources it cites and how its sentences fared.
-export type ExampleMeta = { slug: string; topic: string; seconds: number; sources: number; supported: number; sentences: number };
+// What the feed shows under a video: how long it is, how many sources it cites and how its sentences fared.
+export type ExampleMeta = { slug: string; topic: string; seconds: number; sources: number; supported: number; revised: number; removed: number; sentences: number };
+
+// The fact-check in a few words: "7 sentences checked, all supported" or "8 sentences checked, 4 rewritten to match the
+// sources". A rewrite is the check at work, so it is named for what it did.
+export function checkedLine({ sentences, revised, removed }: { sentences: number; revised: number; removed: number }): string {
+  const changes = [revised > 0 ? `${revised} rewritten to match the sources` : "", removed > 0 ? `${removed} removed` : ""].filter(Boolean);
+  return `${sentences} sentences checked, ${changes.length > 0 ? changes.join(" and ") : "all supported"}`;
+}
 
 export function exampleMeta(slug: string, example: Example): ExampleMeta {
   return {
@@ -28,6 +35,8 @@ export function exampleMeta(slug: string, example: Example): ExampleMeta {
     seconds: Math.round(storyboardFrames(example.storyboard) / example.storyboard.fps),
     sources: example.storyboard.sources.length,
     supported: example.report.supported,
+    revised: example.report.revised,
+    removed: example.report.removed,
     sentences: example.report.checks.length,
   };
 }

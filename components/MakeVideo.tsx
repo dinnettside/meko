@@ -4,7 +4,8 @@ import type { PlayerRef } from "@remotion/player";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { DirectResult } from "@/lib/direct";
-import { EXAMPLES } from "@/lib/example";
+import { EXAMPLES, checkedLine } from "@/lib/example";
+import type { FeedItem } from "@/lib/example";
 import type { LibraryVideo } from "@/lib/library";
 import type { FactCheckResult } from "@/lib/factcheck";
 import type { FactCheckReport as Report, ResearchFact, VideoRequest } from "@/lib/pipeline";
@@ -14,6 +15,7 @@ import type { Source, Storyboard } from "@/lib/storyboard";
 import type { SceneVoice, VoiceResult } from "@/lib/voice";
 import { FactCheckReport } from "./FactCheckReport";
 import { loadSavedVideo } from "./saved-video";
+import Image from "next/image";
 import Link from "next/link";
 import { HowItWorks } from "./HowItWorks";
 import { sentenceSpans } from "./sentence-timing";
@@ -153,7 +155,7 @@ async function postJson<T>(url: string, body: unknown, timeoutMs: number, demoCo
 const DEMO_CODE_KEY = "meko-demo-code";
 
 // `codeRequired` is true on the hosted demo, where making a video needs a demo code.
-export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
+export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; featured: FeedItem[] }) {
   const [topic, setTopic] = useState("");
   // Remembered from the last code the server accepted in this browser. The page is prerendered without it, so the
   // field fills in on the client; storage can be blocked, and then it starts empty.
@@ -490,7 +492,7 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
               <p className="font-mono text-sm text-muted">
                 {finished.example ? "Example · " : finished.library ? "From the library · " : ""}
                 Made in {Math.round(finished.ms / 1000)} s · ${finished.costUsd.toFixed(3)} · {finished.storyboard.sources.length} sources ·{" "}
-                {finished.report.supported} of {finished.report.checks.length} sentences supported
+                {checkedLine({ sentences: finished.report.checks.length, revised: finished.report.revised, removed: finished.report.removed })}
               </p>
               {finished.library ? (
                 <p className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted">
@@ -579,16 +581,44 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
           </section>
         ) : null}
 
-        <section className="mt-20 flex flex-col gap-4 rounded-2xl border border-rule p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-          <div>
-            <h2 className="font-serif text-2xl sm:text-3xl">Watch videos made by Meko</h2>
-            <p className="mt-2 max-w-xl text-muted">
-              Scroll through them one by one, open the fact-check and sources behind each, and like or comment without an account.
-            </p>
+        <section className="mt-20">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="font-serif text-2xl sm:text-3xl">Watch videos made by Meko</h2>
+              <p className="mt-2 max-w-xl text-muted">
+                Scroll through them one by one, open the fact-check and sources behind each, and like or comment without an account.
+              </p>
+            </div>
+            <Link href="/watch" className="shrink-0 self-start rounded-full bg-fg px-6 py-3 font-medium text-bg hover:opacity-85 sm:self-auto">
+              Open the feed
+            </Link>
           </div>
-          <Link href="/watch" className="shrink-0 self-start rounded-full bg-fg px-6 py-3 font-medium text-bg hover:opacity-85 sm:self-auto">
-            Open the feed
-          </Link>
+          {featured.length > 0 ? (
+            <ul className="mt-8 grid gap-6 sm:grid-cols-3">
+              {featured.map((item) => (
+                <li key={item.slug}>
+                  <Link href={`/watch#${item.slug}`} className="group block">
+                    <div className="relative aspect-video overflow-hidden rounded-xl border border-rule bg-black">
+                      {/* The stills are small already, and served as they are, so a new still is never hidden by an old cached one. */}
+                      <Image
+                        src={`/examples/${item.slug}.jpg`}
+                        alt=""
+                        fill
+                        unoptimized
+                        className="object-cover transition-opacity group-hover:opacity-85"
+                      />
+                    </div>
+                    <p className="mt-3 font-serif text-lg leading-snug group-hover:underline group-hover:decoration-rule group-hover:underline-offset-4">
+                      {item.title}
+                    </p>
+                    <p className="mt-1 font-mono text-xs text-muted">
+                      {minutes(item.seconds)} · {checkedLine(item)}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </section>
         <HowItWorks />
       </main>
@@ -596,6 +626,9 @@ export function MakeVideo({ codeRequired }: { codeRequired: boolean }) {
     </>
   );
 }
+
+// A video's length as m:ss.
+const minutes = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
 // A choice inside the form's sentence, drawn as an underlined word with a small arrow instead of a box.
 function InlineSelect({

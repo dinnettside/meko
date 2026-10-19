@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { FormEvent } from "react";
+import { checkedLine } from "@/lib/example";
 import type { FeedItem } from "@/lib/example";
 import { viewerName } from "@/lib/names";
 import type { FeedComment, VideoSocial } from "@/lib/social";
@@ -241,14 +242,14 @@ export function Feed({ items }: { items: FeedItem[] }) {
                   {near && video ? (
                     <FeedPlayer slug={item.slug} video={video} onPlayer={registerPlayer} />
                   ) : (
-                    <Image src={`/examples/${item.slug}.jpg`} alt="" fill sizes="(max-width: 900px) 100vw, 900px" className="object-cover opacity-80" />
+                    <Image src={`/examples/${item.slug}.jpg`} alt="" fill unoptimized className="object-cover opacity-80" />
                   )}
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
                   <div className="min-w-0 sm:flex-1">
                     <h2 className="font-serif text-2xl leading-tight sm:text-3xl">{item.title}</h2>
                     <p className="mt-1.5 font-mono text-xs text-muted">
-                      {duration(item.seconds)} · {item.sources} sources · {item.supported} of {item.sentences} sentences supported
+                      {duration(item.seconds)} · {item.sources} sources · {checkedLine(item)}
                     </p>
                     <p className="mt-1 text-sm text-muted">
                       Made once in {Math.round(item.ms / 1000)} s for ${item.costUsd.toFixed(2)}; every view after that is free.{" "}
