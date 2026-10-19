@@ -1,0 +1,1208 @@
+{
+ "request": {
+  "topic": "How vaccines work",
+  "audience": "High school",
+  "lengthSec": 60,
+  "language": "en"
+ },
+ "madeAt": "2026-10-18T23:33:45.123Z",
+ "ms": 56534,
+ "costUsd": 0.19929348000000002,
+ "tokens": 186620,
+ "storyboard": {
+  "title": "How Vaccines Train Your Immune System",
+  "language": "en",
+  "theme": "field",
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "scenes": [
+   {
+    "id": "scene-1",
+    "narration": "Vaccines imitate an infection to train your immune system without making you sick.",
+    "factIds": [
+     "f1",
+     "f24"
+    ],
+    "durationSec": 5.7,
+    "kind": "title",
+    "heading": "How Vaccines Train Your Immune System",
+    "subheading": "How do vaccines work to protect us?",
+    "icon": "syringe",
+    "look": {
+     "template": "title_card",
+     "params": {
+      "title": "How Vaccines Train Your Immune System",
+      "subtitle": "How do vaccines work to protect us?"
+     }
+    }
+   },
+   {
+    "id": "scene-2",
+    "narration": "The active ingredient is an antigen, a unique part of a germ that triggers antibody production.",
+    "factIds": [
+     "f2",
+     "f28"
+    ],
+    "durationSec": 6.9,
+    "kind": "template",
+    "template": "definition_card",
+    "params": {
+     "term": "antigen",
+     "definition": "A unique part of a germ that triggers antibody production",
+     "example": "Active ingredient in all vaccines"
+    }
+   },
+   {
+    "id": "scene-3",
+    "narration": "Your first response to a new germ is slow, but memory cells remain to act faster next time.",
+    "factIds": [
+     "f25",
+     "f26"
+    ],
+    "durationSec": 6.5,
+    "kind": "steps",
+    "steps": [
+     "Body meets new germ",
+     "Slow antibody making",
+     "Memory cells stay",
+     "Next response is fast"
+    ],
+    "icons": [
+     "virus",
+     "hourglass",
+     "cell",
+     "arrowup"
+    ],
+    "look": {
+     "template": "icon_chain",
+     "params": {
+      "nodes": [
+       {
+        "icon": "virus",
+        "label": "Body meets new germ"
+       },
+       {
+        "icon": "hourglass",
+        "label": "Slow antibody making"
+       },
+       {
+        "icon": "cell",
+        "label": "Memory cells stay"
+       },
+       {
+        "icon": "arrowup",
+        "label": "Next response is fast"
+       }
+      ]
+     }
+    }
+   },
+   {
+    "id": "scene-4",
+    "narration": "Vaccines use different methods: weakened live germs, killed germs, specific protein pieces, or genetic instructions like mRNA.",
+    "factIds": [
+     "f8",
+     "f9",
+     "f10",
+     "f7"
+    ],
+    "durationSec": 9.7,
+    "kind": "list",
+    "items": [
+     {
+      "title": "Different methods"
+     },
+     {
+      "title": "Weakened live germs",
+      "icon": "virus"
+     },
+     {
+      "title": "Killed germs",
+      "icon": "virus"
+     },
+     {
+      "title": "Protein pieces",
+      "icon": "molecule"
+     }
+    ],
+    "look": {
+     "template": "kinetic_words",
+     "params": {
+      "words": [
+       "Different methods",
+       "Weakened live germs",
+       "Killed germs",
+       "Protein pieces"
+      ]
+     }
+    }
+   },
+   {
+    "id": "scene-5",
+    "narration": "All types aim to create active immunity that lasts longer than passive immunity from borrowed antibodies.",
+    "factIds": [
+     "f3",
+     "f4",
+     "f5"
+    ],
+    "durationSec": 7.2,
+    "kind": "quote",
+    "text": "Either way, active immunity takes longer to develop but lasts longer than passive immunity.",
+    "sourceId": "s1",
+    "look": {
+     "template": "quote_card",
+     "params": {
+      "quote": "Either way, active immunity takes longer to develop but lasts longer than passive immunity.",
+      "author": "Explaining How Vaccines Work | Vaccines & Immunizations | CDC",
+      "role": ""
+     }
+    }
+   },
+   {
+    "id": "scene-6",
+    "narration": "Before approval, vaccines go through three trial phases testing safety and efficacy in growing groups of people.",
+    "factIds": [
+     "f17",
+     "f18",
+     "f19"
+    ],
+    "durationSec": 7.8,
+    "kind": "list",
+    "items": [
+     {
+      "title": "Phase I",
+      "detail": "20-80 healthy volunteers"
+     },
+     {
+      "title": "Phase II",
+      "detail": "100-300 patients"
+     },
+     {
+      "title": "Phase III",
+      "detail": "Prove efficacy for approval"
+     }
+    ]
+   },
+   {
+    "id": "scene-7",
+    "narration": "When enough people are immune, community immunity makes it harder for the germ to spread.",
+    "factIds": [
+     "f27"
+    ],
+    "durationSec": 5.6,
+    "kind": "template",
+    "template": "network",
+    "params": {
+     "nodes": [
+      {
+       "label": "Vaccinated people",
+       "icon": "people"
+      },
+      {
+       "label": "Immune people",
+       "icon": "shield"
+      },
+      {
+       "label": "Community immunity",
+       "icon": "castle"
+      },
+      {
+       "label": "Pathogen",
+       "icon": "virus"
+      }
+     ],
+     "links": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       2
+      ],
+      [
+       2,
+       3
+      ]
+     ],
+     "center": 2
+    }
+   }
+  ],
+  "sources": [
+   {
+    "id": "s1",
+    "title": "Explaining How Vaccines Work | Vaccines & Immunizations | CDC",
+    "url": "https://www.cdc.gov/vaccines/basics/explaining-how-vaccines-work.html"
+   },
+   {
+    "id": "s2",
+    "title": "Vaccines | Immunization | Inoculation | MedlinePlus",
+    "url": "https://www.nlm.nih.gov/medlineplus/immunization.html"
+   },
+   {
+    "id": "s5",
+    "title": "Safety surveillance and challenges in accelerated COVID-19 vaccine development",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9444812"
+   },
+   {
+    "id": "s7",
+    "title": "How do vaccines work",
+    "url": "https://www.who.int/en/emergencies/diseases/novel-coronavirus-2019/covid-19-vaccines/how-do-vaccines-work"
+   }
+  ]
+ },
+ "words": {
+  "scene-1": [
+   {
+    "text": "Vaccines",
+    "start": 0,
+    "end": 0.639
+   },
+   {
+    "text": "imitate",
+    "start": 0.708,
+    "end": 1.126
+   },
+   {
+    "text": "an",
+    "start": 1.161,
+    "end": 1.219
+   },
+   {
+    "text": "infection",
+    "start": 1.265,
+    "end": 1.846
+   },
+   {
+    "text": "to",
+    "start": 1.927,
+    "end": 2.043
+   },
+   {
+    "text": "train",
+    "start": 2.101,
+    "end": 2.357
+   },
+   {
+    "text": "your",
+    "start": 2.403,
+    "end": 2.519
+   },
+   {
+    "text": "immune",
+    "start": 2.566,
+    "end": 2.856
+   },
+   {
+    "text": "system",
+    "start": 2.891,
+    "end": 3.251
+   },
+   {
+    "text": "without",
+    "start": 3.332,
+    "end": 3.622
+   },
+   {
+    "text": "making",
+    "start": 3.669,
+    "end": 3.936
+   },
+   {
+    "text": "you",
+    "start": 3.982,
+    "end": 4.063
+   },
+   {
+    "text": "sick.",
+    "start": 4.122,
+    "end": 5.062
+   }
+  ],
+  "scene-2": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.174
+   },
+   {
+    "text": "active",
+    "start": 0.244,
+    "end": 0.604
+   },
+   {
+    "text": "ingredient",
+    "start": 0.639,
+    "end": 1.196
+   },
+   {
+    "text": "is",
+    "start": 1.265,
+    "end": 1.37
+   },
+   {
+    "text": "an",
+    "start": 1.405,
+    "end": 1.474
+   },
+   {
+    "text": "antigen,",
+    "start": 1.533,
+    "end": 2.194
+   },
+   {
+    "text": "a",
+    "start": 2.368,
+    "end": 2.438
+   },
+   {
+    "text": "unique",
+    "start": 2.554,
+    "end": 2.926
+   },
+   {
+    "text": "part",
+    "start": 2.972,
+    "end": 3.274
+   },
+   {
+    "text": "of",
+    "start": 3.32,
+    "end": 3.379
+   },
+   {
+    "text": "a",
+    "start": 3.425,
+    "end": 3.448
+   },
+   {
+    "text": "germ",
+    "start": 3.529,
+    "end": 3.866
+   },
+   {
+    "text": "that",
+    "start": 3.924,
+    "end": 4.052
+   },
+   {
+    "text": "triggers",
+    "start": 4.087,
+    "end": 4.47
+   },
+   {
+    "text": "antibody",
+    "start": 4.54,
+    "end": 5.062
+   },
+   {
+    "text": "production.",
+    "start": 5.108,
+    "end": 6.316
+   }
+  ],
+  "scene-3": [
+   {
+    "text": "Your",
+    "start": 0,
+    "end": 0.221
+   },
+   {
+    "text": "first",
+    "start": 0.279,
+    "end": 0.534
+   },
+   {
+    "text": "response",
+    "start": 0.592,
+    "end": 1.01
+   },
+   {
+    "text": "to",
+    "start": 1.045,
+    "end": 1.103
+   },
+   {
+    "text": "a",
+    "start": 1.173,
+    "end": 1.196
+   },
+   {
+    "text": "new",
+    "start": 1.254,
+    "end": 1.382
+   },
+   {
+    "text": "germ",
+    "start": 1.428,
+    "end": 1.718
+   },
+   {
+    "text": "is",
+    "start": 1.788,
+    "end": 1.881
+   },
+   {
+    "text": "slow,",
+    "start": 1.927,
+    "end": 2.45
+   },
+   {
+    "text": "but",
+    "start": 2.601,
+    "end": 2.752
+   },
+   {
+    "text": "memory",
+    "start": 2.81,
+    "end": 3.088
+   },
+   {
+    "text": "cells",
+    "start": 3.135,
+    "end": 3.425
+   },
+   {
+    "text": "remain",
+    "start": 3.495,
+    "end": 3.785
+   },
+   {
+    "text": "to",
+    "start": 3.843,
+    "end": 3.889
+   },
+   {
+    "text": "act",
+    "start": 3.959,
+    "end": 4.098
+   },
+   {
+    "text": "faster",
+    "start": 4.156,
+    "end": 4.551
+   },
+   {
+    "text": "next",
+    "start": 4.621,
+    "end": 4.853
+   },
+   {
+    "text": "time.",
+    "start": 4.888,
+    "end": 5.898
+   }
+  ],
+  "scene-4": [
+   {
+    "text": "Vaccines",
+    "start": 0,
+    "end": 0.673
+   },
+   {
+    "text": "use",
+    "start": 0.743,
+    "end": 0.929
+   },
+   {
+    "text": "different",
+    "start": 0.975,
+    "end": 1.277
+   },
+   {
+    "text": "methods:",
+    "start": 1.324,
+    "end": 1.916
+   },
+   {
+    "text": "weakened",
+    "start": 2.09,
+    "end": 2.496
+   },
+   {
+    "text": "live",
+    "start": 2.566,
+    "end": 2.81
+   },
+   {
+    "text": "germs,",
+    "start": 2.856,
+    "end": 3.39
+   },
+   {
+    "text": "killed",
+    "start": 3.471,
+    "end": 3.785
+   },
+   {
+    "text": "germs,",
+    "start": 3.843,
+    "end": 4.389
+   },
+   {
+    "text": "specific",
+    "start": 4.563,
+    "end": 5.05
+   },
+   {
+    "text": "protein",
+    "start": 5.108,
+    "end": 5.492
+   },
+   {
+    "text": "pieces,",
+    "start": 5.55,
+    "end": 6.06
+   },
+   {
+    "text": "or",
+    "start": 6.211,
+    "end": 6.339
+   },
+   {
+    "text": "genetic",
+    "start": 6.397,
+    "end": 6.803
+   },
+   {
+    "text": "instructions",
+    "start": 6.85,
+    "end": 7.488
+   },
+   {
+    "text": "like",
+    "start": 7.546,
+    "end": 7.744
+   },
+   {
+    "text": "mRNA.",
+    "start": 7.837,
+    "end": 9.056
+   }
+  ],
+  "scene-5": [
+   {
+    "text": "All",
+    "start": 0,
+    "end": 0.255
+   },
+   {
+    "text": "types",
+    "start": 0.313,
+    "end": 0.639
+   },
+   {
+    "text": "aim",
+    "start": 0.697,
+    "end": 0.917
+   },
+   {
+    "text": "to",
+    "start": 0.987,
+    "end": 1.045
+   },
+   {
+    "text": "create",
+    "start": 1.115,
+    "end": 1.416
+   },
+   {
+    "text": "active",
+    "start": 1.463,
+    "end": 1.8
+   },
+   {
+    "text": "immunity",
+    "start": 1.823,
+    "end": 2.392
+   },
+   {
+    "text": "that",
+    "start": 2.635,
+    "end": 2.81
+   },
+   {
+    "text": "lasts",
+    "start": 2.856,
+    "end": 3.204
+   },
+   {
+    "text": "longer",
+    "start": 3.274,
+    "end": 3.541
+   },
+   {
+    "text": "than",
+    "start": 3.576,
+    "end": 3.692
+   },
+   {
+    "text": "passive",
+    "start": 3.762,
+    "end": 4.122
+   },
+   {
+    "text": "immunity",
+    "start": 4.145,
+    "end": 4.621
+   },
+   {
+    "text": "from",
+    "start": 4.69,
+    "end": 4.841
+   },
+   {
+    "text": "borrowed",
+    "start": 4.899,
+    "end": 5.259
+   },
+   {
+    "text": "antibodies.",
+    "start": 5.306,
+    "end": 6.641
+   }
+  ],
+  "scene-6": [
+   {
+    "text": "Before",
+    "start": 0,
+    "end": 0.372
+   },
+   {
+    "text": "approval,",
+    "start": 0.406,
+    "end": 0.998
+   },
+   {
+    "text": "vaccines",
+    "start": 1.115,
+    "end": 1.66
+   },
+   {
+    "text": "go",
+    "start": 1.707,
+    "end": 1.823
+   },
+   {
+    "text": "through",
+    "start": 1.892,
+    "end": 2.125
+   },
+   {
+    "text": "three",
+    "start": 2.171,
+    "end": 2.426
+   },
+   {
+    "text": "trial",
+    "start": 2.473,
+    "end": 2.775
+   },
+   {
+    "text": "phases",
+    "start": 2.833,
+    "end": 3.239
+   },
+   {
+    "text": "testing",
+    "start": 3.297,
+    "end": 3.692
+   },
+   {
+    "text": "safety",
+    "start": 3.773,
+    "end": 4.168
+   },
+   {
+    "text": "and",
+    "start": 4.226,
+    "end": 4.319
+   },
+   {
+    "text": "efficacy",
+    "start": 4.377,
+    "end": 4.946
+   },
+   {
+    "text": "in",
+    "start": 5.155,
+    "end": 5.294
+   },
+   {
+    "text": "growing",
+    "start": 5.364,
+    "end": 5.654
+   },
+   {
+    "text": "groups",
+    "start": 5.7,
+    "end": 5.968
+   },
+   {
+    "text": "of",
+    "start": 6.002,
+    "end": 6.06
+   },
+   {
+    "text": "people.",
+    "start": 6.118,
+    "end": 7.198
+   }
+  ],
+  "scene-7": [
+   {
+    "text": "When",
+    "start": 0,
+    "end": 0.232
+   },
+   {
+    "text": "enough",
+    "start": 0.279,
+    "end": 0.522
+   },
+   {
+    "text": "people",
+    "start": 0.569,
+    "end": 0.848
+   },
+   {
+    "text": "are",
+    "start": 0.894,
+    "end": 1.033
+   },
+   {
+    "text": "immune,",
+    "start": 1.068,
+    "end": 1.544
+   },
+   {
+    "text": "community",
+    "start": 1.66,
+    "end": 2.159
+   },
+   {
+    "text": "immunity",
+    "start": 2.206,
+    "end": 2.635
+   },
+   {
+    "text": "makes",
+    "start": 2.694,
+    "end": 2.891
+   },
+   {
+    "text": "it",
+    "start": 2.926,
+    "end": 3.007
+   },
+   {
+    "text": "harder",
+    "start": 3.065,
+    "end": 3.367
+   },
+   {
+    "text": "for",
+    "start": 3.402,
+    "end": 3.495
+   },
+   {
+    "text": "the",
+    "start": 3.529,
+    "end": 3.599
+   },
+   {
+    "text": "germ",
+    "start": 3.669,
+    "end": 3.959
+   },
+   {
+    "text": "to",
+    "start": 4.017,
+    "end": 4.075
+   },
+   {
+    "text": "spread.",
+    "start": 4.133,
+    "end": 4.969
+   }
+  ]
+ },
+ "report": {
+  "checks": [
+   {
+    "sentenceId": "scene-1.1",
+    "factIds": [
+     "f1",
+     "f24"
+    ],
+    "status": "supported",
+    "original": "Vaccines imitate an infection to train your immune system without making you sick.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-2.1",
+    "factIds": [
+     "f2",
+     "f28"
+    ],
+    "status": "supported",
+    "original": "The active ingredient is an antigen, a unique part of a germ that triggers antibody production.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-3.1",
+    "factIds": [
+     "f25",
+     "f26"
+    ],
+    "status": "supported",
+    "original": "Your first response to a new germ is slow, but memory cells remain to act faster next time.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-4.1",
+    "factIds": [
+     "f8",
+     "f9",
+     "f10",
+     "f7"
+    ],
+    "status": "supported",
+    "original": "Vaccines use different methods: weakened live germs, killed germs, specific protein pieces, or genetic instructions like mRNA.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-5.1",
+    "factIds": [
+     "f3",
+     "f4",
+     "f5"
+    ],
+    "status": "supported",
+    "original": "All types aim to create active immunity that lasts longer than passive immunity from borrowed antibodies.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-6.1",
+    "factIds": [
+     "f17",
+     "f18",
+     "f19"
+    ],
+    "status": "supported",
+    "original": "Before approval, vaccines go through three trial phases testing safety and efficacy in growing groups of people.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-7.1",
+    "factIds": [
+     "f27"
+    ],
+    "status": "supported",
+    "original": "When enough people are immune, community immunity makes it harder for the germ to spread.",
+    "revised": "",
+    "reason": ""
+   }
+  ],
+  "supported": 7,
+  "revised": 0,
+  "removed": 0
+ },
+ "facts": [
+  {
+   "id": "f1",
+   "text": "Vaccines work by imitating an infection to engage the body's natural defenses.",
+   "quote": "Vaccines work by imitating an infection—the presence of a disease-causing organism in the body—to engage the body's natural defenses.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f2",
+   "text": "The active ingredient in vaccines is an antigen, which causes the immune system to produce antibodies.",
+   "quote": "The active ingredient in all vaccines is an antigen, the name for any substance that causes the immune system to begin producing antibodies.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f3",
+   "text": "Immunity can be passive or active, natural or vaccine-induced.",
+   "quote": "Immunity is protection against a disease, and it can be passive or active, natural or vaccine induced.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f4",
+   "text": "Active immunity comes from exposure to a disease-causing organism and takes longer to develop but lasts longer than passive immunity.",
+   "quote": "Active immunity comes from being exposed to a disease-causing organism. Either way, active immunity takes longer to develop but lasts longer than passive immunity.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f5",
+   "text": "Passive immunity is provided by antibodies produced by another human or animal.",
+   "quote": "Passive immunity is provided by antibodies produced by another human being or animal.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f6",
+   "text": "Even mild or symptom-less infections can be deadly, such as HPV causing cancer years later.",
+   "quote": "Even mild or symptom-less infections can be deadly. For example, most people infected with the human papillomavirus (HPV) never show any sign of infection. But for some, the sign appears years later as an aggressive, life-threatening cancer.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f7",
+   "text": "mRNA vaccines give cells instructions to make a germ protein",
+   "quote": "mRNA vaccines use messenger RNA, which gives your cells instructions for how to make a protein (or piece of a protein) of the germ.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f8",
+   "text": "Live-attenuated vaccines contain a weakened germ",
+   "quote": "Live-attenuated vaccines use a weakened form of the germ.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f9",
+   "text": "Inactivated vaccines contain a killed germ",
+   "quote": "Inactivated vaccines use a killed version of the germ.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f10",
+   "text": "Subunit vaccines use specific pieces of the germ",
+   "quote": "Subunit, recombinant, polysaccharide, and conjugate vaccines use only specific pieces of the germ, such as its protein, sugar, or casing.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f11",
+   "text": "Toxoid vaccines use a germ-made toxin",
+   "quote": "Toxoid vaccines use a toxin (harmful product) made by the germ.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f12",
+   "text": "Viral vector vaccines use harmless virus to deliver genetic material",
+   "quote": "Viral vector vaccines use genetic material, which gives your cells instructions for making a protein of the germ. These vaccines also contain a different, harmless virus that helps get the genetic material into your cells.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f13",
+   "text": "Stabilizers prevent chemical reactions and stop vaccine components from sticking to the vial",
+   "quote": "Stabilizers prevent chemical reactions from occurring within the vaccine and keep the vaccine components from sticking to the vaccine vial.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f14",
+   "text": "Surfactants blend ingredients and prevent settling or clumping in liquid vaccines",
+   "quote": "Surfactants keep all the ingredients in the vaccine blended together. They prevent settling and clumping of elements that are in the liquid form of the vaccine.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f15",
+   "text": "Common stabilizers include sugars like lactose and sucrose, amino acids like glycine, and gelatin",
+   "quote": "Stabilizers can be sugars (lactose, sucrose), amino acids (glycine), gelatin, and proteins (recombinant human albumin, derived from yeast).",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f16",
+   "text": "Her immunity threshold formula uses Ro value: Ic = 1 − (1/Ro)",
+   "quote": "The herd immunity threshold in terms of the critical prevalence of protected individuals required to establish herd immunity against SARS-CoV-2 can be determined using the formula: Ic = 1 − (1/Ro).",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f17",
+   "text": "Phase I vaccine trials test safe dosage range in 20 to 80 healthy volunteers who are closely monitored.",
+   "quote": "During phase I, the safe dosage range of the vaccine is estimated in a small number of healthy volunteers between 20 and 80 subjects who are closely monitored.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f18",
+   "text": "Phase II trials determine dosage range in 100 to 300 closely monitored patients and are randomized and controlled.",
+   "quote": "Phase II is performed on a larger number (~100–300) of closely monitored patients to determine the dosage range.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f19",
+   "text": "Phase III trials demonstrate efficacy in randomized, double-blinded, controlled clinical trials to provide detailed safety data for approval.",
+   "quote": "During phase III clinical trials, the efficacy needs to be demonstrated in randomized, double-blinded, controlled clinical trials.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f20",
+   "text": "Vaccine development normally takes at least 5 years, but accelerated timelines can take 1 to 2 years while ensuring safety at every phase.",
+   "quote": "The typical timeline of vaccine development is at least 5 years, while the accelerating development can take 1–2 years, but irrespective of the development time spent, the vaccine must be safe at every phase while efficacy data are collected and evaluated.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f21",
+   "text": "Properly powered efficacy trials are anticipated to be of adequate size to establish an acceptable safety database for younger adult and elderly populations.",
+   "quote": "Properly powered efficacy trials for COVID-19 vaccines are anticipated to be of adequate size to establish an acceptable safety database for both younger adult and elderly populations, those for whom early vaccination might be recommended.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f22",
+   "text": "If a vaccine is intended for use in children, testing should start in decreasing order of age from the oldest to the first year of life.",
+   "quote": "If the vaccine is intended for use in children, the vaccine should be tested in decreasing order of age from the oldest to the first year of life.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f23",
+   "text": "Falsely linking childhood vaccines to autism is a prevalent vaccine-related rumor in modern US history.",
+   "quote": "Perhaps never before in modern US history have vaccine-related rumors, misinformation, and myths been more prevalent or damaging.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f24",
+   "text": "Vaccines contain a weakened version of a pathogen or its antigen blueprint to trigger an immune response without causing disease.",
+   "quote": "Regardless of whether the vaccine is made up of the antigen itself or the blueprint so that the body will produce the antigen, this weakened version will not cause the disease in the person receiving the vaccine.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f25",
+   "text": "The first immune response to a new pathogen takes time for the body to produce specific antibodies.",
+   "quote": "When the human body is exposed to an antigen for the first time, it takes time for the immune system to respond and produce antibodies specific to that antigen.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f26",
+   "text": "Memory cells remain after infection and allow a faster, more effective antibody response upon re-exposure to the same pathogen.",
+   "quote": "If the body is exposed to the same pathogen more than once, the antibody response is much faster and more effective than the first time around because the memory cells are at the ready to pump out antibodies against that antigen.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f27",
+   "text": "Vaccination creates community immunity by making it harder for pathogens to circulate when most people are immune.",
+   "quote": "When a lot of people in a community are vaccinated the pathogen has a hard time circulating because most of the people it encounters are immune.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f28",
+   "text": "Antigens are unique subparts of pathogens that cause antibody formation.",
+   "quote": "Each pathogen is made up of several subparts, usually unique to that specific pathogen and the disease it causes. The subpart of a pathogen that causes the formation of antibodies is called an antigen.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f29",
+   "text": "Antibodies are a crucial part of the immune system that destroy pathogens after being produced in response to antigens.",
+   "quote": "The antibodies produced in response to the pathogen’s antigen are an important part of the immune system.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f30",
+   "text": "The Herd-Immunity Threshold HIT is calculated as S(0)/N minus S(t0)/N, where t0 is when herd immunity is reached.",
+   "quote": "The Herd-Immunity Threshold HIT then equals S(0)/N − S(t0)/N where t0 is the time point when the herd-immunity threshold is reached, which can be found by solving Re(t0) = 1.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f31",
+   "text": "The classical herd-immunity formula overestimates the threshold, and a more accurate model uses the ASI parameter to predict HIT from available data.",
+   "quote": "I′(t)=αN(S(t)-σ)I(t)=(Re(t)-1)σI(t), [...] formula (1), given an estimate of R0 from e.g. EpiEstim, is over-estimating the herd-immunity threshold. More importantly, it allows to predict HIT, given that the ASI parameter θ = 1 − ω can be estimated from available data.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f32",
+   "text": "In the SIR-model with ASI, the herd-immunity threshold is reached when the effective reproduction number Re(t0) drops to 1.",
+   "quote": "The Herd-Immunity Threshold HIT then equals S(0)/N − S(t0)/N where t0 is the time point when the herd-immunity threshold is reached, which can be found by solving Re(t0) = 1.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f33",
+   "text": "The herd-immunity threshold is defined as the total number of infective and recovered individuals needed to make Re(t0) equal to 1.",
+   "quote": "In mathematical epidemiology, given a certain model and a novel virus, the Herd-Immunity Threshold is defined as the total number of infective and recovered needed to achieve Re(t0) = 1.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f34",
+   "text": "Solving Re(t0) = 1 in the SIR-model yields the equation S(t0)/N = 1/αTgeneration, which is used to calculate the threshold.",
+   "quote": "solving Re(t0) = 1 yields the equation S(t0)/N = 1/αTgeneration, and so we deduce where we used the earlier formula (9) as the definition of R0.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f35",
+   "text": "A live-attenuated vaccine uses a living but weakened version of the virus to trigger an immune response without causing disease.",
+   "quote": "A live-attenuated vaccine uses a living but weakened version of the virus or one that’s very similar.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f36",
+   "text": "A subunit vaccine uses only specific parts (subunits) of a virus that the immune system needs to recognize.",
+   "quote": "A subunit vaccine is one that only uses the very specific parts (the subunits) of a virus or bacterium that the immune system needs to recognize.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f37",
+   "text": "A nucleic acid vaccine delivers a specific set of instructions to our cells as DNA or mRNA to make a specific protein that the immune system recognizes.",
+   "quote": "A nucleic acid vaccine delivers a specific set of instructions to our cells, either as DNA or mRNA, for them to make the specific protein that we want our immune system to recognize and respond to.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f38",
+   "text": "Before the pandemic, no nucleic acid vaccine had completed full approval for human use, though some DNA vaccines for cancer were in trials.",
+   "quote": "Before the COVID-19 pandemic, none had yet been through the full approvals process for use in humans, though some DNA vaccines, including for particular cancers, were undergoing human trials.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f39",
+   "text": "mRNA vaccines for COVID-19 are getting emergency use authorization, allowing use beyond clinical trials.",
+   "quote": "Because of the pandemic, research in this area has progressed very fast and some mRNA vaccines for COVID-19 are getting emergency use authorization, which means they can now be given to people beyond using them only in clinical trials.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f40",
+   "text": "Some vaccine approaches use technology that has been proven to work in people, such as flu and polio vaccines, and can be manufactured at reasonable scale.",
+   "quote": "This approach uses technology that’s been proven to work in people – this is the way the flu and polio vaccines are made – and vaccines can be manufactured on a reasonable scale.",
+   "sourceId": "s9"
+  }
+ ],
+ "sources": [
+  {
+   "id": "s1",
+   "title": "Explaining How Vaccines Work | Vaccines & Immunizations | CDC",
+   "url": "https://www.cdc.gov/vaccines/basics/explaining-how-vaccines-work.html"
+  },
+  {
+   "id": "s2",
+   "title": "Vaccines | Immunization | Inoculation | MedlinePlus",
+   "url": "https://www.nlm.nih.gov/medlineplus/immunization.html"
+  },
+  {
+   "id": "s3",
+   "title": "What's in a vaccine?",
+   "url": "https://www.who.int/news-room/feature-stories/detail/how-are-vaccines-developed"
+  },
+  {
+   "id": "s4",
+   "title": "Percentages of Vaccination Coverage Required to Establish Herd Immunity against SARS-CoV-2",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9144560"
+  },
+  {
+   "id": "s5",
+   "title": "Safety surveillance and challenges in accelerated COVID-19 vaccine development",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9444812"
+  },
+  {
+   "id": "s6",
+   "title": "Dispelling Vaccine Legal Myths",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13051236"
+  },
+  {
+   "id": "s7",
+   "title": "How do vaccines work",
+   "url": "https://www.who.int/en/emergencies/diseases/novel-coronavirus-2019/covid-19-vaccines/how-do-vaccines-work"
+  },
+  {
+   "id": "s8",
+   "title": "A note on variable susceptibility, the herd-immunity threshold and modeling of infectious diseases",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9931097"
+  },
+  {
+   "id": "s9",
+   "title": "The different types of COVID-19 vaccines",
+   "url": "https://who.int/news-room/feature-stories/detail/the-race-for-a-covid-19-vaccine-explained"
+  }
+ ]
+}

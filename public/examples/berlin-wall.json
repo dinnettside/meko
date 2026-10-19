@@ -1,0 +1,1172 @@
+{
+ "request": {
+  "topic": "The fall of the Berlin Wall",
+  "audience": "High school",
+  "lengthSec": 60,
+  "language": "en"
+ },
+ "madeAt": "2026-10-18T23:32:59.838Z",
+ "ms": 66180,
+ "costUsd": 0.26427782,
+ "tokens": 244689,
+ "storyboard": {
+  "title": "How the Berlin Wall Fell in 1989",
+  "language": "en",
+  "theme": "night",
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "scenes": [
+   {
+    "id": "scene-1",
+    "narration": "A single border guard's decision opened the Berlin Wall on November 9, 1989.",
+    "factIds": [
+     "f13",
+     "f16",
+     "f17"
+    ],
+    "durationSec": 6.1,
+    "kind": "title",
+    "heading": "The Fall of the Berlin Wall",
+    "subheading": "How did the Berlin Wall fall in 1989?",
+    "icon": "wall",
+    "look": {
+     "template": "question_card",
+     "params": {
+      "label": "",
+      "question": "How did the Berlin Wall fall in 1989?"
+     }
+    }
+   },
+   {
+    "id": "scene-2",
+    "narration": "Weeks earlier, East Germans fled through Hungary after it opened its border on September 11.",
+    "factIds": [
+     "f30",
+     "f34"
+    ],
+    "durationSec": 6.7,
+    "kind": "map",
+    "frame": [
+     "DEU",
+     "HUN",
+     "AUT"
+    ],
+    "highlights": [
+     {
+      "country": "DEU",
+      "label": "East Germany",
+      "tone": "primary"
+     },
+     {
+      "country": "HUN",
+      "label": "Hungary",
+      "tone": "primary"
+     },
+     {
+      "country": "AUT",
+      "label": "Austria",
+      "tone": "muted"
+     }
+    ],
+    "arrows": [
+     {
+      "from": "DEU",
+      "to": "HUN",
+      "label": "flee via Hungary"
+     }
+    ],
+    "markers": [
+     {
+      "lon": 13.4,
+      "lat": 52.5,
+      "label": "Berlin"
+     }
+    ],
+    "routes": []
+   },
+   {
+    "id": "scene-3",
+    "narration": "A press conference announced new travel rules, sending thousands to the checkpoints.",
+    "factIds": [
+     "f14",
+     "f27"
+    ],
+    "durationSec": 5.6,
+    "kind": "template",
+    "template": "profile_card",
+    "params": {
+     "name": "G\u00fcnter Schabowski",
+     "role": "",
+     "years": "",
+     "facts": [
+      "Announced new travel rules live on TV",
+      "Thousands rushed to border crossings"
+     ]
+    }
+   },
+   {
+    "id": "scene-4",
+    "narration": "Senior Stasi officer Harald J\u00e4ger disobeyed orders and opened the main gate. East Germans crossed freely into West Berlin that night.",
+    "factIds": [
+     "f16",
+     "f17",
+     "f13",
+     "f39"
+    ],
+    "durationSec": 9.4,
+    "kind": "template",
+    "template": "calendar_date",
+    "params": {
+     "day": 9,
+     "month": "November",
+     "year": 1989,
+     "label": "Harald J\u00e4ger opens the gate"
+    }
+   },
+   {
+    "id": "scene-5",
+    "narration": "The wall became a redundant structure as all checkpoints opened. Citizens began demolishing it with hammers and pickaxes.",
+    "factIds": [
+     "f40",
+     "f38"
+    ],
+    "durationSec": 8.4,
+    "kind": "illustration",
+    "title": "Berliners demolish the Wall",
+    "items": [
+     {
+      "icon": "rock",
+      "x": 50,
+      "y": 80,
+      "size": "small"
+     },
+     {
+      "icon": "wall",
+      "label": "Berlin Wall",
+      "x": 50,
+      "y": 40,
+      "size": "large"
+     },
+     {
+      "icon": "pickaxe",
+      "label": "Pickaxe",
+      "x": 70,
+      "y": 70,
+      "size": "medium"
+     },
+     {
+      "icon": "person",
+      "label": "Berliner with sledgehammer",
+      "x": 25,
+      "y": 65,
+      "size": "medium"
+     }
+    ],
+    "links": []
+   },
+   {
+    "id": "scene-6",
+    "narration": "The fall marked a point of no return in the Cold War collapse after 28 years. Germany officially reunified on October 3, 1990, less than a year later.",
+    "factIds": [
+     "f18",
+     "f25",
+     "f42"
+    ],
+    "durationSec": 11.4,
+    "kind": "quote",
+    "text": "That's how it happened with the fall of the Berlin Wall, the point-of-no-return moment in the collapse of the Cold War order.",
+    "sourceId": "s3",
+    "look": {
+     "template": "quote_card",
+     "params": {
+      "quote": "That's how it happened with the fall of the Berlin Wall, the point-of-no-return moment in the collapse of the Cold War order.",
+      "author": "The Surprising Human Factors Behind the Fall of the Berlin Wall | HISTORY",
+      "role": ""
+     }
+    }
+   }
+  ],
+  "sources": [
+   {
+    "id": "s3",
+    "title": "The Surprising Human Factors Behind the Fall of the Berlin Wall | HISTORY",
+    "url": "https://www.history.com/articles/reasons-berlin-wall-fall"
+   },
+   {
+    "id": "s5",
+    "title": "Treaty on the Final Settlement with Respect to Germany - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Treaty_on_the_Final_Settlement_With_Respect_to_Germany"
+   },
+   {
+    "id": "s6",
+    "title": "The Rise and Fall of the Berlin Wall\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 | 4 Corners of the World",
+    "url": "https://blogs.loc.gov/international-collections/2019/11/the-rise-and-fall-of-the-berlin-wall"
+   },
+   {
+    "id": "s8",
+    "title": "Pan-European Picnic - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Pan-European_Picnic"
+   },
+   {
+    "id": "s9",
+    "title": "Reunification of East and West Germany",
+    "url": "https://www.bbc.co.uk/archiveservices/written-archives-centre/featured-collections/reunification-of-east-and-west-germany"
+   }
+  ]
+ },
+ "words": {
+  "scene-1": [
+   {
+    "text": "A",
+    "start": 0,
+    "end": 0.081
+   },
+   {
+    "text": "single",
+    "start": 0.163,
+    "end": 0.488
+   },
+   {
+    "text": "border",
+    "start": 0.522,
+    "end": 0.789
+   },
+   {
+    "text": "guard's",
+    "start": 0.836,
+    "end": 1.115
+   },
+   {
+    "text": "decision",
+    "start": 1.161,
+    "end": 1.567
+   },
+   {
+    "text": "opened",
+    "start": 1.683,
+    "end": 1.997
+   },
+   {
+    "text": "the",
+    "start": 2.02,
+    "end": 2.09
+   },
+   {
+    "text": "Berlin",
+    "start": 2.125,
+    "end": 2.461
+   },
+   {
+    "text": "Wall",
+    "start": 2.531,
+    "end": 2.81
+   },
+   {
+    "text": "on",
+    "start": 2.891,
+    "end": 2.972
+   },
+   {
+    "text": "November",
+    "start": 3.019,
+    "end": 3.355
+   },
+   {
+    "text": "9,",
+    "start": 3.437,
+    "end": 3.796
+   },
+   {
+    "text": "1989.",
+    "start": 3.889,
+    "end": 5.48
+   }
+  ],
+  "scene-2": [
+   {
+    "text": "Weeks",
+    "start": 0,
+    "end": 0.348
+   },
+   {
+    "text": "earlier,",
+    "start": 0.418,
+    "end": 0.964
+   },
+   {
+    "text": "East",
+    "start": 1.138,
+    "end": 1.358
+   },
+   {
+    "text": "Germans",
+    "start": 1.405,
+    "end": 1.8
+   },
+   {
+    "text": "fled",
+    "start": 1.869,
+    "end": 2.101
+   },
+   {
+    "text": "through",
+    "start": 2.136,
+    "end": 2.368
+   },
+   {
+    "text": "Hungary",
+    "start": 2.403,
+    "end": 2.81
+   },
+   {
+    "text": "after",
+    "start": 2.984,
+    "end": 3.274
+   },
+   {
+    "text": "it",
+    "start": 3.332,
+    "end": 3.402
+   },
+   {
+    "text": "opened",
+    "start": 3.46,
+    "end": 3.773
+   },
+   {
+    "text": "its",
+    "start": 3.808,
+    "end": 3.936
+   },
+   {
+    "text": "border",
+    "start": 3.982,
+    "end": 4.307
+   },
+   {
+    "text": "on",
+    "start": 4.377,
+    "end": 4.481
+   },
+   {
+    "text": "September",
+    "start": 4.54,
+    "end": 5.004
+   },
+   {
+    "text": "11.",
+    "start": 5.05,
+    "end": 6.084
+   }
+  ],
+  "scene-3": [
+   {
+    "text": "A",
+    "start": 0,
+    "end": 0.093
+   },
+   {
+    "text": "press",
+    "start": 0.163,
+    "end": 0.395
+   },
+   {
+    "text": "conference",
+    "start": 0.453,
+    "end": 0.894
+   },
+   {
+    "text": "announced",
+    "start": 0.929,
+    "end": 1.347
+   },
+   {
+    "text": "new",
+    "start": 1.428,
+    "end": 1.602
+   },
+   {
+    "text": "travel",
+    "start": 1.649,
+    "end": 1.95
+   },
+   {
+    "text": "rules,",
+    "start": 2.02,
+    "end": 2.485
+   },
+   {
+    "text": "sending",
+    "start": 2.659,
+    "end": 3.007
+   },
+   {
+    "text": "thousands",
+    "start": 3.065,
+    "end": 3.541
+   },
+   {
+    "text": "to",
+    "start": 3.587,
+    "end": 3.646
+   },
+   {
+    "text": "the",
+    "start": 3.715,
+    "end": 3.785
+   },
+   {
+    "text": "checkpoints.",
+    "start": 3.82,
+    "end": 5.016
+   }
+  ],
+  "scene-4": [
+   {
+    "text": "Senior",
+    "start": 0,
+    "end": 0.441
+   },
+   {
+    "text": "Stasi",
+    "start": 0.488,
+    "end": 0.906
+   },
+   {
+    "text": "officer",
+    "start": 0.964,
+    "end": 1.3
+   },
+   {
+    "text": "Harald",
+    "start": 1.382,
+    "end": 1.707
+   },
+   {
+    "text": "J\u00e4ger",
+    "start": 1.776,
+    "end": 2.136
+   },
+   {
+    "text": "disobeyed",
+    "start": 2.415,
+    "end": 2.949
+   },
+   {
+    "text": "orders",
+    "start": 3.007,
+    "end": 3.367
+   },
+   {
+    "text": "and",
+    "start": 3.413,
+    "end": 3.529
+   },
+   {
+    "text": "opened",
+    "start": 3.599,
+    "end": 3.843
+   },
+   {
+    "text": "the",
+    "start": 3.866,
+    "end": 3.936
+   },
+   {
+    "text": "main",
+    "start": 3.982,
+    "end": 4.18
+   },
+   {
+    "text": "gate.",
+    "start": 4.249,
+    "end": 4.76
+   },
+   {
+    "text": "East",
+    "start": 5.201,
+    "end": 5.468
+   },
+   {
+    "text": "Germans",
+    "start": 5.538,
+    "end": 6.002
+   },
+   {
+    "text": "crossed",
+    "start": 6.084,
+    "end": 6.385
+   },
+   {
+    "text": "freely",
+    "start": 6.432,
+    "end": 6.769
+   },
+   {
+    "text": "into",
+    "start": 6.838,
+    "end": 7.024
+   },
+   {
+    "text": "West",
+    "start": 7.082,
+    "end": 7.279
+   },
+   {
+    "text": "Berlin",
+    "start": 7.326,
+    "end": 7.639
+   },
+   {
+    "text": "that",
+    "start": 7.697,
+    "end": 7.837
+   },
+   {
+    "text": "night.",
+    "start": 7.895,
+    "end": 8.824
+   }
+  ],
+  "scene-5": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.163
+   },
+   {
+    "text": "wall",
+    "start": 0.221,
+    "end": 0.453
+   },
+   {
+    "text": "became",
+    "start": 0.511,
+    "end": 0.824
+   },
+   {
+    "text": "a",
+    "start": 0.859,
+    "end": 0.882
+   },
+   {
+    "text": "redundant",
+    "start": 0.952,
+    "end": 1.416
+   },
+   {
+    "text": "structure",
+    "start": 1.474,
+    "end": 1.95
+   },
+   {
+    "text": "as",
+    "start": 1.997,
+    "end": 2.125
+   },
+   {
+    "text": "all",
+    "start": 2.194,
+    "end": 2.392
+   },
+   {
+    "text": "checkpoints",
+    "start": 2.461,
+    "end": 3.007
+   },
+   {
+    "text": "opened.",
+    "start": 3.065,
+    "end": 3.634
+   },
+   {
+    "text": "Citizens",
+    "start": 4.238,
+    "end": 4.737
+   },
+   {
+    "text": "began",
+    "start": 4.795,
+    "end": 5.05
+   },
+   {
+    "text": "demolishing",
+    "start": 5.12,
+    "end": 5.631
+   },
+   {
+    "text": "it",
+    "start": 5.689,
+    "end": 5.77
+   },
+   {
+    "text": "with",
+    "start": 5.817,
+    "end": 5.956
+   },
+   {
+    "text": "hammers",
+    "start": 6.002,
+    "end": 6.316
+   },
+   {
+    "text": "and",
+    "start": 6.351,
+    "end": 6.432
+   },
+   {
+    "text": "pickaxes.",
+    "start": 6.478,
+    "end": 7.755
+   }
+  ],
+  "scene-6": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.163
+   },
+   {
+    "text": "fall",
+    "start": 0.232,
+    "end": 0.499
+   },
+   {
+    "text": "marked",
+    "start": 0.569,
+    "end": 0.848
+   },
+   {
+    "text": "a",
+    "start": 0.882,
+    "end": 0.906
+   },
+   {
+    "text": "point",
+    "start": 0.975,
+    "end": 1.207
+   },
+   {
+    "text": "of",
+    "start": 1.254,
+    "end": 1.312
+   },
+   {
+    "text": "no",
+    "start": 1.382,
+    "end": 1.509
+   },
+   {
+    "text": "return",
+    "start": 1.591,
+    "end": 1.974
+   },
+   {
+    "text": "in",
+    "start": 2.02,
+    "end": 2.09
+   },
+   {
+    "text": "the",
+    "start": 2.125,
+    "end": 2.194
+   },
+   {
+    "text": "Cold",
+    "start": 2.241,
+    "end": 2.496
+   },
+   {
+    "text": "War",
+    "start": 2.543,
+    "end": 2.705
+   },
+   {
+    "text": "collapse",
+    "start": 2.775,
+    "end": 3.17
+   },
+   {
+    "text": "after",
+    "start": 3.216,
+    "end": 3.483
+   },
+   {
+    "text": "28",
+    "start": 3.541,
+    "end": 4.04
+   },
+   {
+    "text": "years.",
+    "start": 4.11,
+    "end": 4.679
+   },
+   {
+    "text": "Germany",
+    "start": 5.19,
+    "end": 5.608
+   },
+   {
+    "text": "officially",
+    "start": 5.666,
+    "end": 6.095
+   },
+   {
+    "text": "reunified",
+    "start": 6.165,
+    "end": 6.838
+   },
+   {
+    "text": "on",
+    "start": 6.896,
+    "end": 6.978
+   },
+   {
+    "text": "October",
+    "start": 7.036,
+    "end": 7.454
+   },
+   {
+    "text": "3,",
+    "start": 7.535,
+    "end": 7.918
+   },
+   {
+    "text": "1990,",
+    "start": 8.069,
+    "end": 9.149
+   },
+   {
+    "text": "less",
+    "start": 9.323,
+    "end": 9.555
+   },
+   {
+    "text": "than",
+    "start": 9.59,
+    "end": 9.729
+   },
+   {
+    "text": "a",
+    "start": 9.764,
+    "end": 9.787
+   },
+   {
+    "text": "year",
+    "start": 9.845,
+    "end": 10.008
+   },
+   {
+    "text": "later.",
+    "start": 10.066,
+    "end": 10.82
+   }
+  ]
+ },
+ "report": {
+  "checks": [
+   {
+    "sentenceId": "scene-1.1",
+    "factIds": [
+     "f13",
+     "f16",
+     "f17"
+    ],
+    "status": "supported",
+    "original": "A single border guard's decision opened the Berlin Wall on November 9, 1989.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-2.1",
+    "factIds": [
+     "f30",
+     "f34"
+    ],
+    "status": "supported",
+    "original": "Weeks earlier, East Germans fled through Hungary after it opened its border on September 11.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-3.1",
+    "factIds": [
+     "f14",
+     "f27"
+    ],
+    "status": "supported",
+    "original": "A press conference announced new travel rules, sending thousands to the checkpoints.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-4.1",
+    "factIds": [
+     "f16",
+     "f17"
+    ],
+    "status": "supported",
+    "original": "Senior Stasi officer Harald J\u00e4ger disobeyed orders and opened the main gate.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-4.2",
+    "factIds": [
+     "f13",
+     "f39"
+    ],
+    "status": "supported",
+    "original": "East Germans crossed freely into West Berlin that night.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-5.1",
+    "factIds": [
+     "f40"
+    ],
+    "status": "supported",
+    "original": "The wall became a redundant structure as all checkpoints opened.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-5.2",
+    "factIds": [
+     "f38"
+    ],
+    "status": "supported",
+    "original": "Citizens began demolishing it with hammers and pickaxes.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-6.1",
+    "factIds": [
+     "f18"
+    ],
+    "status": "supported",
+    "original": "The fall marked a point of no return in the Cold War collapse after 28 years.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-6.2",
+    "factIds": [
+     "f25",
+     "f42"
+    ],
+    "status": "supported",
+    "original": "Germany officially reunified on October 3, 1990, less than a year later.",
+    "revised": "",
+    "reason": ""
+   }
+  ],
+  "supported": 9,
+  "revised": 0,
+  "removed": 0
+ },
+ "facts": [
+  {
+   "id": "f1",
+   "text": "The Berlin Wall fell on 9 November 1989 during the Peaceful Revolution.",
+   "quote": "The Berlin Wall fell on 9 November 1989 during the Peaceful Revolution, marking the beginning of the destruction of the figurative Iron Curtain, as East Berlin transit restrictions were overwhelmed and discarded.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f2",
+   "text": "Planned deconstruction of the wall began the following June after the fall.",
+   "quote": "Sections of the wall were breached, and planned deconstruction began the following June.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f3",
+   "text": "The fall of the inner German border took place shortly after the wall fell.",
+   "quote": "The fall of the inner German border took place shortly afterward.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f4",
+   "text": "An end to the Cold War was declared at the Malta Summit in early December 1989.",
+   "quote": "An end to the Cold War was declared at the Malta Summit in early December, and German reunification took place in October the following year.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f5",
+   "text": "German reunification took place in October 1990, the year after the wall fell.",
+   "quote": "An end to the Cold War was declared at the Malta Summit in early December, and German reunification took place in October the following year.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f6",
+   "text": "The fall of the Berlin Wall was part of the Revolutions of 1989 that started the fall of communism in Central and Eastern Europe.",
+   "quote": "It was one of the series of events that started the fall of communism in Central and Eastern Europe.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f7",
+   "text": "Monday demonstrations began in Leipzig on 4 September 1989.",
+   "quote": "The demonstrations began in Leipzig on 4 September 1989, starting the Peaceful Revolution in the GDR: the fall of the Berlin Wall, the collapse of the government, and German reunification.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f8",
+   "text": "By 16 October 1989, 120,000 demonstrators gathered in Leipzig with military on standby.",
+   "quote": "The next week, in Leipzig on 16 October 1989, 120,000 demonstrators turned up, with military units again being held on stand-by in the vicinity.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f9",
+   "text": "Protest numbers more than doubled to 320,000 the following week.",
+   "quote": "The week after, the number more than doubled to 320,000.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f10",
+   "text": "Many protesters crossed into East Berlin without being fired upon.",
+   "quote": "Many of those people started to cross into East Berlin, without a shot being fired.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f11",
+   "text": "The fall of the Berlin Wall occurred on 9 November 1989.",
+   "quote": "This pressure and other key events eventually led to the fall of the Berlin Wall on 9 November 1989, marking the imminent end of the socialist GDR regime.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f12",
+   "text": "The Monday demonstrations ended around March 1990, coinciding with the first free multi-party elections.",
+   "quote": "The demonstrations eventually ended in March 1990, around the time of the first free multi-party elections for the Volkskammer parliament across the entire GDR.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f13",
+   "text": "On November 9, 1989, Harald J\u00e4ger opened the largest Berlin Wall checkpoint to let East Germans pass freely to the West.",
+   "quote": "On November 9, 1989, in defiance of his Communist bosses, he opened the largest checkpoint of the Berlin Wall to let East Germans pass freely to the West.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f14",
+   "text": "Thousands of East Germans flocked to border crossings after seeing a press conference on TV, expecting to pass to the West.",
+   "quote": "Having seen the press conference on TV, thousands of East Germans flocked to border crossings to see if they could, in fact, pass to the West.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f15",
+   "text": "Border guards were stunned and had no idea why they were being inundated or what orders to follow.",
+   "quote": "Stunned border guards had no idea why they were being inundated, and no orders on how to handle the crowds.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f16",
+   "text": "Harald J\u00e4ger was the senior Stasi officer on duty at the Bornholmer Street checkpoint on November 9, 1989.",
+   "quote": "Among the many shocked men on duty that night at Bornholmer Street, the biggest checkpoint between East and West Berlin, was Stasi officer Harald J\u00e4ger, the senior Stasi officer on duty that historic November night.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f17",
+   "text": "Harald J\u00e4ger disobeyed direct orders to open the gate due to personal anger and fear of cancer.",
+   "quote": "Struggling with the fear that he was dying of cancer, and angry over insults from higher-ups, he disobeyed direct orders and started letting East Germans through the gate.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f18",
+   "text": "The fall of the Berlin Wall was a point-of-no-return moment in the collapse of the Cold War order after 28 years.",
+   "quote": "That\u2019s how it happened with the fall of the Berlin Wall, the point-of-no-return moment in the collapse of the Cold War order.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f19",
+   "text": "The Berlin Wall was demolished at the Brandenburg Gate.",
+   "quote": "Image of the demolition of the Berlin Wall at the Brandenburg Gate.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f20",
+   "text": "The treaty allowed German reunification in October 1990",
+   "quote": "is an international agreement that allowed the reunification of Germany in October 1990.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f21",
+   "text": "It was signed by West Germany, East Germany, and the Four Allied Powers",
+   "quote": "negotiated in 1990 between the 'two', the Federal Republic of Germany and the German Democratic Republic, in addition to the Four Powers which had occupied Germany at the end of World War II in Europe: France, the Soviet Union, the United Kingdom, and the United States.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f22",
+   "text": "The treaty was signed on 12 September 1990 in Moscow",
+   "quote": "The Treaty on the Final Settlement with Respect to Germany was signed in Moscow on 12 September 1990",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f23",
+   "text": "The Four Powers renounced all rights in Germany after the treaty",
+   "quote": "Under the terms of the treaty, the Four Powers renounced all rights they formerly held in Germany, including those regarding the city of Berlin.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f24",
+   "text": "Germany reconfirmed the border with Poland as part of the settlement",
+   "quote": "the two German states agreed to reconfirm the existing border with Poland in the German\u2013Polish Border Treaty, accepting that German territory post-reunification would consist only of what was administered by West and East Germany.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f25",
+   "text": "German reunification occurred on 3 October 1990",
+   "quote": "paved the way for German reunification on 3 October 1990.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f26",
+   "text": "The Berlin Wall fell on November 9, 1989, after a press conference in East Berlin.",
+   "quote": "The Berlin Wall came down on the evening of November 9, 1989, during a hastily arranged international press conference in East Berlin.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f27",
+   "text": "G\u00fcnter Schabowski announced the opening of the borders at a press conference.",
+   "quote": "G\u00fcnter Schabowski, an official in East Germany\u2019s ruling Socialist Unity Party, ambled to the podium clutching some papers.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f28",
+   "text": "East Germans traveled to Hungary and then Austria due to relaxed border controls.",
+   "quote": "Over the summer, East German tourists in Hungary had already taken advantage of that country\u2019s newly relaxed border controls to evade their country\u2019s ban on travel to the West and poured through the border to Austria.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f29",
+   "text": "Mikhail Gorbachev\u2019s reforms of Glasnost and Perestroika influenced the fall of the Wall.",
+   "quote": "Both had been preoccupied with the changes convulsing Communist Europe in the wake of Soviet premier Mikhail Gorbachev\u2019s liberal reforms summarized under the buzzwords Glasnost (openness) and Perestroika (restructuring).",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f30",
+   "text": "East German tourists used Hungary's relaxed borders to flee to the West.",
+   "quote": "More crowds of East Germans had been",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f31",
+   "text": "Schabowski was an official of the Socialist Unity Party of Germany (SED)",
+   "quote": "he became the regime's unofficial spokesman. He gained worldwide fame in November 1989 when he improvised a slightly mistaken answer to a press conference question about the future of the Berlin Wall, that seemed to announce the Wall's immediate end and raised popular expectations much more rapidly than the government planned. Massive crowds gathered at the Wall the same night, which forced its opening after 28 years. Soon afterward, the entire inner German",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f32",
+   "text": "The Pan-European Picnic allowed hundreds of East German citizens to cross into Austria unhindered.",
+   "quote": "At the picnic several hundred East German citizens overran the old wooden gate, reaching Austria unhindered by the border guards around \u00c1rp\u00e1d Bella.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f33",
+   "text": "The event marked the largest mass exodus from East Germany since the Berlin Wall was built in 1961.",
+   "quote": "It was the largest mass exodus since the Berlin Wall was built in 1961.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f34",
+   "text": "Hungary officially opened its border on 11 September, preceding the fall of the Berlin Wall.",
+   "quote": "The Hungarian borders were opened on 11 September, and the Berlin Wall fell on 9 November.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f35",
+   "text": "The fall of the Berlin Wall occurred on 9 November, following the mass exodus events.",
+   "quote": "The Hungarian borders were opened on 11 September, and the Berlin Wall fell on 9 November.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f36",
+   "text": "The Pan-European Picnic is seen as a symbolic event leading to the collapse of the Eastern Bloc.",
+   "quote": "According to the Austrian historian Hildegard Schmoller, it was only through the culture of remembrance that the Pan-European Picnic became a symbol of the entire exodus of summer 1989.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f37",
+   "text": "The Warsaw Pact disintegrated in 1991, after the fall of the Berlin Wall.",
+   "quote": "The Warsaw Pact disintegrated in 1991.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f38",
+   "text": "Citizens began to physically demolish the Berlin Wall using sledgehammers and pickaxes.",
+   "quote": "citizens from East and West Berlin flocked to the Berlin Wall with sledgehammers and pick axes and began to demolish the barrier that had physically and ideologically divided Berlin for more than 28 years.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f39",
+   "text": "On November 9, 1989, East German citizens were allowed to cross directly into West Germany.",
+   "quote": "the BBC\u2019s Brian Hanrahan reported in the Nine O\u2019 Clock News on the bombshell announcement that citizens from East Germany would be able to cross directly into West Germany.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f40",
+   "text": "Checkpoints opened later on November 9, 1989, making the Berlin Wall a 'redundant structure'.",
+   "quote": "By 11pm the checkpoints were open and the Berlin Wall had, in Hanrahan\u2019s words, suddenly become a \u2018redundant structure\u2019.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f41",
+   "text": "The political process of reunifying East and West Germany began shortly after the Wall fell.",
+   "quote": "The political process towards the reunification of East and West Germany started within weeks,",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f42",
+   "text": "Official reunification of Germany occurred on October 3, 1990.",
+   "quote": "was made official on 3rd October 1990, less than a year after the fall of the Berlin Wall.",
+   "sourceId": "s9"
+  }
+ ],
+ "sources": [
+  {
+   "id": "s1",
+   "title": "Fall of the Berlin Wall - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Fall_of_the_Berlin_Wall"
+  },
+  {
+   "id": "s2",
+   "title": "Monday demonstrations in East Germany - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Monday_demonstrations_in_East_Germany"
+  },
+  {
+   "id": "s3",
+   "title": "The Surprising Human Factors Behind the Fall of the Berlin Wall | HISTORY",
+   "url": "https://www.history.com/articles/reasons-berlin-wall-fall"
+  },
+  {
+   "id": "s4",
+   "title": "Impact of Gorbachev\u2019s Reforms in Eastern Europe - The Cold War 1972-1991 - Edexcel - GCSE History Revision - Edexcel - BBC Bitesize",
+   "url": "https://www.bbc.co.uk/bitesize/guides/zwp86fr/revision/4"
+  },
+  {
+   "id": "s5",
+   "title": "Treaty on the Final Settlement with Respect to Germany - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Treaty_on_the_Final_Settlement_With_Respect_to_Germany"
+  },
+  {
+   "id": "s6",
+   "title": "The Rise and Fall of the Berlin Wall\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 | 4 Corners of the World",
+   "url": "https://blogs.loc.gov/international-collections/2019/11/the-rise-and-fall-of-the-berlin-wall"
+  },
+  {
+   "id": "s7",
+   "title": "G\u00fcnter Schabowski - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/G%C3%BCnter_Schabowski"
+  },
+  {
+   "id": "s8",
+   "title": "Pan-European Picnic - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Pan-European_Picnic"
+  },
+  {
+   "id": "s9",
+   "title": "Reunification of East and West Germany",
+   "url": "https://www.bbc.co.uk/archiveservices/written-archives-centre/featured-collections/reunification-of-east-and-west-germany"
+  }
+ ]
+}

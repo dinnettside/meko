@@ -1,0 +1,1192 @@
+{
+ "request": {
+  "topic": "Why earthquakes happen",
+  "audience": "High school",
+  "lengthSec": 60,
+  "language": "en"
+ },
+ "madeAt": "2026-10-18T23:31:26.363Z",
+ "ms": 36564,
+ "costUsd": 0.06820470000000001,
+ "tokens": 66638,
+ "storyboard": {
+  "title": "Why Earthquakes Happen",
+  "language": "en",
+  "theme": "blueprint",
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "scenes": [
+   {
+    "id": "scene-1",
+    "narration": "Earthquakes happen when giant slabs of rock deep underground suddenly snap and slip past each other.",
+    "factIds": [
+     "f28"
+    ],
+    "durationSec": 7,
+    "kind": "title",
+    "heading": "Why Earthquakes Happen",
+    "subheading": "Why do earthquakes happen?",
+    "icon": "rock"
+   },
+   {
+    "id": "scene-2",
+    "narration": "The Earth's crust and upper mantle are broken into tectonic plates that move in different directions.",
+    "factIds": [
+     "f1"
+    ],
+    "durationSec": 6.5,
+    "kind": "template",
+    "template": "layers_of_earth_cutaway",
+    "params": {
+     "labels": {
+      "crust": "Earth's crust",
+      "mantle": "Upper mantle",
+      "outerCore": "",
+      "innerCore": ""
+     },
+     "focus": "crust"
+    }
+   },
+   {
+    "id": "scene-3",
+    "narration": "Where these plates meet, they form fault lines, which are cracks or fractures in the crust.",
+    "factIds": [
+     "f3",
+     "f21"
+    ],
+    "durationSec": 6,
+    "kind": "template",
+    "template": "plate_boundary",
+    "params": {
+     "forms": "volcano",
+     "labels": {
+      "left": "Plate",
+      "right": "Plate",
+      "fault": "Fault line",
+      "quake": "Earthquake"
+     },
+     "kind": "transform"
+    }
+   },
+   {
+    "id": "scene-4",
+    "narration": "Friction locks the rough fault surfaces together while the plates keep pushing.",
+    "factIds": [
+     "f2"
+    ],
+    "durationSec": 5.2,
+    "kind": "template",
+    "template": "earthquake",
+    "params": {
+     "labels": {
+      "fault": "Rough fault surfaces",
+      "focus": "Locked fault"
+     }
+    }
+   },
+   {
+    "id": "scene-5",
+    "narration": "When the stress exceeds the fault's rupture limit, the rocks break and both sides rebound violently.",
+    "factIds": [
+     "f9"
+    ],
+    "durationSec": 6.5,
+    "kind": "illustration",
+    "title": "Fault rupture and rebound",
+    "items": [
+     {
+      "icon": "rock",
+      "label": "The fault",
+      "x": 50,
+      "y": 60,
+      "size": "large"
+     },
+     {
+      "icon": "lightning",
+      "label": "Rocks break",
+      "x": 50,
+      "y": 20,
+      "size": "large"
+     },
+     {
+      "icon": "wave",
+      "label": "Left side rebounds",
+      "x": 25,
+      "y": 20,
+      "size": "medium"
+     },
+     {
+      "icon": "wave",
+      "label": "Right side rebounds",
+      "x": 75,
+      "y": 20,
+      "size": "medium"
+     }
+    ],
+    "links": [
+     {
+      "from": 0,
+      "to": 1,
+      "label": "Stress exceeds limit"
+     },
+     {
+      "from": 1,
+      "to": 2,
+      "label": "Violent rebound"
+     },
+     {
+      "from": 1,
+      "to": 3
+     }
+    ],
+    "backdrop": "underground"
+   },
+   {
+    "id": "scene-6",
+    "narration": "The break starts deep underground at the focus, and the shaking radiates outward from the epicenter above it.",
+    "factIds": [
+     "f17",
+     "f18"
+    ],
+    "durationSec": 7.3,
+    "kind": "template",
+    "template": "cutaway",
+    "params": {
+     "setting": "ground",
+     "layers": [
+      {
+       "label": ""
+      }
+     ],
+     "items": [
+      {
+       "icon": "rock",
+       "label": "Focus",
+       "zone": "lower",
+       "side": "center"
+      },
+      {
+       "icon": "earth",
+       "label": "Epicenter",
+       "zone": "surface",
+       "side": "center"
+      }
+     ],
+     "flows": [
+      {
+       "from": 0,
+       "to": 1,
+       "label": "Shaking radiates outward"
+      }
+     ]
+    }
+   },
+   {
+    "id": "scene-7",
+    "narration": "Humans can also trigger quakes by changing underground pressure, like with wastewater disposal or large reservoirs.",
+    "factIds": [
+     "f29",
+     "f30",
+     "f31"
+    ],
+    "durationSec": 7.3,
+    "kind": "list",
+    "items": [
+     {
+      "title": "Wastewater disposal",
+      "detail": "Changes underground pressure",
+      "icon": "dam"
+     },
+     {
+      "title": "Large reservoirs",
+      "detail": "Changes underground pressure",
+      "icon": "dam"
+     }
+    ]
+   }
+  ],
+  "sources": [
+   {
+    "id": "s1",
+    "title": "What is tectonic plate movement? - BBC Bitesize",
+    "url": "https://www.bbc.co.uk/bitesize/articles/z2wnhcw"
+   },
+   {
+    "id": "s2",
+    "title": "Earthquake cycle - Wikipedia",
+    "url": "http://en.wikipedia.org/wiki/Earthquake_cycle"
+   },
+   {
+    "id": "s4",
+    "title": "Stressed Out",
+    "url": "https://www.pbs.org/wnet/nature/files/2008/12/stressed-out.pdf"
+   },
+   {
+    "id": "s6",
+    "title": "Earthquake - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Earthquake"
+   }
+  ]
+ },
+ "words": {
+  "scene-1": [
+   {
+    "text": "Earthquakes",
+    "start": 0,
+    "end": 0.604
+   },
+   {
+    "text": "happen",
+    "start": 0.65,
+    "end": 0.987
+   },
+   {
+    "text": "when",
+    "start": 1.196,
+    "end": 1.393
+   },
+   {
+    "text": "giant",
+    "start": 1.463,
+    "end": 1.8
+   },
+   {
+    "text": "slabs",
+    "start": 1.869,
+    "end": 2.218
+   },
+   {
+    "text": "of",
+    "start": 2.264,
+    "end": 2.322
+   },
+   {
+    "text": "rock",
+    "start": 2.403,
+    "end": 2.624
+   },
+   {
+    "text": "deep",
+    "start": 2.705,
+    "end": 2.926
+   },
+   {
+    "text": "underground",
+    "start": 2.995,
+    "end": 3.587
+   },
+   {
+    "text": "suddenly",
+    "start": 3.796,
+    "end": 4.203
+   },
+   {
+    "text": "snap",
+    "start": 4.261,
+    "end": 4.574
+   },
+   {
+    "text": "and",
+    "start": 4.632,
+    "end": 4.714
+   },
+   {
+    "text": "slip",
+    "start": 4.772,
+    "end": 5.004
+   },
+   {
+    "text": "past",
+    "start": 5.074,
+    "end": 5.364
+   },
+   {
+    "text": "each",
+    "start": 5.41,
+    "end": 5.561
+   },
+   {
+    "text": "other.",
+    "start": 5.608,
+    "end": 6.362
+   }
+  ],
+  "scene-2": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.174
+   },
+   {
+    "text": "Earth's",
+    "start": 0.255,
+    "end": 0.557
+   },
+   {
+    "text": "crust",
+    "start": 0.615,
+    "end": 0.987
+   },
+   {
+    "text": "and",
+    "start": 1.045,
+    "end": 1.138
+   },
+   {
+    "text": "upper",
+    "start": 1.196,
+    "end": 1.382
+   },
+   {
+    "text": "mantle",
+    "start": 1.44,
+    "end": 1.892
+   },
+   {
+    "text": "are",
+    "start": 2.009,
+    "end": 2.183
+   },
+   {
+    "text": "broken",
+    "start": 2.206,
+    "end": 2.508
+   },
+   {
+    "text": "into",
+    "start": 2.543,
+    "end": 2.705
+   },
+   {
+    "text": "tectonic",
+    "start": 2.775,
+    "end": 3.286
+   },
+   {
+    "text": "plates",
+    "start": 3.355,
+    "end": 3.692
+   },
+   {
+    "text": "that",
+    "start": 3.727,
+    "end": 3.855
+   },
+   {
+    "text": "move",
+    "start": 3.913,
+    "end": 4.122
+   },
+   {
+    "text": "in",
+    "start": 4.156,
+    "end": 4.226
+   },
+   {
+    "text": "different",
+    "start": 4.272,
+    "end": 4.574
+   },
+   {
+    "text": "directions.",
+    "start": 4.609,
+    "end": 5.944
+   }
+  ],
+  "scene-3": [
+   {
+    "text": "Where",
+    "start": 0,
+    "end": 0.244
+   },
+   {
+    "text": "these",
+    "start": 0.279,
+    "end": 0.441
+   },
+   {
+    "text": "plates",
+    "start": 0.476,
+    "end": 0.755
+   },
+   {
+    "text": "meet,",
+    "start": 0.824,
+    "end": 1.184
+   },
+   {
+    "text": "they",
+    "start": 1.265,
+    "end": 1.416
+   },
+   {
+    "text": "form",
+    "start": 1.474,
+    "end": 1.695
+   },
+   {
+    "text": "fault",
+    "start": 1.776,
+    "end": 1.985
+   },
+   {
+    "text": "lines,",
+    "start": 2.043,
+    "end": 2.554
+   },
+   {
+    "text": "which",
+    "start": 2.67,
+    "end": 2.856
+   },
+   {
+    "text": "are",
+    "start": 2.891,
+    "end": 2.972
+   },
+   {
+    "text": "cracks",
+    "start": 3.007,
+    "end": 3.367
+   },
+   {
+    "text": "or",
+    "start": 3.425,
+    "end": 3.518
+   },
+   {
+    "text": "fractures",
+    "start": 3.576,
+    "end": 3.994
+   },
+   {
+    "text": "in",
+    "start": 4.052,
+    "end": 4.145
+   },
+   {
+    "text": "the",
+    "start": 4.191,
+    "end": 4.261
+   },
+   {
+    "text": "crust.",
+    "start": 4.296,
+    "end": 5.387
+   }
+  ],
+  "scene-4": [
+   {
+    "text": "Friction",
+    "start": 0,
+    "end": 0.476
+   },
+   {
+    "text": "locks",
+    "start": 0.557,
+    "end": 0.813
+   },
+   {
+    "text": "the",
+    "start": 0.859,
+    "end": 0.94
+   },
+   {
+    "text": "rough",
+    "start": 0.998,
+    "end": 1.196
+   },
+   {
+    "text": "fault",
+    "start": 1.265,
+    "end": 1.509
+   },
+   {
+    "text": "surfaces",
+    "start": 1.567,
+    "end": 2.02
+   },
+   {
+    "text": "together",
+    "start": 2.067,
+    "end": 2.508
+   },
+   {
+    "text": "while",
+    "start": 2.682,
+    "end": 2.902
+   },
+   {
+    "text": "the",
+    "start": 2.926,
+    "end": 2.995
+   },
+   {
+    "text": "plates",
+    "start": 3.03,
+    "end": 3.309
+   },
+   {
+    "text": "keep",
+    "start": 3.367,
+    "end": 3.541
+   },
+   {
+    "text": "pushing.",
+    "start": 3.587,
+    "end": 4.551
+   }
+  ],
+  "scene-5": [
+   {
+    "text": "When",
+    "start": 0,
+    "end": 0.209
+   },
+   {
+    "text": "the",
+    "start": 0.244,
+    "end": 0.313
+   },
+   {
+    "text": "stress",
+    "start": 0.36,
+    "end": 0.697
+   },
+   {
+    "text": "exceeds",
+    "start": 0.743,
+    "end": 1.184
+   },
+   {
+    "text": "the",
+    "start": 1.231,
+    "end": 1.3
+   },
+   {
+    "text": "fault's",
+    "start": 1.347,
+    "end": 1.625
+   },
+   {
+    "text": "rupture",
+    "start": 1.695,
+    "end": 2.009
+   },
+   {
+    "text": "limit,",
+    "start": 2.043,
+    "end": 2.426
+   },
+   {
+    "text": "the",
+    "start": 2.601,
+    "end": 2.694
+   },
+   {
+    "text": "rocks",
+    "start": 2.763,
+    "end": 3.007
+   },
+   {
+    "text": "break",
+    "start": 3.065,
+    "end": 3.355
+   },
+   {
+    "text": "and",
+    "start": 3.425,
+    "end": 3.529
+   },
+   {
+    "text": "both",
+    "start": 3.587,
+    "end": 3.796
+   },
+   {
+    "text": "sides",
+    "start": 3.843,
+    "end": 4.18
+   },
+   {
+    "text": "rebound",
+    "start": 4.249,
+    "end": 4.714
+   },
+   {
+    "text": "violently.",
+    "start": 4.783,
+    "end": 5.944
+   }
+  ],
+  "scene-6": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.163
+   },
+   {
+    "text": "break",
+    "start": 0.209,
+    "end": 0.441
+   },
+   {
+    "text": "starts",
+    "start": 0.499,
+    "end": 0.871
+   },
+   {
+    "text": "deep",
+    "start": 0.94,
+    "end": 1.161
+   },
+   {
+    "text": "underground",
+    "start": 1.242,
+    "end": 1.788
+   },
+   {
+    "text": "at",
+    "start": 1.834,
+    "end": 1.904
+   },
+   {
+    "text": "the",
+    "start": 1.939,
+    "end": 2.009
+   },
+   {
+    "text": "focus,",
+    "start": 2.067,
+    "end": 2.635
+   },
+   {
+    "text": "and",
+    "start": 2.879,
+    "end": 3.007
+   },
+   {
+    "text": "the",
+    "start": 3.053,
+    "end": 3.123
+   },
+   {
+    "text": "shaking",
+    "start": 3.158,
+    "end": 3.529
+   },
+   {
+    "text": "radiates",
+    "start": 3.599,
+    "end": 4.063
+   },
+   {
+    "text": "outward",
+    "start": 4.122,
+    "end": 4.481
+   },
+   {
+    "text": "from",
+    "start": 4.516,
+    "end": 4.644
+   },
+   {
+    "text": "the",
+    "start": 4.679,
+    "end": 4.748
+   },
+   {
+    "text": "epicenter",
+    "start": 4.807,
+    "end": 5.306
+   },
+   {
+    "text": "above",
+    "start": 5.364,
+    "end": 5.619
+   },
+   {
+    "text": "it.",
+    "start": 5.654,
+    "end": 6.687
+   }
+  ],
+  "scene-7": [
+   {
+    "text": "Humans",
+    "start": 0,
+    "end": 0.453
+   },
+   {
+    "text": "can",
+    "start": 0.499,
+    "end": 0.615
+   },
+   {
+    "text": "also",
+    "start": 0.662,
+    "end": 0.894
+   },
+   {
+    "text": "trigger",
+    "start": 0.964,
+    "end": 1.265
+   },
+   {
+    "text": "quakes",
+    "start": 1.335,
+    "end": 1.707
+   },
+   {
+    "text": "by",
+    "start": 1.753,
+    "end": 1.881
+   },
+   {
+    "text": "changing",
+    "start": 1.95,
+    "end": 2.322
+   },
+   {
+    "text": "underground",
+    "start": 2.403,
+    "end": 2.879
+   },
+   {
+    "text": "pressure,",
+    "start": 2.937,
+    "end": 3.471
+   },
+   {
+    "text": "like",
+    "start": 3.646,
+    "end": 3.831
+   },
+   {
+    "text": "with",
+    "start": 3.855,
+    "end": 3.982
+   },
+   {
+    "text": "wastewater",
+    "start": 4.04,
+    "end": 4.563
+   },
+   {
+    "text": "disposal",
+    "start": 4.609,
+    "end": 5.166
+   },
+   {
+    "text": "or",
+    "start": 5.259,
+    "end": 5.399
+   },
+   {
+    "text": "large",
+    "start": 5.457,
+    "end": 5.747
+   },
+   {
+    "text": "reservoirs.",
+    "start": 5.805,
+    "end": 6.734
+   }
+  ]
+ },
+ "report": {
+  "checks": [
+   {
+    "sentenceId": "scene-1.1",
+    "factIds": [
+     "f28"
+    ],
+    "status": "supported",
+    "original": "Earthquakes happen when giant slabs of rock deep underground suddenly snap and slip past each other.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-2.1",
+    "factIds": [
+     "f1"
+    ],
+    "status": "revised",
+    "original": "The Earth's crust and upper mantle are broken into tectonic plates that carry on moving in different directions.",
+    "revised": "The Earth's crust and upper mantle are broken into tectonic plates that move in different directions.",
+    "reason": "The quote describes the crust and upper mantle forming tectonic plates but does not state that they 'carry on moving' (imply continuous movement)."
+   },
+   {
+    "sentenceId": "scene-3.1",
+    "factIds": [
+     "f3",
+     "f21"
+    ],
+    "status": "supported",
+    "original": "Where these plates meet, they form fault lines, which are cracks or fractures in the crust.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-4.1",
+    "factIds": [
+     "f2"
+    ],
+    "status": "supported",
+    "original": "Friction locks the rough fault surfaces together while the plates keep pushing.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-5.1",
+    "factIds": [
+     "f9"
+    ],
+    "status": "supported",
+    "original": "When the stress exceeds the fault's rupture limit, the rocks break and both sides rebound violently.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-6.1",
+    "factIds": [
+     "f17",
+     "f18"
+    ],
+    "status": "supported",
+    "original": "The break starts deep underground at the focus, and the shaking radiates outward from the epicenter above it.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-7.1",
+    "factIds": [
+     "f29",
+     "f30",
+     "f31"
+    ],
+    "status": "supported",
+    "original": "Humans can also trigger quakes by changing underground pressure, like with wastewater disposal or large reservoirs.",
+    "revised": "",
+    "reason": ""
+   }
+  ],
+  "supported": 6,
+  "revised": 1,
+  "removed": 0
+ },
+ "facts": [
+  {
+   "id": "f1",
+   "text": "Earth's crust and upper mantle form tectonic plates that carry on moving in different directions",
+   "quote": "The Earth is made up of different layers and the crust (which is the part we can see, together with the upper layer of mantle or rock) forms the tectonic plates.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f2",
+   "text": "Friction causes plates to get stuck, building pressure that is suddenly released as an earthquake",
+   "quote": "As plates carry on moving in different directions over long periods of time, friction causes them to get stuck. The pressure of the plates trying to move builds up. Eventually there is so much pressure that the plates suddenly move, creating an earthquake.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f3",
+   "text": "Fault lines are where two or more tectonic plates meet",
+   "quote": "Where they meet is called a plate boundary or a fault line.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f4",
+   "text": "Great Glen Fault runs through Inverness, where earthquakes are usually small and unnoticed",
+   "quote": "Don’t worry! Any earthquakes over the Great Glen Fault today are usually so small they go totally unnoticed.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f5",
+   "text": "Inverness Town Steeple was damaged by an earthquake in 1816 along the Great Glen Fault",
+   "quote": "Did you know that Inverness Town Steeple was damaged by an earthquake in 1816? When two tectonic plates move against each other this can cause earthquakes along the fault line where the movement takes place.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f6",
+   "text": "Reid proposed the elastic-rebound theory in 1910 based on the 1906 San Francisco earthquake.",
+   "quote": "Reid proposed the elastic-rebound theory in 1910 based on the surface rupture record from the 1906 San Francisco earthquake",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f7",
+   "text": "Accumulated geodetic data demonstrated continual stress loading from plate motion.",
+   "quote": "accumulated geodetic data demonstrated continual stress loading from the plate motion",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f8",
+   "text": "Earthquake-cycle theory combines stress-accumulation hypothesis and elastic-rebound theory.",
+   "quote": "Earthquake-cycle theory combines the stress-accumulation hypothesis and elastic-rebound theory",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f9",
+   "text": "When stress exceeds rupture limit, the fault moves and both sides rebound, releasing stress via an earthquake.",
+   "quote": "When this stress finally exceeds the rupture limit, the fault will start to move and both sides rebound to their previous positions, releasing their accumulated stress via an earthquake",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f10",
+   "text": "Dynamic fault modeling examines fault parameters in rupture-cycle behavior and reproduces seismic observations.",
+   "quote": "Dynamic fault modeling allows us to examine the role of different fault parameters in rupture-cycle behavior and reproduces many seismic observations",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f11",
+   "text": "Surface waves travel along the Earth's surface, unlike body waves that travel through the interior.",
+   "quote": "Surface waves are a type of seismic wave that travels along the Earth's surface, rather than through its interior.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f12",
+   "text": "Love waves cause sideways displacement perpendicular to the direction of wave travel.",
+   "quote": "Love waves: These travel faster and cause displacement perpendicular to the direction of propagation.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f13",
+   "text": "Rayleigh waves cause an elliptical rolling motion on the Earth's surface.",
+   "quote": "Rayleigh waves: These involve a combination of longitudinal compression and dilation, resulting in an elliptical motion of points on the surface.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f14",
+   "text": "Surface waves are generated by powerful events like earthquakes and explosions.",
+   "quote": "These waves are generated by energetic sources like earthquakes or explosions.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f15",
+   "text": "Surface waves are detected on seismographs even from distant earthquakes due to their two-dimensional energy spread.",
+   "quote": "Surface waves produce strong records on seismographs even from distant earthquakes because their energy spreads in two dimensions, unlike body waves which spread in three.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f16",
+   "text": "The mechanical properties of ground materials influence surface wave characteristics.",
+   "quote": "The characteristics of surface waves are influenced by the mechanical properties of the rocks and soil they encounter, such as incompressibility, rigidity, and density.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f17",
+   "text": "The focus is the zone within the earth where rock displacement or breakage first occurs during an earthquake.",
+   "quote": "Focus: the zone within the earth where the displacement or break of rock in an earthquake first occurs.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f18",
+   "text": "The epicenter is the location on the earth's surface directly above the focus.",
+   "quote": "Epicenter: the location on the earth's surface directly above the focus of an earthquake.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f19",
+   "text": "The December 26, 2004 earthquake had its focus deep beneath the bottom of the ocean.",
+   "quote": "Ask your students where the focus of the December 26, 2004 earthquake was. (Somewhere in the earth deep beneath the bottom of the ocean, where the initial displacement between plates occurred.)",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f20",
+   "text": "The December 26, 2004 earthquake had its epicenter on the ocean's floor directly above its focus.",
+   "quote": "Ask your students where the epicenter of the December 26, 2004 earthquake was. (The point on the ocean's floor directly above the focus.)",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f21",
+   "text": "Faults are cracks or fractures in the earth's crust where rocks move past each other.",
+   "quote": "Fault: a crack or fracture in the earth's crust.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f22",
+   "text": "Earthquake prediction has been disappointing despite optimism in the 1970s.",
+   "quote": "As the preceding examples show, the record of earthquake prediction has been disappointing.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f23",
+   "text": "Geometrical irregularities in the fault surface control rupture starting and stopping.",
+   "quote": "in 1986 that geometrical irregularities in the fault surface \"appear to exert major controls on the starting and stopping of ruptures\"",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f24",
+   "text": "Fault maturity accounts for significant differences in earthquake behavior.",
+   "quote": "Another study attributed significant differences in fault behavior to the maturity of the fault.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f25",
+   "text": "Reliable earthquake prediction may be beyond current science due to complex fault mechanics.",
+   "quote": "the record of earthquake prediction has been disappointing. The optimism of the 1970s that routine prediction of earthquakes would be \"soon\", perhaps within ten years, was coming up disappointingly short by the 1990s",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f26",
+   "text": "The 1975 Haicheng earthquake prediction claim is considered invalid by later studies.",
+   "quote": "For example, the most famous claim of a successful prediction is that alleged for the 1975 Haicheng earthquake. A later study said that there was no valid short-term prediction.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f27",
+   "text": "Extensive searches have found earthquake precursors, but none identified across large scales.",
+   "quote": "Extensive searches have reported many possible earthquake precursors, but, so far, such precursors have not been reliably identified across significant spatial and temporal scales.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f28",
+   "text": "Earthquakes are primarily caused by movement of tectonic plates.",
+   "quote": "While most earthquakes are caused by the movement of the Earth's tectonic plates,",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f29",
+   "text": "Human activities such as building reservoirs and fluid injection can induce earthquakes.",
+   "quote": "Activities both above ground and below may change the stresses and strains on the crust, including building reservoirs, extracting resources such as coal or oil, and injecting fluids underground for waste disposal or fracking.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f30",
+   "text": "The 2011 Oklahoma earthquake of magnitude 5.7 was likely caused by wastewater disposal from oil production.",
+   "quote": "The 5.7 magnitude 2011 Oklahoma earthquake is thought to have been caused by disposing wastewater from oil production into injection wells",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f31",
+   "text": "The 2008 Sichuan earthquake of magnitude 8.0 may have been induced by the Zipingpu Dam.",
+   "quote": "A Columbia University paper suggested that the 8.0 magnitude 2008 Sichuan earthquake was induced by loading from the Zipingpu Dam",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f32",
+   "text": "The three main fault types are normal, reverse (thrust), and strike-slip.",
+   "quote": "There are three main types of fault, all of which may cause an interplate earthquake: normal, reverse (thrust), and strike-slip",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f33",
+   "text": "Normal and reverse faulting involve vertical movement (dip-slip) along the fault.",
+   "quote": "Normal and reverse faulting are examples of dip-slip, where the displacement along the fault is in the direction of dip and where movement on them involves a vertical component.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f34",
+   "text": "Reid proposed the elastic-rebound theory in 1910 based on the 1906 San Francisco earthquake.",
+   "quote": "Reid proposed the elastic-rebound theory in 1910 based on the surface rupture record from the 1906 San Francisco earthquake.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f35",
+   "text": "Stress accumulates on a locked fault during the interseismic period due to plate motion.",
+   "quote": "During the interseismic period, stress accumulates on a locked fault due to plate motion.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f36",
+   "text": "When stress exceeds the rupture limit, the fault moves and both sides rebound, releasing stress via an earthquake.",
+   "quote": "When this stress finally exceeds the rupture limit, the fault will start to move and both sides rebound to their previous positions, releasing their accumulated stress via an earthquake.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f37",
+   "text": "The spring-slider model explains earthquake cycle recurrence using friction differences.",
+   "quote": "Assuming that the kinematic friction is smaller than the static friction, the block's initial movement is unstable, which is equivalent to a fault rupture.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f38",
+   "text": "Complete earthquake cycles have barely been recorded, so geodetic and geological data are key analysis sources.",
+   "quote": "So far, complete earthquake cycles have barely been recorded, and geodetic and geology data become key sources for the analysis of different stages in an earthquake cycle.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f39",
+   "text": "Normal faults occur where the hanging wall moves down relative to the footwall due to tension or stretching.",
+   "quote": "In normal and reverse faulting, rock masses slip past each other vertically.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f40",
+   "text": "Normal faults are also known as block faults, dip-slip faults, or gravity faults.",
+   "quote": "Also known as: block faulting, dip-slip fault, gravity fault",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f41",
+   "text": "In a normal fault, the hanging wall moves down and the footwall moves up.",
+   "quote": "In normal and reverse faulting, rock masses slip past each other vertically.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f42",
+   "text": "Earthquakes occur when rocks break under extreme stress causing movement along a fracture in the Earth's surface.",
+   "quote": "A fault is a fracture in the surface of the Earth that occurs when rocks break under extreme stress. Movement of rock along the fracture occurs in faults. If no movement occurs, the fracture is described instead as a joint.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f43",
+   "text": "Anderson's theory explains faulting using three types based on the orientation of principal stresses: normal, reverse, and strike-slip.",
+   "quote": "While there are four types of faults classified by geologists today, Anderson's fault theory focuses on the explanation of three: normal, reverse, and strike-slip.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f44",
+   "text": "Faults are classified based on the kind of motion between separated rock masses.",
+   "quote": "Faults can be classified into four types based on the kind of motion between the separated rock masses: normal, reverse, strike-slip, and oblique.",
+   "sourceId": "s9"
+  }
+ ],
+ "sources": [
+  {
+   "id": "s1",
+   "title": "What is tectonic plate movement? - BBC Bitesize",
+   "url": "https://www.bbc.co.uk/bitesize/articles/z2wnhcw"
+  },
+  {
+   "id": "s2",
+   "title": "Earthquake cycle - Wikipedia",
+   "url": "http://en.wikipedia.org/wiki/Earthquake_cycle"
+  },
+  {
+   "id": "s3",
+   "title": "Surface wave | seismology | Britannica",
+   "url": "https://www.britannica.com/science/surface-wave-seismology"
+  },
+  {
+   "id": "s4",
+   "title": "Stressed Out",
+   "url": "https://www.pbs.org/wnet/nature/files/2008/12/stressed-out.pdf"
+  },
+  {
+   "id": "s5",
+   "title": "Earthquake prediction - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Earthquake_prediction"
+  },
+  {
+   "id": "s6",
+   "title": "Earthquake - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Earthquake"
+  },
+  {
+   "id": "s7",
+   "title": "Earthquake cycle - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Earthquake_Cycle"
+  },
+  {
+   "id": "s8",
+   "title": "Normal fault | Description, Variations, Examples, & Facts | Britannica",
+   "url": "https://www.britannica.com/science/normal-fault"
+  },
+  {
+   "id": "s9",
+   "title": "Anderson's theory of faulting - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Anderson%27s_theory_of_faulting"
+  }
+ ]
+}

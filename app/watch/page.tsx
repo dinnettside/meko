@@ -11,13 +11,17 @@ export const metadata: Metadata = {
 };
 
 // The feed of videos made by Meko. What each shows under the video, and the text it is searched by, are read from the
-// videos' files here, on the server.
+// videos' files here, on the server. A video whose file is missing is left out.
 export default async function Watch() {
   const items = await Promise.all(
     EXAMPLES.map(async ({ slug }) => {
-      const example = JSON.parse(await readFile(path.join(process.cwd(), "public", "examples", `${slug}.json`), "utf8")) as Example;
-      return feedItem(slug, example);
+      try {
+        const example = JSON.parse(await readFile(path.join(process.cwd(), "public", "examples", `${slug}.json`), "utf8")) as Example;
+        return feedItem(slug, example);
+      } catch {
+        return null;
+      }
     }),
   );
-  return <Feed items={items} />;
+  return <Feed items={items.filter((item) => item !== null)} />;
 }

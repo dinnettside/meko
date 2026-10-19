@@ -1,4 +1,4 @@
-// Makes one of the examples behind "Watch an example": runs the pipeline once and saves the finished video,
+// Makes one of the videos in the feed: runs the pipeline once and saves the finished video,
 // with one MP3 per scene, in public/examples. Source texts are left out; titles, links and the short
 // quotes behind each fact are kept.
 // Run with `npm run make-example -- black-death` while the app is running (npm run dev); without a slug it makes
@@ -13,7 +13,7 @@ import { runPipeline } from "./pipeline-client.ts";
 const chosen = EXAMPLES.find((example) => example.slug === (process.argv[2] ?? EXAMPLES[0].slug));
 if (!chosen) throw new Error(`Unknown example. Use one of: ${EXAMPLES.map((example) => example.slug).join(", ")}`);
 const SLUG = chosen.slug;
-const REQUEST: VideoRequest = { topic: chosen.topic, audience: "High school", lengthSec: 90, language: "en" };
+const REQUEST: VideoRequest = { topic: chosen.topic, audience: "High school", lengthSec: 60, language: "en" };
 
 console.log(`Making the example "${REQUEST.topic}"`);
 const run = await runPipeline(REQUEST);

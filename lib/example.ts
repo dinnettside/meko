@@ -1,26 +1,31 @@
 import type { TimedWord } from "./elevenlabs.ts";
 import type { FactCheckReport, ResearchFact, VideoRequest } from "./pipeline.ts";
 import type { Source, Storyboard } from "./storyboard.ts";
+import { storyboardFrames } from "../remotion/timing.ts";
 
-// The examples on the start page, in order. Each is made by `npm run make-example -- <slug>`.
+// The videos in the feed, in order. Each is made by `npm run make-example -- <slug>`, as a one-minute video.
 export const EXAMPLES = [
-  { slug: "silk-road", topic: "The Silk Road" },
+  { slug: "earthquakes", topic: "Why earthquakes happen" },
   { slug: "black-death", topic: "The Black Death" },
-  { slug: "french-revolution", topic: "The French Revolution" },
+  { slug: "vaccines", topic: "How vaccines work" },
+  { slug: "neural-networks", topic: "How neural networks learn" },
+  { slug: "silk-road", topic: "The Silk Road" },
+  { slug: "volcanoes", topic: "How volcanoes erupt" },
+  { slug: "berlin-wall", topic: "The fall of the Berlin Wall" },
+  { slug: "heart", topic: "How the heart pumps blood" },
   { slug: "apollo-11", topic: "The Apollo 11 Moon landing" },
+  { slug: "airplanes", topic: "How do airplanes fly?" },
 ];
 
 // What the gallery shows under an example: how long it is, how many sources it cites and how its sentences fared.
 export type ExampleMeta = { slug: string; topic: string; seconds: number; sources: number; supported: number; sentences: number };
 
-// Six seconds of credits follow the last scene.
-const CREDITS_SEC = 6;
-
 export function exampleMeta(slug: string, example: Example): ExampleMeta {
   return {
     slug,
     topic: example.request.topic,
-    seconds: Math.round(example.storyboard.scenes.reduce((total, scene) => total + scene.durationSec, 0) + CREDITS_SEC),
+    // As long as the player makes it, with the dissolves between scenes and the credits.
+    seconds: Math.round(storyboardFrames(example.storyboard) / example.storyboard.fps),
     sources: example.storyboard.sources.length,
     supported: example.report.supported,
     sentences: example.report.checks.length,

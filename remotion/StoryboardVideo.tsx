@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { AbsoluteFill, Easing, Html5Audio, Series, interpolate, useCurrentFrame } from "remotion";
 import { sounds } from "./sfx";
 import type { Scene, Storyboard } from "@/lib/storyboard";
-import { MOTION, VIDEO } from "@/lib/theme";
+import { VIDEO } from "@/lib/theme";
 import { THEMES } from "@/lib/themes";
 import type { Theme } from "@/lib/themes";
 import type { TimedWord } from "@/lib/elevenlabs";
@@ -14,6 +14,7 @@ import type { CheckCounts } from "./Credits";
 import { Ground } from "./Ground";
 import { ThemeProvider, alpha, useTheme } from "./theme";
 import { YearMark } from "./YearMark";
+import { creditsFrames, overlapFrames, sceneFrames } from "./timing";
 import { SourceChip } from "./SourceChip";
 import { CompareScene } from "./scenes/CompareScene";
 import { IllustrationScene } from "./scenes/IllustrationScene";
@@ -32,38 +33,7 @@ import { TextScene } from "./scenes/TextScene";
 import { TimelineScene } from "./scenes/TimelineScene";
 import { TitleScene } from "./scenes/TitleScene";
 
-export function sceneFrames(scene: Scene, fps: number): number {
-  return Math.max(1, Math.round(scene.durationSec * fps));
-}
-
-// Each scene starts a moment before the one before it ends, so they dissolve into each other.
-// The overlap falls in the pause after each scene's narration, so voices never overlap.
-const overlapFrames = (fps: number) => Math.round(MOTION.sceneFade * fps);
-
-// The frame where each scene starts.
-export function sceneStarts(storyboard: Storyboard): number[] {
-  let start = 0;
-  return storyboard.scenes.map((scene) => {
-    const current = start;
-    start += sceneFrames(scene, storyboard.fps) - overlapFrames(storyboard.fps);
-    return current;
-  });
-}
-
-// The closing credits list every source, a little longer when there are many.
-export function creditsFrames(storyboard: Storyboard): number {
-  if (storyboard.sources.length === 0) return 0;
-  return Math.round(Math.min(9, Math.max(4.5, 2.5 + 0.7 * storyboard.sources.length)) * storyboard.fps);
-}
-
-export function storyboardFrames(storyboard: Storyboard): number {
-  const last = storyboard.scenes.length - 1;
-  if (last < 0) return 1;
-  const scenesEnd = sceneStarts(storyboard)[last] + sceneFrames(storyboard.scenes[last], storyboard.fps);
-  const credits = creditsFrames(storyboard);
-  // The credits dissolve in over the end of the last scene, like one scene into the next.
-  return credits > 0 ? scenesEnd - overlapFrames(storyboard.fps) + credits : scenesEnd;
-}
+export { creditsFrames, sceneFrames, sceneStarts, storyboardFrames } from "./timing";
 
 const NO_VOICE: Record<string, SceneVoice> = {};
 // The sound effects are quiet, under the voice.

@@ -1,0 +1,1330 @@
+{
+ "request": {
+  "topic": "How volcanoes erupt",
+  "audience": "High school",
+  "lengthSec": 60,
+  "language": "en"
+ },
+ "madeAt": "2026-10-18T23:24:25.906Z",
+ "ms": 56359,
+ "costUsd": 0.16515676,
+ "tokens": 154121,
+ "storyboard": {
+  "title": "How Volcanoes Erupt: From Deep Earth to Explosive Power",
+  "language": "en",
+  "theme": "blueprint",
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "scenes": [
+   {
+    "id": "scene-1",
+    "narration": "Deep heat pushes magma up through cracks at plate boundaries, where it can burst onto the surface.",
+    "factIds": [
+     "f1",
+     "f2",
+     "f34",
+     "f23"
+    ],
+    "durationSec": 6.6,
+    "kind": "title",
+    "heading": "How Volcanoes Erupt",
+    "subheading": "How do volcanoes erupt?",
+    "icon": "volcano"
+   },
+   {
+    "id": "scene-2",
+    "narration": "Magma rises because it is lighter than solid rock and gathers in chambers near the surface. There, pressure builds as crystals form and gases bubble out of the melt.",
+    "factIds": [
+     "f4",
+     "f42",
+     "f43",
+     "f47"
+    ],
+    "durationSec": 11,
+    "kind": "template",
+    "template": "cutaway",
+    "params": {
+     "setting": "ground",
+     "layers": [],
+     "items": [
+      {
+       "icon": "volcano",
+       "zone": "surface",
+       "side": "center"
+      },
+      {
+       "icon": "rock",
+       "label": "Country rock",
+       "zone": "lower",
+       "side": "left"
+      },
+      {
+       "icon": "flame",
+       "label": "Magma chamber",
+       "zone": "upper",
+       "side": "center"
+      },
+      {
+       "icon": "crystal",
+       "label": "Crystals form",
+       "zone": "upper",
+       "side": "left"
+      },
+      {
+       "icon": "cloud",
+       "label": "Gas bubbles",
+       "zone": "upper",
+       "side": "right"
+      }
+     ],
+     "flows": [
+      {
+       "from": 1,
+       "to": 2,
+       "label": "Magma rises"
+      },
+      {
+       "from": 2,
+       "to": 3
+      },
+      {
+       "from": 2,
+       "to": 4,
+       "label": "Gases bubble out"
+      }
+     ]
+    }
+   },
+   {
+    "id": "scene-3",
+    "narration": "An eruption starts when that upward pressure beats the weight of rock above the chamber.",
+    "factIds": [
+     "f5",
+     "f6"
+    ],
+    "durationSec": 5.5,
+    "kind": "template",
+    "template": "big_statement",
+    "params": {
+     "text": "Upward pressure beats the weight of rock above the chamber.",
+     "emphasis": []
+    }
+   },
+   {
+    "id": "scene-4",
+    "narration": "Runny magma with little gas flows gently in Icelandic and Hawaiian eruptions. Sticky, gas-rich magma blasts apart in Strombolian, Vulcanian, Pelean, and Plinian events.",
+    "factIds": [
+     "f7",
+     "f8",
+     "f35",
+     "f9",
+     "f10",
+     "f11",
+     "f12",
+     "f36"
+    ],
+    "durationSec": 12.2,
+    "kind": "illustration",
+    "items": [
+     {
+      "icon": "volcano",
+      "label": "Icelandic",
+      "x": 10,
+      "y": 50,
+      "size": "medium"
+     },
+     {
+      "icon": "volcano",
+      "label": "Hawaiian",
+      "x": 28,
+      "y": 50,
+      "size": "medium"
+     },
+     {
+      "icon": "volcano",
+      "label": "Strombolian",
+      "x": 46,
+      "y": 50,
+      "size": "medium"
+     },
+     {
+      "icon": "volcano",
+      "label": "Vulcanian",
+      "x": 64,
+      "y": 50,
+      "size": "medium"
+     },
+     {
+      "icon": "volcano",
+      "label": "Pelean",
+      "x": 82,
+      "y": 50,
+      "size": "medium"
+     },
+     {
+      "icon": "rocket",
+      "label": "Plinian",
+      "x": 95,
+      "y": 35,
+      "size": "large"
+     }
+    ],
+    "links": [
+     {
+      "from": 0,
+      "to": 1,
+      "label": "runny magma"
+     },
+     {
+      "from": 1,
+      "to": 2
+     },
+     {
+      "from": 2,
+      "to": 3,
+      "label": "more gas"
+     },
+     {
+      "from": 3,
+      "to": 4
+     },
+     {
+      "from": 4,
+      "to": 5
+     }
+    ]
+   },
+   {
+    "id": "scene-5",
+    "narration": "The 1991 Pinatubo eruption shot over 250 megatons of gas into the upper air in one day.",
+    "factIds": [
+     "f16"
+    ],
+    "durationSec": 8,
+    "kind": "stat",
+    "value": 250,
+    "unit": "megatons",
+    "label": "gas into upper atmosphere",
+    "look": {
+     "template": "big_number",
+     "params": {
+      "value": 250,
+      "decimals": 0,
+      "suffix": " megatons",
+      "label": "gas into upper atmosphere"
+     }
+    }
+   },
+   {
+    "id": "scene-6",
+    "narration": "From quiet lava rivers to rocket-like blasts, volcanoes erupt when deep pressure finds a way out.",
+    "factIds": [
+     "f50"
+    ],
+    "durationSec": 7.3,
+    "kind": "template",
+    "template": "volcano_cutaway",
+    "params": {
+     "at": "blasts",
+     "erupts": true,
+     "labels": {
+      "conduit": "Vent",
+      "lava": "Lava rivers",
+      "crust": "Earth's crust"
+     }
+    }
+   }
+  ],
+  "sources": [
+   {
+    "id": "s1",
+    "title": "What Causes a Volcano to Erupt?",
+    "url": "https://www.britannica.com/story/what-causes-a-volcano-to-erupt"
+   },
+   {
+    "id": "s2",
+    "title": "Types of Volcanic Eruptions Explained | Britannica",
+    "url": "https://www.britannica.com/video/kinds-eruptions/-229559?cmpscreen="
+   },
+   {
+    "id": "s3",
+    "title": "Volcanic gases can be harmful to health, vegetation and infrastructure | U.S. Geological Survey",
+    "url": "https://www.usgs.gov/programs/VHP/volcanic-gases-can-be-harmful-health-vegetation-and-infrastructure"
+   },
+   {
+    "id": "s4",
+    "title": "The process of volcanic eruption - Disaster Risk Reduction Knowledge Service",
+    "url": "https://ikcest-drr.data.ac.cn/tutorial/peb09"
+   },
+   {
+    "id": "s7",
+    "title": "Volcano | Definition, Types, & Facts",
+    "url": "https://www.britannica.com/science/volcano/Six-types-of-eruptions"
+   },
+   {
+    "id": "s8",
+    "title": "Magma chamber - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Magma_chamber"
+   },
+   {
+    "id": "s9",
+    "title": "Volcanic Eruptions - Volcanoes, Craters & Lava Flows (U.S. National Park Service)",
+    "url": "https://www.nps.gov/subjects/volcanoes/volcanic-eruptions.htm"
+   }
+  ]
+ },
+ "words": {
+  "scene-1": [
+   {
+    "text": "Deep",
+    "start": 0,
+    "end": 0.302
+   },
+   {
+    "text": "heat",
+    "start": 0.383,
+    "end": 0.627
+   },
+   {
+    "text": "pushes",
+    "start": 0.743,
+    "end": 1.103
+   },
+   {
+    "text": "magma",
+    "start": 1.184,
+    "end": 1.544
+   },
+   {
+    "text": "up",
+    "start": 1.602,
+    "end": 1.741
+   },
+   {
+    "text": "through",
+    "start": 1.788,
+    "end": 2.02
+   },
+   {
+    "text": "cracks",
+    "start": 2.078,
+    "end": 2.426
+   },
+   {
+    "text": "at",
+    "start": 2.461,
+    "end": 2.543
+   },
+   {
+    "text": "plate",
+    "start": 2.589,
+    "end": 2.844
+   },
+   {
+    "text": "boundaries,",
+    "start": 2.879,
+    "end": 3.483
+   },
+   {
+    "text": "where",
+    "start": 3.657,
+    "end": 3.866
+   },
+   {
+    "text": "it",
+    "start": 3.901,
+    "end": 3.947
+   },
+   {
+    "text": "can",
+    "start": 3.982,
+    "end": 4.098
+   },
+   {
+    "text": "burst",
+    "start": 4.156,
+    "end": 4.481
+   },
+   {
+    "text": "onto",
+    "start": 4.54,
+    "end": 4.702
+   },
+   {
+    "text": "the",
+    "start": 4.76,
+    "end": 4.83
+   },
+   {
+    "text": "surface.",
+    "start": 4.876,
+    "end": 5.991
+   }
+  ],
+  "scene-2": [
+   {
+    "text": "Magma",
+    "start": 0,
+    "end": 0.441
+   },
+   {
+    "text": "rises",
+    "start": 0.522,
+    "end": 0.94
+   },
+   {
+    "text": "because",
+    "start": 0.998,
+    "end": 1.254
+   },
+   {
+    "text": "it",
+    "start": 1.277,
+    "end": 1.347
+   },
+   {
+    "text": "is",
+    "start": 1.393,
+    "end": 1.474
+   },
+   {
+    "text": "lighter",
+    "start": 1.544,
+    "end": 1.858
+   },
+   {
+    "text": "than",
+    "start": 1.892,
+    "end": 2.02
+   },
+   {
+    "text": "solid",
+    "start": 2.09,
+    "end": 2.415
+   },
+   {
+    "text": "rock",
+    "start": 2.473,
+    "end": 2.74
+   },
+   {
+    "text": "and",
+    "start": 2.914,
+    "end": 3.111
+   },
+   {
+    "text": "gathers",
+    "start": 3.17,
+    "end": 3.495
+   },
+   {
+    "text": "in",
+    "start": 3.541,
+    "end": 3.611
+   },
+   {
+    "text": "chambers",
+    "start": 3.68,
+    "end": 4.087
+   },
+   {
+    "text": "near",
+    "start": 4.145,
+    "end": 4.307
+   },
+   {
+    "text": "the",
+    "start": 4.354,
+    "end": 4.423
+   },
+   {
+    "text": "surface.",
+    "start": 4.47,
+    "end": 5.062
+   },
+   {
+    "text": "There,",
+    "start": 5.445,
+    "end": 5.898
+   },
+   {
+    "text": "pressure",
+    "start": 6.014,
+    "end": 6.374
+   },
+   {
+    "text": "builds",
+    "start": 6.42,
+    "end": 6.792
+   },
+   {
+    "text": "as",
+    "start": 6.827,
+    "end": 6.908
+   },
+   {
+    "text": "crystals",
+    "start": 6.978,
+    "end": 7.419
+   },
+   {
+    "text": "form",
+    "start": 7.488,
+    "end": 7.825
+   },
+   {
+    "text": "and",
+    "start": 7.999,
+    "end": 8.173
+   },
+   {
+    "text": "gases",
+    "start": 8.255,
+    "end": 8.638
+   },
+   {
+    "text": "bubble",
+    "start": 8.707,
+    "end": 8.986
+   },
+   {
+    "text": "out",
+    "start": 9.021,
+    "end": 9.16
+   },
+   {
+    "text": "of",
+    "start": 9.207,
+    "end": 9.253
+   },
+   {
+    "text": "the",
+    "start": 9.3,
+    "end": 9.369
+   },
+   {
+    "text": "melt.",
+    "start": 9.416,
+    "end": 10.356
+   }
+  ],
+  "scene-3": [
+   {
+    "text": "An",
+    "start": 0,
+    "end": 0.174
+   },
+   {
+    "text": "eruption",
+    "start": 0.221,
+    "end": 0.65
+   },
+   {
+    "text": "starts",
+    "start": 0.72,
+    "end": 1.126
+   },
+   {
+    "text": "when",
+    "start": 1.184,
+    "end": 1.347
+   },
+   {
+    "text": "that",
+    "start": 1.382,
+    "end": 1.509
+   },
+   {
+    "text": "upward",
+    "start": 1.579,
+    "end": 1.904
+   },
+   {
+    "text": "pressure",
+    "start": 1.962,
+    "end": 2.322
+   },
+   {
+    "text": "beats",
+    "start": 2.368,
+    "end": 2.647
+   },
+   {
+    "text": "the",
+    "start": 2.705,
+    "end": 2.775
+   },
+   {
+    "text": "weight",
+    "start": 2.821,
+    "end": 3.019
+   },
+   {
+    "text": "of",
+    "start": 3.065,
+    "end": 3.123
+   },
+   {
+    "text": "rock",
+    "start": 3.204,
+    "end": 3.425
+   },
+   {
+    "text": "above",
+    "start": 3.483,
+    "end": 3.727
+   },
+   {
+    "text": "the",
+    "start": 3.762,
+    "end": 3.831
+   },
+   {
+    "text": "chamber.",
+    "start": 3.878,
+    "end": 4.923
+   }
+  ],
+  "scene-4": [
+   {
+    "text": "Runny",
+    "start": 0,
+    "end": 0.29
+   },
+   {
+    "text": "magma",
+    "start": 0.337,
+    "end": 0.731
+   },
+   {
+    "text": "with",
+    "start": 0.789,
+    "end": 0.952
+   },
+   {
+    "text": "little",
+    "start": 0.998,
+    "end": 1.242
+   },
+   {
+    "text": "gas",
+    "start": 1.289,
+    "end": 1.521
+   },
+   {
+    "text": "flows",
+    "start": 1.591,
+    "end": 1.939
+   },
+   {
+    "text": "gently",
+    "start": 2.009,
+    "end": 2.368
+   },
+   {
+    "text": "in",
+    "start": 2.438,
+    "end": 2.508
+   },
+   {
+    "text": "Icelandic",
+    "start": 2.577,
+    "end": 3.1
+   },
+   {
+    "text": "and",
+    "start": 3.158,
+    "end": 3.228
+   },
+   {
+    "text": "Hawaiian",
+    "start": 3.286,
+    "end": 3.646
+   },
+   {
+    "text": "eruptions.",
+    "start": 3.692,
+    "end": 4.423
+   },
+   {
+    "text": "Sticky,",
+    "start": 4.865,
+    "end": 5.306
+   },
+   {
+    "text": "gas-rich",
+    "start": 5.364,
+    "end": 5.944
+   },
+   {
+    "text": "magma",
+    "start": 6.014,
+    "end": 6.455
+   },
+   {
+    "text": "blasts",
+    "start": 6.536,
+    "end": 7.001
+   },
+   {
+    "text": "apart",
+    "start": 7.047,
+    "end": 7.419
+   },
+   {
+    "text": "in",
+    "start": 7.477,
+    "end": 7.546
+   },
+   {
+    "text": "Strombolian,",
+    "start": 7.616,
+    "end": 8.452
+   },
+   {
+    "text": "Vulcanian,",
+    "start": 8.568,
+    "end": 9.3
+   },
+   {
+    "text": "Pelean,",
+    "start": 9.346,
+    "end": 9.81
+   },
+   {
+    "text": "and",
+    "start": 9.834,
+    "end": 9.961
+   },
+   {
+    "text": "Plinian",
+    "start": 10.019,
+    "end": 10.379
+   },
+   {
+    "text": "events.",
+    "start": 10.426,
+    "end": 11.564
+   }
+  ],
+  "scene-5": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.151
+   },
+   {
+    "text": "1991",
+    "start": 0.209,
+    "end": 1.022
+   },
+   {
+    "text": "Pinatubo",
+    "start": 1.138,
+    "end": 1.73
+   },
+   {
+    "text": "eruption",
+    "start": 1.811,
+    "end": 2.276
+   },
+   {
+    "text": "shot",
+    "start": 2.485,
+    "end": 2.752
+   },
+   {
+    "text": "over",
+    "start": 2.81,
+    "end": 2.972
+   },
+   {
+    "text": "250",
+    "start": 3.03,
+    "end": 3.75
+   },
+   {
+    "text": "megatons",
+    "start": 3.866,
+    "end": 4.354
+   },
+   {
+    "text": "of",
+    "start": 4.4,
+    "end": 4.458
+   },
+   {
+    "text": "gas",
+    "start": 4.528,
+    "end": 4.853
+   },
+   {
+    "text": "into",
+    "start": 4.911,
+    "end": 5.097
+   },
+   {
+    "text": "the",
+    "start": 5.143,
+    "end": 5.224
+   },
+   {
+    "text": "upper",
+    "start": 5.294,
+    "end": 5.526
+   },
+   {
+    "text": "air",
+    "start": 5.596,
+    "end": 5.828
+   },
+   {
+    "text": "in",
+    "start": 5.898,
+    "end": 5.979
+   },
+   {
+    "text": "one",
+    "start": 6.06,
+    "end": 6.246
+   },
+   {
+    "text": "day.",
+    "start": 6.293,
+    "end": 7.384
+   }
+  ],
+  "scene-6": [
+   {
+    "text": "From",
+    "start": 0,
+    "end": 0.209
+   },
+   {
+    "text": "quiet",
+    "start": 0.29,
+    "end": 0.615
+   },
+   {
+    "text": "lava",
+    "start": 0.685,
+    "end": 0.975
+   },
+   {
+    "text": "rivers",
+    "start": 1.045,
+    "end": 1.37
+   },
+   {
+    "text": "to",
+    "start": 1.544,
+    "end": 1.66
+   },
+   {
+    "text": "rocket-like",
+    "start": 1.753,
+    "end": 2.299
+   },
+   {
+    "text": "blasts,",
+    "start": 2.345,
+    "end": 3.007
+   },
+   {
+    "text": "volcanoes",
+    "start": 3.216,
+    "end": 3.855
+   },
+   {
+    "text": "erupt",
+    "start": 3.924,
+    "end": 4.4
+   },
+   {
+    "text": "when",
+    "start": 4.516,
+    "end": 4.714
+   },
+   {
+    "text": "deep",
+    "start": 4.772,
+    "end": 4.981
+   },
+   {
+    "text": "pressure",
+    "start": 5.062,
+    "end": 5.422
+   },
+   {
+    "text": "finds",
+    "start": 5.468,
+    "end": 5.759
+   },
+   {
+    "text": "a",
+    "start": 5.793,
+    "end": 5.817
+   },
+   {
+    "text": "way",
+    "start": 5.875,
+    "end": 6.026
+   },
+   {
+    "text": "out.",
+    "start": 6.095,
+    "end": 6.687
+   }
+  ]
+ },
+ "report": {
+  "checks": [
+   {
+    "sentenceId": "scene-1.1",
+    "factIds": [
+     "f1",
+     "f2",
+     "f34",
+     "f23"
+    ],
+    "status": "supported",
+    "original": "Deep heat pushes magma up through cracks at plate boundaries, where it can burst onto the surface.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-2.1",
+    "factIds": [
+     "f4",
+     "f42"
+    ],
+    "status": "supported",
+    "original": "Magma rises because it is lighter than solid rock and gathers in chambers near the surface.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-2.2",
+    "factIds": [
+     "f43",
+     "f47"
+    ],
+    "status": "supported",
+    "original": "There, pressure builds as crystals form and gases bubble out of the melt.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-3.1",
+    "factIds": [
+     "f5",
+     "f6"
+    ],
+    "status": "supported",
+    "original": "An eruption starts when that upward pressure beats the weight of rock above the chamber.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-4.1",
+    "factIds": [
+     "f7",
+     "f8",
+     "f35"
+    ],
+    "status": "supported",
+    "original": "Runny magma with little gas flows gently in Icelandic and Hawaiian eruptions.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-4.2",
+    "factIds": [
+     "f9",
+     "f10",
+     "f11",
+     "f12",
+     "f35",
+     "f36"
+    ],
+    "status": "supported",
+    "original": "Sticky, gas-rich magma blasts apart in Strombolian, Vulcanian, Pelean, and Plinian events.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-5.1",
+    "factIds": [
+     "f16"
+    ],
+    "status": "supported",
+    "original": "The 1991 Pinatubo eruption shot over 250 megatons of gas into the upper air in one day.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-6.1",
+    "factIds": [
+     "f50"
+    ],
+    "status": "supported",
+    "original": "From quiet lava rivers to rocket-like blasts, volcanoes erupt when deep pressure finds a way out.",
+    "revised": "",
+    "reason": ""
+   }
+  ],
+  "supported": 8,
+  "revised": 0,
+  "removed": 0
+ },
+ "facts": [
+  {
+   "id": "f1",
+   "text": "Heat from Earth's interior moves by convection through magma, which rises and erupts at the surface.",
+   "quote": "Heat is conveyed from the planet\u2019s interior to its surface largely by convection\u2014the transfer of heat by movement of a heated fluid.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f2",
+   "text": "Volcanoes often form at plate boundaries where one plate slides under another.",
+   "quote": "Most volcanoes are associated with plate tectonic activity.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f3",
+   "text": "Water trapped in a subducting plate is squeezed out by pressure, producing heat that melts rock into magma.",
+   "quote": "When one plate slides under another, water trapped in the subducted, sinking plate is squeezed out of it by enormous pressure, which produces enough heat to melt nearby rock, forming magma.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f4",
+   "text": "Magma rises because it is more buoyant than surrounding rock and may collect in chambers near the surface.",
+   "quote": "Since the magma is more buoyant than the surrounding rock, it rises, and it may collect in chambers nearer to the surface.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f5",
+   "text": "Pressure builds in magma chambers as they fill, leading to cracks and eventual eruption.",
+   "quote": "As a chamber fills up, the pressure inside may increase. When the downward pressure produced by the weight of rock above the chamber is less than the upward pressure produced by rock below the chamber, cracks often form above.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f6",
+   "text": "Eruption occurs when upward pressure overcomes the weight of rock above the magma chamber.",
+   "quote": "Eventually the upward pressure may [...]",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f7",
+   "text": "Icelandic eruptions are effusive, with lava flowing from long fissures in the ground.",
+   "quote": "Icelandic eruptions are effusive. Molten lava flows smoothly from long fissures, or cracks, in the ground.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f8",
+   "text": "Hawaiian eruptions are effusive, with lava flowing from the summit and from cracks in the sides of the volcano.",
+   "quote": "Hawaiian eruptions are also effusive. Lava flows from the summit of a volcano and from cracks in the sides of the volcano.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f9",
+   "text": "Strombolian eruptions are small explosive eruptions that throw clots of lava into the air in small bursts.",
+   "quote": "Strombolian eruptions are small explosive eruptions. These volcanoes erupt often in small bursts. Expanding gases throw clots of lava into the air.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f10",
+   "text": "Vulcanian eruptions have moderate explosions of gas with volcanic ash that form rapid eruption clouds.",
+   "quote": "Vulcanian eruptions have moderate explosions of gas with volcanic ash. They form rapid eruption clouds.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f11",
+   "text": "Pelean eruptions produce large explosive outbursts and pyroclastic flows of volcanic fragments and gas rolling down slopes.",
+   "quote": "Pelean eruptions have large explosive outbursts. They produce pyroclastic flows\u2014dense mixtures of volcanic fragments and gas that roll down slopes.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f12",
+   "text": "Plinian eruptions are the most dramatic, enormous explosive eruptions that resemble a rocket blast, sending gases and volcanic fragments into the air.",
+   "quote": "Plinian eruptions are the most dramatic. These enormous explosive eruptions resemble a rocket blast. Gases and volcanic fragments are",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f13",
+   "text": "Magma contains dissolved gases that drive volcanic eruptions.",
+   "quote": "Magma contains dissolved gases, which provide the driving force that causes most volcanic eruptions.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f14",
+   "text": "Gases escape from magma as it rises toward the surface due to decreasing pressure.",
+   "quote": "As magma rises towards the surface and pressure decreases, gases are released from the liquid portion of the magma (melt) and continue to travel upward and are eventually released into the atmosphere.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f15",
+   "text": "Large volcanic eruptions can release massive amounts of gas quickly into the atmosphere.",
+   "quote": "Large eruptions can release enormous amounts of gas in a short time.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f16",
+   "text": "The 1991 Mt. Pinatubo eruption injected over 250 megatons of gas into the upper atmosphere in a single day.",
+   "quote": "The 1991 eruption of Mt. Pinatubo is thought to have injected more than 250 megatons of gas into the upper atmosphere on a single day.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f17",
+   "text": "Volcanic gases can escape into the atmosphere even if magma does not reach the surface.",
+   "quote": "However, even if magma never reaches the surface, gases can often escape continuously into the atmosphere from the soil, volcanic vents, fumaroles, and hydrothermal systems.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f18",
+   "text": "Gases escape through soil, vents, fumaroles, and hydrothermal systems.",
+   "quote": "gases can often escape continuously into the atmosphere from the soil, volcanic vents, fumaroles, and hydrothermal systems.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f19",
+   "text": "Partial melting and separation of mother rock and molten mass are the two processes in the first phase of magma formation.",
+   "quote": "In the first phase, the formation must have two processes: partial melting and seperation of mother rock and molten mass.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f20",
+   "text": "Partial melting occurs when temperature rises and pressure drops, causing the solid phase line to decrease and magma to coexist with solids.",
+   "quote": "Partial melting is coexistence of liquid (i.e. magma) and solids (crystallization). When temperature rises and press drops and solid phase line decreases.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f21",
+   "text": "Molten mass separation happens when partial melt rises along mantle flow, causing liquid and solid to separate and aggregate into magma.",
+   "quote": "When partial molten mass rises along the mantle flow, the seperation of liquid and solid will occur, resulting in the movement of the liquid and even aggregation, which is called the liquation.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f22",
+   "text": "Magma rises to the surface due to excess pressure in the chamber, channel formation, and crystallization and degassing processes.",
+   "quote": "In the third phase, magma rises from the magmatic source region to near surface, which is related to the excess pressure of magma chamber, the formation of channels and the crystallization and degassing process of the magma rising.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f23",
+   "text": "Fractures in the crust form when tectonic stress exceeds rock strength, creating pathways for magma eruption.",
+   "quote": "When tension or shear stress in the crust is greater than the local strength of rock failure, extensional or single shear fracure may form consequently. If these fractures connected one another, it can be a channel of magma eruption.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f24",
+   "text": "Fuego volcano in Guatemala started erupting on Monday, spewing lava and ash.",
+   "quote": "Fuego, one of the most active volcanoes in the Western Hemisphere, started spewing lava and ash on Monday.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f25",
+   "text": "Pyroclastic currents flowed down the southeastern slope of Fuego volcano early Tuesday.",
+   "quote": "Pyroclastic currents - rivers of gas, volcanic ash and rock fragments - continued to flow down Fuego's south-eastern slope early on Tuesday, the government agency which monitors its activity said.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f26",
+   "text": "Government issued orange alert, second highest level, for areas near Fuego volcano.",
+   "quote": "Disaster management agency Conred issued a nationwide orange alert, the second highest, and warned locals to be prepared as the eruptions could create further pyroclastic flows and billowing ash clouds.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f27",
+   "text": "At least two villages on Fuego's slopes were evacuated due to the eruption.",
+   "quote": "The eruption of the Fuego volcano in Guatemala has triggered the evacuation of at least two villages on its slopes.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f28",
+   "text": "Mount Vesuvius has erupted multiple times since AD 79, including in 172, 203, 222, and possibly 303.",
+   "quote": "Since AD 79, the volcano has also erupted repeatedly, in 172, 203, 222, possibly in 303, 379, 472, 512, 536, 685, 787, around 860, around 900, 968, 991, 999, 1006, 1037, 1049, around 1073, 1139, 1150, and there may have been eruptions in 1270, 1347, and 1500.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f29",
+   "text": "The volcano emits different amounts of magma depending on how long it has been inactive.",
+   "quote": "For Vesuvius, the amount of magma expelled in an eruption increases roughly linearly with the interval since the previous one, and at a rate of around 0.001 cubic kilometres (0.00024 cu mi) for each year.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f30",
+   "text": "Large eruptions capable of devastating cities like Pompeii occur after thousands of years of inactivity.",
+   "quote": "Large Vesuvian eruptions which emit volcanic material in quantities of about 1 cubic kilometre (0.24 cu mi), the most recent of which overwhelmed Pompeii and Herculaneum, have happened after periods of inactivity of a few thousand years.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f31",
+   "text": "Sub-Plinian eruptions, though smaller, are more frequent and produce significant amounts of volcanic material.",
+   "quote": "Sub-Plinian eruptions producing about 0.1 cubic kilometres (0.024 cu mi), such as those of 472 and 1631, have been more frequent with a few hundred years between them.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f32",
+   "text": "The 79 AD eruption ejected volcanic material at a rate of 600,000 cubic metres per second.",
+   "quote": "The eruption ejected a cloud of stones, ash and volcanic gases to a height of 33 km (21 mi), erupting molten rock and pulverised pumice at the rate of 6\u00d7105 cubic metres (7.8\u00d7105 yd3) per second.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f33",
+   "text": "Pliny the Younger provided the only surviving eyewitness account of the 79 AD eruption.",
+   "quote": "The only surviving witness account consists of two letters by Pliny the Younger to the historian Tacitus.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f34",
+   "text": "Magma rises to the surface at plate boundaries where plates pull apart or one subducts beneath another",
+   "quote": "At the margins of Earth's plates, where two plates pull apart or one plate dives beneath another, magma (molten underground rock) frequently rises to the surface through volcanic vents.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f35",
+   "text": "Eruptions are categorized as effusive or explosive based on magma viscosity and gas content",
+   "quote": "In general, eruptions can be categorized as either effusive or explosive. Effusive eruptions involve the outpouring of basaltic magma that is relatively low in viscosity and in gas content. Explosive eruptions generally involve magma that is more viscous and has a higher gas content.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f36",
+   "text": "Six major eruption types are listed in order of increasing explosiveness: Icelandic, Hawaiian, Strombolian, Vulcanian, Pelean, and Plinian",
+   "quote": "Volcanic eruptions may fall into six major types: Icelandic, Hawaiian, Strombolian, Vulcanian, Pelean, and Plinian.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f37",
+   "text": "Strombolian eruptions involve moderate gas bursts that eject incandescent lava clots in small, frequent eruptions",
+   "quote": "Strombolian eruptions involve moderate bursts of expanding gases that eject clots of incandescent lava in cyclical or nearly continuous small eruptions.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f38",
+   "text": "Pelean eruptions generate destructive pyroclastic flows of hot volcanic fragments and gas",
+   "quote": "A Pelean eruption is associated with explosive outbursts that generate pyroclastic flows, dense mixtures of hot volcanic fragments and gas described in the section Lava, gas, and other hazards. Pelean eruptions are named for the destructive eruption of Mount Pel\u00e9e on the Caribbean island of Martinique in 1902.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f39",
+   "text": "Plinian eruptions are violently explosive and produce eruption clouds rising into the stratosphere",
+   "quote": "The Plinian type is an intensely violent kind of volcanic eruption exemplified by the outburst of Mount Vesuvius in Italy in 79 ce that killed the famous Roman scholar Pliny the Elder and was described in an eyewitness account by his nephew, the historian Pliny the Younger. In this type of eruption, gases boiling out of gas-rich magma generate enormous and nearly continuous jetting blasts that core out the magma conduit and rip it apart.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f40",
+   "text": "Supervolcanoes form when large magma chambers develop at shallow crustal levels",
+   "quote": "Supervolcano eruptions are possible only when an extraordinarily large magma chamber forms at a relatively shallow level in the crust.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f41",
+   "text": "Magma accumulates over 100,000 to 1 million years to reach eruption size",
+   "quote": "accumulation of sufficient magma for a supereruption takes 105 to 106 years",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f42",
+   "text": "Magma is less dense than surrounding country rock, creating buoyant forces",
+   "quote": "The molten rock, or magma, in such a chamber is less dense than the surrounding country rock ",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f43",
+   "text": "Magma chamber pressure rises as crystals solidify and release dissolved gas",
+   "quote": "Another effect of the cooling of the chamber is that the solidifying crystals will release the gas (primarily steam) previously dissolved when they were liquid, causing the pressure in the chamber to rise",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f44",
+   "text": "Magma viscosity increases as lower melting point components are removed",
+   "quote": "the removal of the lower melting point components will tend to make the magma more viscous (by increasing the concentration of silicates)",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f45",
+   "text": "Regional extension and warm chamber walls suppress small eruptions, allowing large chambers to fill",
+   "quote": "The combination of regional extension, which lowers the maximum attainable overpressure on the chamber roof, and a large magma chamber with warm walls, which has a high effective viscoelasticity, may suppress rhyolite dike formation and allow such large chambers to fill with magma",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f46",
+   "text": "Magmas contain small amounts of dissolved gases like water and carbon dioxide, which exsolve as bubbles as pressure drops near the surface, propelling eruptions.",
+   "quote": "Magmas typically contain small amounts of dissolved gas (volatiles). Water and carbon dioxide are the most common volatiles, although sulfur dioxide, hydrogen sulfide, and others may be present.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f47",
+   "text": "Gas bubbles form via vesiculation, a process where dissolved magmatic gases exsolve from the melt as magma ascends toward the surface.",
+   "quote": "Until a magma nears the Earth\u2019s surface, the enormous pressure of the overlying rock keeps gases dissolved. Near the surface, the pressure decreases and they can exsolve from the melt, ultimately forming gas bubbles in a process called vesiculation.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f48",
+   "text": "Shallow magma chambers allow magma to accumulate and crystallize into a liquid-crystal mush before erupting.",
+   "quote": "Shallow magma chambers may form in regions of neutral buoyancy, i.e., areas where the pressure within the magma body equals the pressure outside it. Magma typically begins to crystallize while they are being stored in magma chambers, forming a liquid-crystal mush.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f49",
+   "text": "Eruptions are triggered by magma injection, overpressure from increased gas content, or other factors that disturb the magma chamber.",
+   "quote": "Eruptions from a shallow magma body may be triggered by injection of more magma into the chamber, by overpressure from increased volatile (gas) content, or by some other factor.",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f50",
+   "text": "A volcanic eruption expels gases, rock fragments, and/or molten lava through a vent from within the Earth onto the surface or into the atmosphere.",
+   "quote": "A volcanic eruption is the expulsion of gases, rock fragments, and/or molten lava from within the Earth through a vent onto the Earth\u2019s surface or into the atmosphere.",
+   "sourceId": "s9"
+  }
+ ],
+ "sources": [
+  {
+   "id": "s1",
+   "title": "What Causes a Volcano to Erupt?",
+   "url": "https://www.britannica.com/story/what-causes-a-volcano-to-erupt"
+  },
+  {
+   "id": "s2",
+   "title": "Types of Volcanic Eruptions Explained | Britannica",
+   "url": "https://www.britannica.com/video/kinds-eruptions/-229559?cmpscreen="
+  },
+  {
+   "id": "s3",
+   "title": "Volcanic gases can be harmful to health, vegetation and infrastructure | U.S. Geological Survey",
+   "url": "https://www.usgs.gov/programs/VHP/volcanic-gases-can-be-harmful-health-vegetation-and-infrastructure"
+  },
+  {
+   "id": "s4",
+   "title": "The process of volcanic eruption - Disaster Risk Reduction Knowledge Service",
+   "url": "https://ikcest-drr.data.ac.cn/tutorial/peb09"
+  },
+  {
+   "id": "s5",
+   "title": "Guatemala volcano eruption sends lava spewing into the air",
+   "url": "https://www.bbc.com/news/articles/c2lqpvv1wlxo"
+  },
+  {
+   "id": "s6",
+   "title": "Mount Vesuvius - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Mount_Vesuvius"
+  },
+  {
+   "id": "s7",
+   "title": "Volcano | Definition, Types, & Facts",
+   "url": "https://www.britannica.com/science/volcano/Six-types-of-eruptions"
+  },
+  {
+   "id": "s8",
+   "title": "Magma chamber - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Magma_chamber"
+  },
+  {
+   "id": "s9",
+   "title": "Volcanic Eruptions - Volcanoes, Craters & Lava Flows (U.S. National Park Service)",
+   "url": "https://www.nps.gov/subjects/volcanoes/volcanic-eruptions.htm"
+  }
+ ]
+}

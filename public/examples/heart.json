@@ -1,0 +1,1195 @@
+{
+ "request": {
+  "topic": "How the heart pumps blood",
+  "audience": "High school",
+  "lengthSec": 60,
+  "language": "en"
+ },
+ "madeAt": "2026-10-18T23:30:09.833Z",
+ "ms": 62956,
+ "costUsd": 0.26080857999999996,
+ "tokens": 239633,
+ "storyboard": {
+  "title": "How the Heart Pumps Blood",
+  "language": "en",
+  "theme": "blueprint",
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "scenes": [
+   {
+    "id": "scene-1",
+    "narration": "Your heart pumps blood in a continuous loop through chambers.",
+    "factIds": [
+     "f27",
+     "f28",
+     "f30"
+    ],
+    "durationSec": 4.5,
+    "kind": "title",
+    "heading": "How the Heart Pumps Blood",
+    "subheading": "How does the heart pump blood through the body?",
+    "icon": "heart"
+   },
+   {
+    "id": "scene-2",
+    "narration": "Deoxygenated blood enters the right atrium via the vena cava, then flows into the right ventricle.",
+    "factIds": [
+     "f1",
+     "f2",
+     "f27",
+     "f28"
+    ],
+    "durationSec": 7.6,
+    "kind": "template",
+    "template": "journey",
+    "params": {
+     "traveller": {
+      "icon": "blood",
+      "label": "Deoxygenated blood"
+     },
+     "stations": [
+      {
+       "icon": "heart",
+       "label": "Right atrium"
+      },
+      {
+       "icon": "heart",
+       "label": "Right ventricle"
+      }
+     ]
+    }
+   },
+   {
+    "id": "scene-3",
+    "narration": "The right ventricle pumps this blood through the pulmonary artery to the lungs for oxygen.",
+    "factIds": [
+     "f3",
+     "f29",
+     "f17"
+    ],
+    "durationSec": 5.6,
+    "kind": "template",
+    "template": "heart_pump",
+    "params": {
+     "labels": {
+      "rightVentricle": "Right ventricle",
+      "lungs": "Lungs",
+      "withoutOxygen": "Deoxygenated blood"
+     }
+    }
+   },
+   {
+    "id": "scene-4",
+    "narration": "Oxygen-rich blood travels through the pulmonary veins to the left atrium.",
+    "factIds": [
+     "f4",
+     "f30"
+    ],
+    "durationSec": 4.9,
+    "kind": "illustration",
+    "title": "Blood flow from lungs to left atrium",
+    "items": [
+     {
+      "icon": "heart",
+      "label": "Pulmonary veins",
+      "x": 50,
+      "y": 35,
+      "size": "medium"
+     },
+     {
+      "icon": "heart",
+      "label": "Left atrium",
+      "x": 85,
+      "y": 55,
+      "size": "medium"
+     },
+     {
+      "icon": "lungs",
+      "label": "Lungs",
+      "x": 15,
+      "y": 15,
+      "size": "medium"
+     }
+    ],
+    "links": [
+     {
+      "from": 2,
+      "to": 0,
+      "label": "Oxygen-rich blood travels"
+     },
+     {
+      "from": 0,
+      "to": 1
+     }
+    ],
+    "backdrop": "body"
+   },
+   {
+    "id": "scene-5",
+    "narration": "The left ventricle pushes blood through the aortic valve into the aorta to reach the body.",
+    "factIds": [
+     "f5",
+     "f32"
+    ],
+    "durationSec": 6.2,
+    "kind": "text",
+    "lines": [
+     "Left ventricle pushes blood",
+     "Through aortic valve into aorta",
+     "Blood travels to the body"
+    ]
+   },
+   {
+    "id": "scene-6",
+    "narration": "An electrical signal crosses the AV node and His bundle, then races down Purkinje fibers to squeeze the ventricles.",
+    "factIds": [
+     "f12",
+     "f13",
+     "f14",
+     "f35",
+     "f37"
+    ],
+    "durationSec": 7.9,
+    "kind": "steps",
+    "steps": [
+     "Signal crosses AV node",
+     "Travels His bundle",
+     "Races Purkinje fibers",
+     "Squeezes ventricles"
+    ],
+    "icons": [
+     "lightning",
+     "arrowup",
+     "arrowup",
+     "heart"
+    ],
+    "look": {
+     "template": "cause_chain",
+     "params": {
+      "nodes": [
+       {
+        "text": "Signal crosses AV node"
+       },
+       {
+        "text": "Travels His bundle"
+       },
+       {
+        "text": "Races Purkinje fibers"
+       },
+       {
+        "text": "Squeezes ventricles"
+       }
+      ],
+      "direction": "v"
+     }
+    }
+   },
+   {
+    "id": "scene-7",
+    "narration": "One full cycle takes about 0.8 seconds at rest, split into a quick squeeze and a longer refill.",
+    "factIds": [
+     "f7",
+     "f8",
+     "f10"
+    ],
+    "durationSec": 6.6,
+    "kind": "template",
+    "template": "cycle",
+    "params": {
+     "center": "Cardiac cycle",
+     "nodes": [
+      {
+       "text": "Ventricular contraction",
+       "icon": "heart"
+      },
+      {
+       "text": "Systole",
+       "icon": "heart"
+      },
+      {
+       "text": "Ventricular relaxation",
+       "icon": "heart"
+      },
+      {
+       "text": "Diastole",
+       "icon": "heart"
+      }
+     ]
+    }
+   }
+  ],
+  "sources": [
+   {
+    "id": "s1",
+    "title": "How the Heart Works: The Science of Pumping Blood | UF Medical Sciences Online",
+    "url": "https://distance.physiology.med.ufl.edu/about/articles/physiology/how-the-heart-works-the-science-of-pumping-blood"
+   },
+   {
+    "id": "s2",
+    "title": "CARDIAC CYCLE",
+    "url": "https://cvil.ucsd.edu/wp-content/uploads/2017/02/cardiac-cycle.pdf"
+   },
+   {
+    "id": "s3",
+    "title": "Cardiac conduction system - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Cardiac_conduction_system"
+   },
+   {
+    "id": "s4",
+    "title": "Lung Circulation",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7432532"
+   },
+   {
+    "id": "s6",
+    "title": "Flow through the heart (video) | Khan Academy",
+    "url": "https://www.khanacademy.org/test-prep/mcat/organ-systems/the-circulatory-system/v/flow-through-the-heart"
+   },
+   {
+    "id": "s7",
+    "title": "Bundle of His - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Bundle_of_His"
+   }
+  ]
+ },
+ "words": {
+  "scene-1": [
+   {
+    "text": "Your",
+    "start": 0,
+    "end": 0.244
+   },
+   {
+    "text": "heart",
+    "start": 0.313,
+    "end": 0.546
+   },
+   {
+    "text": "pumps",
+    "start": 0.604,
+    "end": 0.882
+   },
+   {
+    "text": "blood",
+    "start": 0.94,
+    "end": 1.207
+   },
+   {
+    "text": "in",
+    "start": 1.265,
+    "end": 1.335
+   },
+   {
+    "text": "a",
+    "start": 1.37,
+    "end": 1.393
+   },
+   {
+    "text": "continuous",
+    "start": 1.44,
+    "end": 1.997
+   },
+   {
+    "text": "loop",
+    "start": 2.055,
+    "end": 2.264
+   },
+   {
+    "text": "through",
+    "start": 2.322,
+    "end": 2.554
+   },
+   {
+    "text": "chambers.",
+    "start": 2.601,
+    "end": 3.576
+   }
+  ],
+  "scene-2": [
+   {
+    "text": "Deoxygenated",
+    "start": 0,
+    "end": 0.975
+   },
+   {
+    "text": "blood",
+    "start": 1.033,
+    "end": 1.324
+   },
+   {
+    "text": "enters",
+    "start": 1.44,
+    "end": 1.776
+   },
+   {
+    "text": "the",
+    "start": 1.823,
+    "end": 1.892
+   },
+   {
+    "text": "right",
+    "start": 1.962,
+    "end": 2.183
+   },
+   {
+    "text": "atrium",
+    "start": 2.252,
+    "end": 2.717
+   },
+   {
+    "text": "via",
+    "start": 2.961,
+    "end": 3.228
+   },
+   {
+    "text": "the",
+    "start": 3.274,
+    "end": 3.344
+   },
+   {
+    "text": "vena",
+    "start": 3.402,
+    "end": 3.68
+   },
+   {
+    "text": "cava,",
+    "start": 3.738,
+    "end": 4.389
+   },
+   {
+    "text": "then",
+    "start": 4.563,
+    "end": 4.76
+   },
+   {
+    "text": "flows",
+    "start": 4.841,
+    "end": 5.155
+   },
+   {
+    "text": "into",
+    "start": 5.201,
+    "end": 5.341
+   },
+   {
+    "text": "the",
+    "start": 5.399,
+    "end": 5.468
+   },
+   {
+    "text": "right",
+    "start": 5.526,
+    "end": 5.712
+   },
+   {
+    "text": "ventricle.",
+    "start": 5.77,
+    "end": 6.966
+   }
+  ],
+  "scene-3": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.163
+   },
+   {
+    "text": "right",
+    "start": 0.221,
+    "end": 0.418
+   },
+   {
+    "text": "ventricle",
+    "start": 0.476,
+    "end": 0.94
+   },
+   {
+    "text": "pumps",
+    "start": 0.987,
+    "end": 1.277
+   },
+   {
+    "text": "this",
+    "start": 1.312,
+    "end": 1.463
+   },
+   {
+    "text": "blood",
+    "start": 1.533,
+    "end": 1.776
+   },
+   {
+    "text": "through",
+    "start": 1.811,
+    "end": 2.032
+   },
+   {
+    "text": "the",
+    "start": 2.055,
+    "end": 2.125
+   },
+   {
+    "text": "pulmonary",
+    "start": 2.159,
+    "end": 2.601
+   },
+   {
+    "text": "artery",
+    "start": 2.67,
+    "end": 3.065
+   },
+   {
+    "text": "to",
+    "start": 3.123,
+    "end": 3.181
+   },
+   {
+    "text": "the",
+    "start": 3.251,
+    "end": 3.32
+   },
+   {
+    "text": "lungs",
+    "start": 3.367,
+    "end": 3.646
+   },
+   {
+    "text": "for",
+    "start": 3.68,
+    "end": 3.785
+   },
+   {
+    "text": "oxygen.",
+    "start": 3.843,
+    "end": 4.969
+   }
+  ],
+  "scene-4": [
+   {
+    "text": "Oxygen-rich",
+    "start": 0,
+    "end": 0.813
+   },
+   {
+    "text": "blood",
+    "start": 0.859,
+    "end": 1.115
+   },
+   {
+    "text": "travels",
+    "start": 1.161,
+    "end": 1.544
+   },
+   {
+    "text": "through",
+    "start": 1.579,
+    "end": 1.8
+   },
+   {
+    "text": "the",
+    "start": 1.834,
+    "end": 1.904
+   },
+   {
+    "text": "pulmonary",
+    "start": 1.939,
+    "end": 2.357
+   },
+   {
+    "text": "veins",
+    "start": 2.415,
+    "end": 2.717
+   },
+   {
+    "text": "to",
+    "start": 2.763,
+    "end": 2.833
+   },
+   {
+    "text": "the",
+    "start": 2.902,
+    "end": 2.972
+   },
+   {
+    "text": "left",
+    "start": 3.007,
+    "end": 3.216
+   },
+   {
+    "text": "atrium.",
+    "start": 3.286,
+    "end": 4.319
+   }
+  ],
+  "scene-5": [
+   {
+    "text": "The",
+    "start": 0,
+    "end": 0.116
+   },
+   {
+    "text": "left",
+    "start": 0.174,
+    "end": 0.372
+   },
+   {
+    "text": "ventricle",
+    "start": 0.441,
+    "end": 0.952
+   },
+   {
+    "text": "pushes",
+    "start": 0.998,
+    "end": 1.347
+   },
+   {
+    "text": "blood",
+    "start": 1.405,
+    "end": 1.66
+   },
+   {
+    "text": "through",
+    "start": 1.695,
+    "end": 1.904
+   },
+   {
+    "text": "the",
+    "start": 1.939,
+    "end": 2.009
+   },
+   {
+    "text": "aortic",
+    "start": 2.078,
+    "end": 2.473
+   },
+   {
+    "text": "valve",
+    "start": 2.554,
+    "end": 2.926
+   },
+   {
+    "text": "into",
+    "start": 2.972,
+    "end": 3.204
+   },
+   {
+    "text": "the",
+    "start": 3.262,
+    "end": 3.332
+   },
+   {
+    "text": "aorta",
+    "start": 3.402,
+    "end": 3.901
+   },
+   {
+    "text": "to",
+    "start": 3.971,
+    "end": 4.087
+   },
+   {
+    "text": "reach",
+    "start": 4.168,
+    "end": 4.389
+   },
+   {
+    "text": "the",
+    "start": 4.447,
+    "end": 4.516
+   },
+   {
+    "text": "body.",
+    "start": 4.563,
+    "end": 5.619
+   }
+  ],
+  "scene-6": [
+   {
+    "text": "An",
+    "start": 0,
+    "end": 0.139
+   },
+   {
+    "text": "electrical",
+    "start": 0.186,
+    "end": 0.65
+   },
+   {
+    "text": "signal",
+    "start": 0.72,
+    "end": 1.033
+   },
+   {
+    "text": "crosses",
+    "start": 1.103,
+    "end": 1.474
+   },
+   {
+    "text": "the",
+    "start": 1.533,
+    "end": 1.614
+   },
+   {
+    "text": "AV",
+    "start": 1.683,
+    "end": 1.892
+   },
+   {
+    "text": "node",
+    "start": 2.043,
+    "end": 2.287
+   },
+   {
+    "text": "and",
+    "start": 2.334,
+    "end": 2.45
+   },
+   {
+    "text": "His",
+    "start": 2.508,
+    "end": 2.612
+   },
+   {
+    "text": "bundle,",
+    "start": 2.67,
+    "end": 3.193
+   },
+   {
+    "text": "then",
+    "start": 3.437,
+    "end": 3.599
+   },
+   {
+    "text": "races",
+    "start": 3.68,
+    "end": 4.017
+   },
+   {
+    "text": "down",
+    "start": 4.063,
+    "end": 4.249
+   },
+   {
+    "text": "Purkinje",
+    "start": 4.319,
+    "end": 4.795
+   },
+   {
+    "text": "fibers",
+    "start": 4.865,
+    "end": 5.306
+   },
+   {
+    "text": "to",
+    "start": 5.422,
+    "end": 5.526
+   },
+   {
+    "text": "squeeze",
+    "start": 5.596,
+    "end": 5.944
+   },
+   {
+    "text": "the",
+    "start": 5.979,
+    "end": 6.049
+   },
+   {
+    "text": "ventricles.",
+    "start": 6.095,
+    "end": 7.291
+   }
+  ],
+  "scene-7": [
+   {
+    "text": "One",
+    "start": 0,
+    "end": 0.232
+   },
+   {
+    "text": "full",
+    "start": 0.279,
+    "end": 0.476
+   },
+   {
+    "text": "cycle",
+    "start": 0.534,
+    "end": 0.906
+   },
+   {
+    "text": "takes",
+    "start": 0.952,
+    "end": 1.184
+   },
+   {
+    "text": "about",
+    "start": 1.219,
+    "end": 1.44
+   },
+   {
+    "text": "0.8",
+    "start": 1.509,
+    "end": 2.136
+   },
+   {
+    "text": "seconds",
+    "start": 2.194,
+    "end": 2.531
+   },
+   {
+    "text": "at",
+    "start": 2.566,
+    "end": 2.635
+   },
+   {
+    "text": "rest,",
+    "start": 2.705,
+    "end": 3.135
+   },
+   {
+    "text": "split",
+    "start": 3.344,
+    "end": 3.646
+   },
+   {
+    "text": "into",
+    "start": 3.692,
+    "end": 3.843
+   },
+   {
+    "text": "a",
+    "start": 3.901,
+    "end": 3.924
+   },
+   {
+    "text": "quick",
+    "start": 3.982,
+    "end": 4.18
+   },
+   {
+    "text": "squeeze",
+    "start": 4.226,
+    "end": 4.609
+   },
+   {
+    "text": "and",
+    "start": 4.656,
+    "end": 4.772
+   },
+   {
+    "text": "a",
+    "start": 4.818,
+    "end": 4.841
+   },
+   {
+    "text": "longer",
+    "start": 4.888,
+    "end": 5.155
+   },
+   {
+    "text": "refill.",
+    "start": 5.213,
+    "end": 5.991
+   }
+  ]
+ },
+ "report": {
+  "checks": [
+   {
+    "sentenceId": "scene-1.1",
+    "factIds": [
+     "f27",
+     "f28",
+     "f30"
+    ],
+    "status": "revised",
+    "original": "Your heart pumps blood in a continuous loop through four chambers.",
+    "revised": "Your heart pumps blood in a continuous loop through chambers.",
+    "reason": "Facts name only three chambers (right atrium, right ventricle, left atrium); the fourth chamber is not cited."
+   },
+   {
+    "sentenceId": "scene-2.1",
+    "factIds": [
+     "f1",
+     "f2",
+     "f27",
+     "f28"
+    ],
+    "status": "supported",
+    "original": "Deoxygenated blood enters the right atrium via the vena cava, then flows into the right ventricle.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-3.1",
+    "factIds": [
+     "f3",
+     "f29",
+     "f17"
+    ],
+    "status": "supported",
+    "original": "The right ventricle pumps this blood through the pulmonary artery to the lungs for oxygen.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-4.1",
+    "factIds": [
+     "f4",
+     "f30"
+    ],
+    "status": "revised",
+    "original": "Oxygen-rich blood travels through the pulmonary veins to the left atrium, then into the left ventricle.",
+    "revised": "Oxygen-rich blood travels through the pulmonary veins to the left atrium.",
+    "reason": "Facts do not state that blood moves from the left atrium into the left ventricle."
+   },
+   {
+    "sentenceId": "scene-5.1",
+    "factIds": [
+     "f5",
+     "f32"
+    ],
+    "status": "supported",
+    "original": "The left ventricle pushes blood through the aortic valve into the aorta to reach the body.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-6.1",
+    "factIds": [
+     "f12",
+     "f13",
+     "f14",
+     "f35",
+     "f37"
+    ],
+    "status": "revised",
+    "original": "An electrical signal starts at the SA node, crosses the AV node and His bundle, then races down Purkinje fibers to squeeze the ventricles.",
+    "revised": "An electrical signal crosses the AV node and His bundle, then races down Purkinje fibers to squeeze the ventricles.",
+    "reason": "Facts describe the signal traveling through the right atrium to the AV node, not starting at the SA node."
+   },
+   {
+    "sentenceId": "scene-7.1",
+    "factIds": [
+     "f7",
+     "f8",
+     "f10"
+    ],
+    "status": "supported",
+    "original": "One full cycle takes about 0.8 seconds at rest, split into a quick squeeze and a longer refill.",
+    "revised": "",
+    "reason": ""
+   }
+  ],
+  "supported": 4,
+  "revised": 3,
+  "removed": 0
+ },
+ "facts": [
+  {
+   "id": "f1",
+   "text": "Deoxygenated blood flows into the right atrium via the vena cava",
+   "quote": "Deoxygenated blood flows into the heart through the vena cava.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f2",
+   "text": "Blood enters the right atrium after flowing through the vena cava",
+   "quote": "Deoxygenated blood flows into the heart through the vena cava.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f3",
+   "text": "The pulmonary artery carries blood to the lungs for oxygenation",
+   "quote": "The pulmonary artery carries blood to the lungs for oxygenation.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f4",
+   "text": "Oxygenated blood returns from the lungs through the pulmonary veins",
+   "quote": "Oxygenated blood returns from the lungs to the heart through the pulmonary veins.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f5",
+   "text": "The aorta sends oxygenated blood out to the body",
+   "quote": "The aorta sends oxygenated blood out to the body.",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f6",
+   "text": "Cardiac cycle duration is inversely proportional to heart rate",
+   "quote": "The duration of the cardiac cycle is inversely proportional to the heart rate.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f7",
+   "text": "One cardiac cycle at 75 beats per minute lasts 0.8 seconds",
+   "quote": "At a normal heart rate of 75 beats per minute, one cardiac cycle lasts 0.8 second.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f8",
+   "text": "Systole occupies one third and diastole two thirds of the cardiac cycle under resting conditions",
+   "quote": "Under resting conditions, systole occupies \u2153 and diastole \u2154 of the cardiac cycle duration.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f9",
+   "text": "Diastole duration decreases more than systole when heart rate increases",
+   "quote": "At an increasing heart rate (e.g. during an intensive muscle work), the duration of diastole decreases much more then the duration of systole.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f10",
+   "text": "Cardiac cycle has two main parts: ventricular contraction (systole) and relaxation (diastole)",
+   "quote": "It consists of two parts: 1. Ventricular contraction called systole. 2. Ventricular relaxation called diastole.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f11",
+   "text": "Systole includes isovolumic contraction and ejection phases",
+   "quote": "Systole includes: 1. Isovolumic contraction. 2. Ejection.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f12",
+   "text": "Electrical signals travel from the sinoatrial node through the right atrium to the atrioventricular node",
+   "quote": "The pacemaking signal travels through the right atrium to the atrioventricular node.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f13",
+   "text": "The bundle of His conducts signals from the atrioventricular node to the ventricles",
+   "quote": "along the bundle of His, and through the bundle branches to Purkinje fibers in the walls of the ventricles.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f14",
+   "text": "Purkinje fibers transmit signals rapidly to stimulate ventricular contraction",
+   "quote": "The Purkinje fibers transmit the signals more rapidly to stimulate contraction of the ventricles.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f15",
+   "text": "Electrical activity spreading through the atria appears as the P wave on an ECG",
+   "quote": "The conduction of the electrical impulses throughout the atria is seen on the ECG as the P wave.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f16",
+   "text": "If the SA node fails, the AV junction can take over as the heart's pacemaker at 40-60 bpm",
+   "quote": "If the SA node fails to initialize, the AV junction can take over as the main pacemaker of the heart. The AV junction consists of the AV node, the bundle of His, and the surrounding area; it has a regular rate of 40 to 60 bpm.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f17",
+   "text": "Pulmonary arteries carry mixed venous blood to alveolar capillaries for gas exchange.",
+   "quote": "The pulmonary arteries carry mixed venous blood. From the pulmonary arteries, deoxygenated blood is channeled through the alveolar/capillary units where a large component of gas exchange occurs, and returned to the left heart by the pulmonary veins for distribution to the systemic circulation.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f18",
+   "text": "Pulmonary circulation lacks autoregulation, unlike systemic circulation.",
+   "quote": "While autoregulation is a well-recognized feature of most systemic vascular beds, this phenomenon is absent in the adult pulmonary circulation.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f19",
+   "text": "Pulmonary vasculature has high distensibility and low resistance.",
+   "quote": "The pulmonary vasculature exhibits high distensibility and low resistance.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f20",
+   "text": "Pulmonary arteries dilate when oxygen concentrations decrease, unlike systemic arteries.",
+   "quote": "The pulmonary vascular pressor response to hypoxia is also unique, as systemic arteries dilate as oxygen concentrations decrease.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f21",
+   "text": "The acute pressor response to hypoxia is rapidly reversible when oxygen levels return to normal.",
+   "quote": "The acute pressor response occurs immediately and is rapidly reversible with return to normoxic conditions.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f22",
+   "text": "Systemic circulation requires a high-pressure gradient to distribute blood vertically up to 180 cm in humans.",
+   "quote": "To effectively distribute CO to the vascular beds of various organs that possess unique requirements with respect to blood flow and, in humans, are separated by vertical distances up to 180 cm, the systemic circulation requires a high-pressure gradient.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f23",
+   "text": "The cardiac sodium pump is located in caveolae, which are rich in sphingolipids and cholesterol.",
+   "quote": "The cardiac pump is located in caveolae (discussed in \"Caveolae and caveolins\" below), which are rich in sphingolipids and cholesterol.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f24",
+   "text": "Phospholipids and cholesterol stabilize the sodium pump activity in the heart.",
+   "quote": "In general, phospholipid interactions and in particular cholesterol are important to stabilize the pump.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f25",
+   "text": "The sodium pump needs to vary its activity depending on prevailing physiological conditions such as heart rate and sympathetic drive.",
+   "quote": "but rather need to vary depending on prevailing physiological conditions (heart rate, sympathetic drive and so on).",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f26",
+   "text": "Adrenoceptor activation can lead to kinase-induced pump activation via PLM in the absence of redox stress.",
+   "quote": "adrenoceptor activation leading to kinase-induced pump activation via PLM in the absence of redox stress",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f27",
+   "text": "Blood returns from the body and enters the right atrium as the first chamber",
+   "quote": "So blood is going to come up from this arm, let's say, and dump into there. And the same on this side. And it's going to come from their head. And all three sources, the two arms and the head, are going to come together into one big vein. And that's going to be dumping into the top of the heart.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f28",
+   "text": "Blood flows from the right atrium into the right ventricle, chamber number two",
+   "quote": "First into the right atrium-- this is chamber number one. And then it goes into the right ventricle. This is chamber number two.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f29",
+   "text": "Blood is pumped from the right ventricle to the lungs for oxygenation",
+   "quote": "It goes to the lungs and then back out to the left atrium.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f30",
+   "text": "Blood enters the left atrium as chamber number three after returning from the lungs",
+   "quote": "And then separately, you've got [...] First into the right atrium-- this is chamber number one. And then it goes into the right ventricle. This is chamber number two. It goes to the lungs and then back out to the left atrium. So this is chamber number three.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f31",
+   "text": "The mitral valve prevents blood from flowing back from the left ventricle to the left atrium",
+   "quote": "So this valve is called the mitral valve. And its job is, of course, to make sure that blood does not go from the left ventricle back to the left atrium by accident. It wants to make sure that there's forward flow.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f32",
+   "text": "The aortic valve controls blood flow from the left ventricle into the aorta",
+   "quote": "And then the final valve-- I have to find a nice spot to write it, maybe right here. This final valve that it passes through is called the aortic valve. And the aortic valve is going to be what divides the left ventricle from this giant vessel that we talked about earlier.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f33",
+   "text": "The bundle of His branches into left and right bundle branches along the interventricular septum.",
+   "quote": "The bundle of His branches into the left and the right bundle branches, which run along the interventricular septum.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f34",
+   "text": "The left bundle branch divides into left anterior and left posterior fascicles.",
+   "quote": "The left bundle branch further divides into the left anterior fascicle and the left posterior fascicle.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f35",
+   "text": "Purkinje fibers distribute the impulse to the ventricular muscle.",
+   "quote": "These bundles and fascicles give rise to thin filaments known as Purkinje fibers. These fibers distribute the impulse to the ventricular muscle.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f36",
+   "text": "The ventricular conduction system includes bundle branches and Purkinje networks.",
+   "quote": "The ventricular conduction system comprises the bundle branches and the Purkinje networks.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f37",
+   "text": "Electrical conduction from the bundle of His causes ventricular muscle contraction at a paced interval.",
+   "quote": "...via the bundle branches. The fascicular branches then lead to the Purkinje fibers, which provide electrical conduction to the ventricles, causing the cardiac muscle of the ventricles to contract at a paced interval.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f38",
+   "text": "The pulmonary valve is between the right ventricle and the pulmonary artery, having three cusps.",
+   "quote": "The pulmonary valve (sometimes referred to as the pulmonic valve) is a valve of the heart that lies between the right ventricle and the pulmonary artery, and has three cusps.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f39",
+   "text": "The pulmonary valve opens during ventricular systole when right ventricle pressure exceeds pulmonary artery pressure.",
+   "quote": "Similar to the aortic valve, the pulmonary valve opens in ventricular systole when the pressure in the right ventricle rises above the pressure in the pulmonary artery.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f40",
+   "text": "The pulmonary valve closes when right ventricle pressure falls at the end of ventricular systole.",
+   "quote": "At the end of ventricular systole, when the pressure in the right ventricle falls rapidly, the pressure in the pulmonary artery closes the pulmonary valve.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f41",
+   "text": "The closure of the pulmonary valve contributes to the P2 component of the second heart sound.",
+   "quote": "The closure of the pulmonary valve contributes to the P2 component of the second heart sound (S2).",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f42",
+   "text": "The SAN is located in the atrial wall and is subepicardial, while the AVN is subendocardial.",
+   "quote": "Its atrial components, the SAN (subepicardial) and the AVN (subendocardial), are in contact with the atrial myocardium [1,2].",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f43",
+   "text": "The His bundle passes through the right fibrous trigone and connects the membranous to the muscular septum.",
+   "quote": "The His bundle goes through the right fibrous trigone (central fibrous body) and runs at the junction of the membranous and muscular septum",
+   "sourceId": "s9"
+  }
+ ],
+ "sources": [
+  {
+   "id": "s1",
+   "title": "How the Heart Works: The Science of Pumping Blood | UF Medical Sciences Online",
+   "url": "https://distance.physiology.med.ufl.edu/about/articles/physiology/how-the-heart-works-the-science-of-pumping-blood"
+  },
+  {
+   "id": "s2",
+   "title": "CARDIAC CYCLE",
+   "url": "https://cvil.ucsd.edu/wp-content/uploads/2017/02/cardiac-cycle.pdf"
+  },
+  {
+   "id": "s3",
+   "title": "Cardiac conduction system - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Cardiac_conduction_system"
+  },
+  {
+   "id": "s4",
+   "title": "Lung Circulation",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7432532"
+  },
+  {
+   "id": "s5",
+   "title": "Regulation of the cardiac sodium pump",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3607738"
+  },
+  {
+   "id": "s6",
+   "title": "Flow through the heart (video) | Khan Academy",
+   "url": "https://www.khanacademy.org/test-prep/mcat/organ-systems/the-circulatory-system/v/flow-through-the-heart"
+  },
+  {
+   "id": "s7",
+   "title": "Bundle of His - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Bundle_of_His"
+  },
+  {
+   "id": "s8",
+   "title": "Pulmonary valve - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Pulmonary_valve"
+  },
+  {
+   "id": "s9",
+   "title": "Cardiac Conduction System: Delineation of Anatomic Landmarks With Multidetector CT",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2766580"
+  }
+ ]
+}

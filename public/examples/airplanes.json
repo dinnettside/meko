@@ -1,0 +1,1239 @@
+{
+ "request": {
+  "topic": "How do airplanes fly?",
+  "audience": "High school",
+  "lengthSec": 60,
+  "language": "en"
+ },
+ "madeAt": "2026-10-18T23:29:30.441Z",
+ "ms": 48018,
+ "costUsd": 0.11710276,
+ "tokens": 110286,
+ "storyboard": {
+  "title": "How Airplanes Fly",
+  "language": "en",
+  "theme": "blueprint",
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "scenes": [
+   {
+    "id": "scene-1",
+    "narration": "Airplanes fly by balancing four forces: lift, weight, thrust, and drag.",
+    "factIds": [
+     "f5",
+     "f28"
+    ],
+    "durationSec": 6.2,
+    "kind": "title",
+    "heading": "How Airplanes Fly",
+    "subheading": "How do airplanes fly?",
+    "icon": "plane"
+   },
+   {
+    "id": "scene-2",
+    "narration": "Lift pushes up, opposing weight pulling the plane down toward Earth's center. Lift must exceed weight for the airplane to fly.",
+    "factIds": [
+     "f1",
+     "f2",
+     "f8",
+     "f29",
+     "f10"
+    ],
+    "durationSec": 8.6,
+    "kind": "template",
+    "template": "forces",
+    "params": {
+     "object": {
+      "icon": "plane",
+      "label": "airplane"
+     },
+     "setting": "air",
+     "forces": [
+      {
+       "direction": "up",
+       "label": "Lift"
+      },
+      {
+       "direction": "down",
+       "label": "Weight"
+      }
+     ],
+     "moves": "none"
+    }
+   },
+   {
+    "id": "scene-3",
+    "narration": "Wings generate most lift by creating a pressure difference between top and bottom surfaces. Moving through air, the wing pushes air down; by Newton's third law, air pushes the wing up.",
+    "factIds": [
+     "f7",
+     "f11",
+     "f9",
+     "f12",
+     "f36",
+     "f37"
+    ],
+    "durationSec": 12.4,
+    "kind": "template",
+    "template": "airplane_lift",
+    "params": {
+     "at": "lift",
+     "labels": {
+      "wing": "Wing",
+      "airflow": "Air flow",
+      "lift": "Lift",
+      "weight": "",
+      "thrust": "",
+      "drag": "",
+      "lowPressure": "Lower pressure",
+      "highPressure": ""
+     }
+    }
+   },
+   {
+    "id": "scene-4",
+    "narration": "Thrust propels the plane forward, overcoming drag, the air pushing back.",
+    "factIds": [
+     "f3",
+     "f4",
+     "f30",
+     "f31"
+    ],
+    "durationSec": 5.5,
+    "kind": "template",
+    "template": "forces",
+    "params": {
+     "object": {
+      "icon": "plane",
+      "label": "Airplane"
+     },
+     "setting": "air",
+     "forces": [
+      {
+       "direction": "right",
+       "label": "Thrust",
+       "strength": "large"
+      },
+      {
+       "direction": "left",
+       "label": "Drag",
+       "strength": "large"
+      }
+     ],
+     "moves": "right"
+    }
+   },
+   {
+    "id": "scene-5",
+    "narration": "For level flight, thrust equals drag. Pilots control these forces using ailerons, elevators, and rudder pedals.",
+    "factIds": [
+     "f42",
+     "f46",
+     "f13",
+     "f14",
+     "f15"
+    ],
+    "durationSec": 8.7,
+    "kind": "illustration",
+    "title": "Pilot controls ailerons, elevators, rudder",
+    "items": [
+     {
+      "figure": "person",
+      "label": "Pilot",
+      "x": 20,
+      "y": 50,
+      "size": "medium"
+     },
+     {
+      "icon": "plane",
+      "label": "Left aileron up",
+      "x": 50,
+      "y": 25,
+      "size": "small"
+     },
+     {
+      "icon": "plane",
+      "label": "Right aileron down",
+      "x": 75,
+      "y": 25,
+      "size": "small"
+     },
+     {
+      "icon": "plane",
+      "label": "Elevators up",
+      "x": 50,
+      "y": 70,
+      "size": "small"
+     },
+     {
+      "icon": "plane",
+      "label": "Rudder right",
+      "x": 75,
+      "y": 70,
+      "size": "small"
+     }
+    ],
+    "links": [
+     {
+      "from": 0,
+      "to": 1
+     },
+     {
+      "from": 0,
+      "to": 2
+     },
+     {
+      "from": 0,
+      "to": 3
+     },
+     {
+      "from": 0,
+      "to": 4
+     }
+    ],
+    "backdrop": "sky"
+   },
+   {
+    "id": "scene-6",
+    "narration": "Airplanes fly by generating enough lift to beat gravity and enough thrust to beat drag.",
+    "factIds": [
+     "f1",
+     "f3",
+     "f8",
+     "f10",
+     "f11",
+     "f16",
+     "f28"
+    ],
+    "durationSec": 6.3,
+    "kind": "template",
+    "template": "big_statement",
+    "params": {
+     "text": "Airplanes fly when lift beats weight and thrust beats drag.",
+     "emphasis": [
+      "lift",
+      "thrust"
+     ]
+    }
+   }
+  ],
+  "sources": [
+   {
+    "id": "s1",
+    "title": "| How Things Fly",
+    "url": "https://howthingsfly.si.edu/ask-an-explainer/how-do-four-forces-interact-long-flights-compared-short-flights"
+   },
+   {
+    "id": "s2",
+    "title": "Bernoulli's Principle",
+    "url": "https://www.nasa.gov/wp-content/uploads/2023/06/bernoullis-principle-k-4-02-09-17-508.pdf"
+   },
+   {
+    "id": "s3",
+    "title": "Flight control surfaces - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Flight_control_surfaces"
+   },
+   {
+    "id": "s4",
+    "title": "Turbofan Thrust",
+    "url": "https://www.grc.nasa.gov/www/k-12/airplane/turbfan.html"
+   },
+   {
+    "id": "s6",
+    "title": "Lift to Drag Ratio | Glenn Research Center | NASA",
+    "url": "https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/lift-to-drag-ratio"
+   },
+   {
+    "id": "s8",
+    "title": "Lift (force) - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Lift_(force)"
+   },
+   {
+    "id": "s9",
+    "title": "Chapter 4. Performance in Straight and Level Flight \u2013 Aerodynamics and Aircraft Performance, 3rd edition",
+    "url": "https://pressbooks.lib.vt.edu/aerodynamics/chapter/chapter-4"
+   }
+  ]
+ },
+ "words": {
+  "scene-1": [
+   {
+    "text": "Airplanes",
+    "start": 0,
+    "end": 0.58
+   },
+   {
+    "text": "fly",
+    "start": 0.639,
+    "end": 0.871
+   },
+   {
+    "text": "by",
+    "start": 0.952,
+    "end": 1.196
+   },
+   {
+    "text": "balancing",
+    "start": 1.289,
+    "end": 1.753
+   },
+   {
+    "text": "four",
+    "start": 1.834,
+    "end": 2.032
+   },
+   {
+    "text": "forces:",
+    "start": 2.101,
+    "end": 2.74
+   },
+   {
+    "text": "lift,",
+    "start": 3.065,
+    "end": 3.425
+   },
+   {
+    "text": "weight,",
+    "start": 3.518,
+    "end": 3.913
+   },
+   {
+    "text": "thrust,",
+    "start": 3.982,
+    "end": 4.4
+   },
+   {
+    "text": "and",
+    "start": 4.423,
+    "end": 4.551
+   },
+   {
+    "text": "drag.",
+    "start": 4.609,
+    "end": 5.619
+   }
+  ],
+  "scene-2": [
+   {
+    "text": "Lift",
+    "start": 0,
+    "end": 0.325
+   },
+   {
+    "text": "pushes",
+    "start": 0.395,
+    "end": 0.72
+   },
+   {
+    "text": "up,",
+    "start": 0.789,
+    "end": 1.115
+   },
+   {
+    "text": "opposing",
+    "start": 1.196,
+    "end": 1.672
+   },
+   {
+    "text": "weight",
+    "start": 1.741,
+    "end": 1.962
+   },
+   {
+    "text": "pulling",
+    "start": 2.009,
+    "end": 2.264
+   },
+   {
+    "text": "the",
+    "start": 2.31,
+    "end": 2.38
+   },
+   {
+    "text": "plane",
+    "start": 2.415,
+    "end": 2.694
+   },
+   {
+    "text": "down",
+    "start": 2.74,
+    "end": 2.972
+   },
+   {
+    "text": "toward",
+    "start": 3.019,
+    "end": 3.309
+   },
+   {
+    "text": "Earth's",
+    "start": 3.379,
+    "end": 3.68
+   },
+   {
+    "text": "center.",
+    "start": 3.704,
+    "end": 4.296
+   },
+   {
+    "text": "Lift",
+    "start": 4.899,
+    "end": 5.166
+   },
+   {
+    "text": "must",
+    "start": 5.224,
+    "end": 5.41
+   },
+   {
+    "text": "exceed",
+    "start": 5.468,
+    "end": 5.828
+   },
+   {
+    "text": "weight",
+    "start": 5.898,
+    "end": 6.107
+   },
+   {
+    "text": "for",
+    "start": 6.142,
+    "end": 6.235
+   },
+   {
+    "text": "the",
+    "start": 6.269,
+    "end": 6.339
+   },
+   {
+    "text": "airplane",
+    "start": 6.385,
+    "end": 6.803
+   },
+   {
+    "text": "to",
+    "start": 6.838,
+    "end": 6.896
+   },
+   {
+    "text": "fly.",
+    "start": 6.954,
+    "end": 7.988
+   }
+  ],
+  "scene-3": [
+   {
+    "text": "Wings",
+    "start": 0,
+    "end": 0.36
+   },
+   {
+    "text": "generate",
+    "start": 0.406,
+    "end": 0.824
+   },
+   {
+    "text": "most",
+    "start": 0.871,
+    "end": 1.091
+   },
+   {
+    "text": "lift",
+    "start": 1.173,
+    "end": 1.486
+   },
+   {
+    "text": "by",
+    "start": 1.637,
+    "end": 1.788
+   },
+   {
+    "text": "creating",
+    "start": 1.858,
+    "end": 2.264
+   },
+   {
+    "text": "a",
+    "start": 2.31,
+    "end": 2.334
+   },
+   {
+    "text": "pressure",
+    "start": 2.392,
+    "end": 2.694
+   },
+   {
+    "text": "difference",
+    "start": 2.728,
+    "end": 3.088
+   },
+   {
+    "text": "between",
+    "start": 3.123,
+    "end": 3.448
+   },
+   {
+    "text": "top",
+    "start": 3.506,
+    "end": 3.773
+   },
+   {
+    "text": "and",
+    "start": 3.843,
+    "end": 3.959
+   },
+   {
+    "text": "bottom",
+    "start": 4.017,
+    "end": 4.307
+   },
+   {
+    "text": "surfaces.",
+    "start": 4.377,
+    "end": 5.132
+   },
+   {
+    "text": "Moving",
+    "start": 5.573,
+    "end": 5.875
+   },
+   {
+    "text": "through",
+    "start": 5.933,
+    "end": 6.165
+   },
+   {
+    "text": "air,",
+    "start": 6.223,
+    "end": 6.629
+   },
+   {
+    "text": "the",
+    "start": 6.711,
+    "end": 6.815
+   },
+   {
+    "text": "wing",
+    "start": 6.873,
+    "end": 7.059
+   },
+   {
+    "text": "pushes",
+    "start": 7.129,
+    "end": 7.442
+   },
+   {
+    "text": "air",
+    "start": 7.5,
+    "end": 7.721
+   },
+   {
+    "text": "down;",
+    "start": 7.779,
+    "end": 8.266
+   },
+   {
+    "text": "by",
+    "start": 8.44,
+    "end": 8.58
+   },
+   {
+    "text": "Newton's",
+    "start": 8.661,
+    "end": 9.044
+   },
+   {
+    "text": "third",
+    "start": 9.091,
+    "end": 9.358
+   },
+   {
+    "text": "law,",
+    "start": 9.427,
+    "end": 9.799
+   },
+   {
+    "text": "air",
+    "start": 9.927,
+    "end": 10.182
+   },
+   {
+    "text": "pushes",
+    "start": 10.24,
+    "end": 10.542
+   },
+   {
+    "text": "the",
+    "start": 10.588,
+    "end": 10.658
+   },
+   {
+    "text": "wing",
+    "start": 10.704,
+    "end": 10.867
+   },
+   {
+    "text": "up.",
+    "start": 10.937,
+    "end": 11.796
+   }
+  ],
+  "scene-4": [
+   {
+    "text": "Thrust",
+    "start": 0,
+    "end": 0.383
+   },
+   {
+    "text": "propels",
+    "start": 0.453,
+    "end": 0.882
+   },
+   {
+    "text": "the",
+    "start": 0.94,
+    "end": 1.01
+   },
+   {
+    "text": "plane",
+    "start": 1.057,
+    "end": 1.347
+   },
+   {
+    "text": "forward,",
+    "start": 1.393,
+    "end": 1.846
+   },
+   {
+    "text": "overcoming",
+    "start": 2.02,
+    "end": 2.589
+   },
+   {
+    "text": "drag,",
+    "start": 2.659,
+    "end": 3.123
+   },
+   {
+    "text": "the",
+    "start": 3.204,
+    "end": 3.32
+   },
+   {
+    "text": "air",
+    "start": 3.402,
+    "end": 3.622
+   },
+   {
+    "text": "pushing",
+    "start": 3.692,
+    "end": 4.017
+   },
+   {
+    "text": "back.",
+    "start": 4.087,
+    "end": 4.923
+   }
+  ],
+  "scene-5": [
+   {
+    "text": "For",
+    "start": 0,
+    "end": 0.163
+   },
+   {
+    "text": "level",
+    "start": 0.209,
+    "end": 0.464
+   },
+   {
+    "text": "flight,",
+    "start": 0.522,
+    "end": 0.917
+   },
+   {
+    "text": "thrust",
+    "start": 0.998,
+    "end": 1.416
+   },
+   {
+    "text": "equals",
+    "start": 1.486,
+    "end": 1.869
+   },
+   {
+    "text": "drag.",
+    "start": 1.916,
+    "end": 2.473
+   },
+   {
+    "text": "Pilots",
+    "start": 2.984,
+    "end": 3.413
+   },
+   {
+    "text": "control",
+    "start": 3.46,
+    "end": 3.878
+   },
+   {
+    "text": "these",
+    "start": 3.936,
+    "end": 4.11
+   },
+   {
+    "text": "forces",
+    "start": 4.145,
+    "end": 4.609
+   },
+   {
+    "text": "using",
+    "start": 4.725,
+    "end": 5.016
+   },
+   {
+    "text": "ailerons,",
+    "start": 5.085,
+    "end": 5.759
+   },
+   {
+    "text": "elevators,",
+    "start": 5.875,
+    "end": 6.478
+   },
+   {
+    "text": "and",
+    "start": 6.502,
+    "end": 6.641
+   },
+   {
+    "text": "rudder",
+    "start": 6.722,
+    "end": 6.966
+   },
+   {
+    "text": "pedals.",
+    "start": 7.001,
+    "end": 8.081
+   }
+  ],
+  "scene-6": [
+   {
+    "text": "Airplanes",
+    "start": 0,
+    "end": 0.627
+   },
+   {
+    "text": "fly",
+    "start": 0.685,
+    "end": 0.894
+   },
+   {
+    "text": "by",
+    "start": 0.975,
+    "end": 1.207
+   },
+   {
+    "text": "generating",
+    "start": 1.335,
+    "end": 1.881
+   },
+   {
+    "text": "enough",
+    "start": 1.927,
+    "end": 2.136
+   },
+   {
+    "text": "lift",
+    "start": 2.194,
+    "end": 2.403
+   },
+   {
+    "text": "to",
+    "start": 2.426,
+    "end": 2.485
+   },
+   {
+    "text": "beat",
+    "start": 2.554,
+    "end": 2.74
+   },
+   {
+    "text": "gravity",
+    "start": 2.798,
+    "end": 3.286
+   },
+   {
+    "text": "and",
+    "start": 3.495,
+    "end": 3.657
+   },
+   {
+    "text": "enough",
+    "start": 3.727,
+    "end": 3.947
+   },
+   {
+    "text": "thrust",
+    "start": 3.994,
+    "end": 4.354
+   },
+   {
+    "text": "to",
+    "start": 4.435,
+    "end": 4.54
+   },
+   {
+    "text": "beat",
+    "start": 4.609,
+    "end": 4.807
+   },
+   {
+    "text": "drag.",
+    "start": 4.876,
+    "end": 5.666
+   }
+  ]
+ },
+ "report": {
+  "checks": [
+   {
+    "sentenceId": "scene-1.1",
+    "factIds": [
+     "f5",
+     "f28"
+    ],
+    "status": "supported",
+    "original": "Airplanes fly by balancing four forces: lift, weight, thrust, and drag.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-2.1",
+    "factIds": [
+     "f1",
+     "f2",
+     "f8",
+     "f29"
+    ],
+    "status": "supported",
+    "original": "Lift pushes up, opposing weight pulling the plane down toward Earth's center.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-2.2",
+    "factIds": [
+     "f10"
+    ],
+    "status": "supported",
+    "original": "Lift must exceed weight for the airplane to fly.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-3.1",
+    "factIds": [
+     "f7",
+     "f11"
+    ],
+    "status": "supported",
+    "original": "Wings generate most lift by creating a pressure difference between top and bottom surfaces.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-3.2",
+    "factIds": [
+     "f9",
+     "f12",
+     "f36",
+     "f37"
+    ],
+    "status": "supported",
+    "original": "Moving through air, the wing pushes air down; by Newton's third law, air pushes the wing up.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-4.1",
+    "factIds": [
+     "f3",
+     "f4",
+     "f30",
+     "f31"
+    ],
+    "status": "supported",
+    "original": "Thrust propels the plane forward, overcoming drag, the air pushing back.",
+    "revised": "",
+    "reason": ""
+   },
+   {
+    "sentenceId": "scene-5.1",
+    "factIds": [
+     "f42",
+     "f46"
+    ],
+    "status": "revised",
+    "original": "For level flight, thrust equals drag and lift equals weight.",
+    "revised": "For level flight, thrust equals drag.",
+    "reason": "The facts state thrust must equal drag for straight and level flight, but do not state that lift equals weight for level flight; they state lift must exceed weight to fly."
+   },
+   {
+    "sentenceId": "scene-5.2",
+    "factIds": [
+     "f13",
+     "f14",
+     "f15"
+    ],
+    "status": "revised",
+    "original": "Pilots control these forces using ailerons, elevators, and the rudder.",
+    "revised": "Pilots control these forces using ailerons, elevators, and rudder pedals.",
+    "reason": "The facts describe moving the rudder by pressing a rudder pedal, not a rudder itself; the control stick moves ailerons and elevators."
+   },
+   {
+    "sentenceId": "scene-6.1",
+    "factIds": [
+     "f1",
+     "f3",
+     "f8",
+     "f10",
+     "f11",
+     "f16",
+     "f28"
+    ],
+    "status": "supported",
+    "original": "Airplanes fly by generating enough lift to beat gravity and enough thrust to beat drag.",
+    "revised": "",
+    "reason": ""
+   }
+  ],
+  "supported": 7,
+  "revised": 2,
+  "removed": 0
+ },
+ "facts": [
+  {
+   "id": "f1",
+   "text": "Lift gets airplanes up into the air using differences in air pressure.",
+   "quote": "Lift gets airplanes up into the air using differences in air pressure",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f2",
+   "text": "Weight refers to the pull of gravity on an airplane.",
+   "quote": "weight refers to the pull of gravity",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f3",
+   "text": "Thrust propels airplanes forward.",
+   "quote": "thrust propels airplanes forward",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f4",
+   "text": "Drag is the push of air back on the airplane that slows down the airplane.",
+   "quote": "drag is the push of air back on the airplane that slows down the airplane",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f5",
+   "text": "The four forces of flight are lift, weight, drag, and thrust.",
+   "quote": "The four forces of flight are lift, weight, drag, and thrust",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f6",
+   "text": "Some things that influence the forces of flight change with time, like wind speed or air density.",
+   "quote": "Some things that influence the forces of flight change with time, like wind speed or air density",
+   "sourceId": "s1"
+  },
+  {
+   "id": "f7",
+   "text": "Lift is generated by the pressure difference between the bottom and top of the wing.",
+   "quote": "In its simplest explanation, lift is a product of wing shape and the outcome of the total pressure on the bottom of the wing being greater than the total pressure on top of the wing.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f8",
+   "text": "Airplane lift opposes weight and holds the airplane in the air.",
+   "quote": "Lift: Lift is the force that directly opposes the weight of an airplane and holds the airplane in the air.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f9",
+   "text": "Lift is produced by the motion of the airplane moving through the air.",
+   "quote": "Lift is a mechanical aerodynamic force produced by the motion of the airplane moving through the air.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f10",
+   "text": "Lift must be greater than gravity for an airplane to fly.",
+   "quote": "When the force of lift is greater than the force of gravity, the airplane is able to fly,",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f11",
+   "text": "Wings generate the most lift among all airplane parts.",
+   "quote": "Although generated by every part of an airplane, wings generate the most lift.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f12",
+   "text": "Newton's third law explains lift generation through wing motion through air.",
+   "quote": "According to Newton\u2019s third law of motion, the action of the wings moving through the air creates lift.",
+   "sourceId": "s2"
+  },
+  {
+   "id": "f13",
+   "text": "Moving the control stick left lowers the left wing by raising the left aileron and lowering the right aileron",
+   "quote": "Moving the control stick to the left moves the aileron in the left wing up, that in the right wing down, making the plane lower the left wing.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f14",
+   "text": "Pulling back on the control stick raises the plane's nose by moving the elevators up",
+   "quote": "Pulling on the stick moves the elevators up, making the plane raise the nose.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f15",
+   "text": "Pressing the right rudder pedal turns the plane's nose to the right by moving the rudder to the right",
+   "quote": "Pressing the right rudder pedal moves the rudder to the right, making the plane turn the nose to the right.",
+   "sourceId": "s3"
+  },
+  {
+   "id": "f16",
+   "text": "Turbofan engines generate thrust from both the core and the fan",
+   "quote": "A turbofan gets some of its thrust from the core and some of its thrust from the fan.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f17",
+   "text": "The air bypassing the engine core is called fan flow or bypass flow",
+   "quote": "The air that goes through the fan has a velocity that is slightly increased from free stream. This airflow is called the fan flow, or bypass flow.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f18",
+   "text": "Bypass ratio is the ratio of fan flow mass flow rate to core flow mass flow rate",
+   "quote": "The ratio of (m dot)f to (m dot)c is called the bypass ratio - bpr. bpr = (m dot)f / (m dot)c",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f19",
+   "text": "Total mass flow rate is the sum of core and fan flow rates",
+   "quote": "The total mass flow rate through the inlet is the sum of the core and fan flows (m dot)0 = (m dot)f + (m dot)c",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f20",
+   "text": "Turbofans are more fuel efficient than basic jet engines because the fan generates extra thrust",
+   "quote": "Because the fuel flow rate for the core is changed only a small amount by the addition of the fan, a turbofan generates more thrust for nearly the same amount of fuel used by the core.",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f21",
+   "text": "Turbofans are used on high-speed transports while propellers are used on low-speed aircraft",
+   "quote": "Because the fan is enclosed by the inlet and is composed of many blades, it can operate efficiently at higher speeds than a simple propeller. That is why turbofans are found on high speed transports and propellers are used on low speed",
+   "sourceId": "s4"
+  },
+  {
+   "id": "f22",
+   "text": "Conventional landing gear tends to raise the tail during takeoff",
+   "quote": "If the airplane has a conventional landing gear with a tail wheel, there is a tendency for the tail to rise.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f23",
+   "text": "Pilot pushes stick forward to lower the tail for takeoff",
+   "quote": "The pilot aids this by pushing the stick forward slightly.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f24",
+   "text": "Wings parallel to runway allows plane to fly itself off ground",
+   "quote": "When the tail has come up so that the wings are parallel to the runway the pilot centers the stick again. In this attitude the airplane will fly itself off the ground.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f25",
+   "text": "Tricycle gear allows quick acceleration due to normal position",
+   "quote": "If the airplane has a tricycle landing gear with a nose wheel, its normal position is suited for quick acceleration.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f26",
+   "text": "Breaking the sound barrier creates smooth flight above pressure waves",
+   "quote": "After an airplane penetrates the sonic, or sound, barrier, its flight is smooth because it is moving faster than the pressure waves it produces.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f27",
+   "text": "Supersonic airplanes have short, thin wings with knife-like edges",
+   "quote": "Airplanes capable of supersonic flight have short, thin wings with knifelike leading edges.",
+   "sourceId": "s5"
+  },
+  {
+   "id": "f28",
+   "text": "Four forces act on an aircraft in flight: lift, weight, thrust, and drag.",
+   "quote": "There are four forces that act on an aircraft in flight: lift, weight, thrust, and drag.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f29",
+   "text": "Weight is determined by the size, materials, payload, and fuel of the airplane and always points toward Earth's center.",
+   "quote": "The weight of an airplane is determined by the size and materials used in the airplane\u2019s construction and on the payload and fuel that the airplane carries. The weight is always directed towards the center of the earth.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f30",
+   "text": "Thrust is determined by the propulsion system size and type, and pilot throttle setting, and points forward along the aircraft's center line.",
+   "quote": "The thrust is determined by the size and type of propulsion system used on the airplane and on the throttle setting selected by the pilot. Thrust is normally directed forward along the center-line of the aircraft.",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f31",
+   "text": "Lift and drag are aerodynamic forces dependent on the aircraft's shape and size.",
+   "quote": "Lift and drag are aerodynamic forces that depend on the shape and size of the aircraft, air",
+   "sourceId": "s6"
+  },
+  {
+   "id": "f32",
+   "text": "To achieve level flight, thrust required must equal thrust available, requiring solving for airspeed where curves coincide.",
+   "quote": "To solve the equation, both the thrust available from the engine and the thrust required (i.e., the aircraft\u2019s drag) must be plotted against airspeed (or Mach number). Then the precise conditions under which the curves coincide must be determined.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f33",
+   "text": "Drag equals the required thrust in steady, level flight, and power required is the product of drag and airspeed.",
+   "quote": "For steady, level flight, drag equals the required thrust, and the corresponding power required follows from the product of drag and airspeed.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f34",
+   "text": "Thrust- and power-required curves help determine minimum and maximum level-flight speeds and the effects of weight, altitude, and configuration.",
+   "quote": "The resulting thrust- and power-required curves provide a useful framework for determining minimum and maximum level-flight speeds and for assessing the effects of aircraft weight, altitude, and configuration.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f35",
+   "text": "At low airspeeds, stall or insufficient thrust or power may limit flight, while at high airspeeds drag eventually equals available thrust or power.",
+   "quote": "At low airspeeds, stall or insufficient thrust or power may limit flight, while at high airspeeds the increasing drag eventually equals the available thrust or power.",
+   "sourceId": "s7"
+  },
+  {
+   "id": "f36",
+   "text": "Airfoil generates lift by exerting downward force on air flow",
+   "quote": "An airfoil generates lift by exerting a downward force on the air as it flows past.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f37",
+   "text": "Newton's third law produces equal and opposite upward force",
+   "quote": "According to Newton's third law, the air must exert an equal and opposite (upward) force on the airfoil, which is lift.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f38",
+   "text": "Pressure differences and flow speed changes sustain lift force",
+   "quote": "Sustaining the pressure difference that exerts the lift force on the airfoil surfaces requires sustaining a pattern of non-uniform pressure in a wide area around the airfoil.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f39",
+   "text": "Airfoil shape produces more lift than flat plate with higher drag",
+   "quote": "An airfoil is a streamlined shape that is capable of generating significantly more lift than drag. A flat plate can generate lift, but not as much as a streamlined airfoil, and with somewhat higher drag.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f40",
+   "text": "Downward turning of flow and speed changes both required",
+   "quote": "This requires maintaining pressure differences in both the vertical and horizontal directions, and thus requires both downward turning of the flow and changes in flow speed according to Bernoulli's principle.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f41",
+   "text": "Comprehensive explanation requires both Newton and Bernoulli",
+   "quote": "Either of these, by itself, correctly identifies some aspects of the lifting flow but leaves other important aspects of the phenomenon unexplained.",
+   "sourceId": "s8"
+  },
+  {
+   "id": "f42",
+   "text": "Thrust must equal drag for straight and level flight",
+   "quote": "for an aircraft in straight and level flight, thrust must equal drag",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f43",
+   "text": "Drag is composed of base drag and induced drag",
+   "quote": "CD = CD0 + CDi",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f44",
+   "text": "K value for induced drag depends on wing aspect ratio and planform shape",
+   "quote": "K is found from inviscid aerodynamic theory to be a function of the aspect ratio and planform shape of the wing",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f45",
+   "text": "Aspect ratio and elliptical lift distribution affect the K factor",
+   "quote": "e is unity for an ideal elliptical form of the lift distribution along the wing's span and less than one for non\u2011ideal spanwise lift distributions",
+   "sourceId": "s9"
+  },
+  {
+   "id": "f46",
+   "text": "Aircraft can fly straight and level at various speeds if thrust overcomes drag",
+   "quote": "The aircraft can fly straight and level at a wide range of speeds, provided there is sufficient power or thrust to equal or overcome the drag at those speeds",
+   "sourceId": "s9"
+  }
+ ],
+ "sources": [
+  {
+   "id": "s1",
+   "title": "| How Things Fly",
+   "url": "https://howthingsfly.si.edu/ask-an-explainer/how-do-four-forces-interact-long-flights-compared-short-flights"
+  },
+  {
+   "id": "s2",
+   "title": "Bernoulli's Principle",
+   "url": "https://www.nasa.gov/wp-content/uploads/2023/06/bernoullis-principle-k-4-02-09-17-508.pdf"
+  },
+  {
+   "id": "s3",
+   "title": "Flight control surfaces - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Flight_control_surfaces"
+  },
+  {
+   "id": "s4",
+   "title": "Turbofan Thrust",
+   "url": "https://www.grc.nasa.gov/www/k-12/airplane/turbfan.html"
+  },
+  {
+   "id": "s5",
+   "title": "airplane\n                    \n                \n                - Students | Britannica Kids | Homework Help",
+   "url": "https://kids.britannica.com/students/article/airplane/272759"
+  },
+  {
+   "id": "s6",
+   "title": "Lift to Drag Ratio | Glenn Research Center | NASA",
+   "url": "https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/lift-to-drag-ratio"
+  },
+  {
+   "id": "s7",
+   "title": "Steady Level-Flight Operations \u2013 Introduction to Aerospace Flight Vehicles",
+   "url": "https://eaglepubs.erau.edu/introductiontoaerospaceflightvehicles/chapter/steady-level-flight-performance"
+  },
+  {
+   "id": "s8",
+   "title": "Lift (force) - Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/Lift_(force)"
+  },
+  {
+   "id": "s9",
+   "title": "Chapter 4. Performance in Straight and Level Flight \u2013 Aerodynamics and Aircraft Performance, 3rd edition",
+   "url": "https://pressbooks.lib.vt.edu/aerodynamics/chapter/chapter-4"
+  }
+ ]
+}
