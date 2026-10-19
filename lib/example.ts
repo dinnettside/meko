@@ -31,8 +31,8 @@ export function exampleMeta(slug: string, example: Example): ExampleMeta {
   return {
     slug,
     topic: example.request.topic,
-    // As long as the player makes it, with the dissolves between scenes and the credits.
-    seconds: Math.round(storyboardFrames(example.storyboard) / example.storyboard.fps),
+    // As long as the player makes it, with the dissolves between scenes and the credits, in whole seconds as it shows it.
+    seconds: Math.floor(storyboardFrames(example.storyboard) / example.storyboard.fps),
     sources: example.storyboard.sources.length,
     supported: example.report.supported,
     revised: example.report.revised,

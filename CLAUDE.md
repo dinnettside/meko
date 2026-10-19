@@ -145,8 +145,8 @@ Current phase: **4**
 - [x] `scripts/eval.ts`: run 10 topics, report % supported sentences, cost and time per video (see `docs/eval.md`)
 
 ### Phase 4: ship (Oct 27-29)
-- [ ] Deploy to Vercel with environment variables
-- [ ] README: setup, architecture, how Nemotron and Token Factory are used
+- [x] Deploy to Vercel with environment variables
+- [x] README: setup, architecture, how Nemotron and Token Factory are used
 - [ ] Design polish, demo video (under 3 min, public on YouTube), Devpost text
 - [ ] Make the repo public
 
