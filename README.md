@@ -6,6 +6,8 @@ You type a topic, an audience and a length, for example "The French Revolution, 
 
 The point: explainer videos people can trust, made in under a minute.
 
+![Six scenes from videos Meko made: a fault where an earthquake starts, a map of the port of Caffa in 1347, the kinds of vaccines, blood flowing through the heart, air lifting a wing, and a chart of a falling labor supply](docs/images/scenes.jpg)
+
 Meko is built for the Nebius x NVIDIA Global AI Hackathon (track: Best Apps and Agents). Every video is made by NVIDIA Nemotron, served by Nebius Token Factory.
 
 ## Try it
@@ -13,7 +15,12 @@ Meko is built for the Nebius x NVIDIA Global AI Hackathon (track: Best Apps and 
 Open the live demo (the link is in this repository's About box and in the Devpost submission).
 
 - **Watch** shows videos Meko made, one per screen, to scroll through. Open **Fact-check** on any of them to see every sentence next to the source words behind it; in the Black Death video, four sentences were rewritten because the sources only say the plague "might have" ended feudalism. You can like and comment without an account.
+
+  ![The fact-check of the Black Death video: four sentences supported and four rewritten, one because the source only says the plague "might have" ended feudalism](docs/images/fact-check.png)
+
 - **Make a video**: type a topic, pick an audience and a length, and choose **Make video**. Each step shows its progress, and the video plays when it is done, in about a minute. The hosted demo asks for a demo code, so strangers cannot spend the API credits; judges find it in the submission's testing instructions. A topic someone already made, with the same audience and length, plays at once from the library.
+
+  ![The start page: "Explainer videos you can check", the topic form, and three videos from the feed](docs/images/start-page.png)
 
 ## Why you can trust a Meko video
 
