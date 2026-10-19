@@ -187,7 +187,7 @@ register('eye_vision', {
   cat: CAT, title: 'How the eye sees',
   desc: 'An eye cut open, seen from the side, looking at a tree. Light from the tree goes in through the cornea and the pupil, the lens bends it onto the retina at the back, where the picture lands upside down, and a signal runs along the optic nerve to the brain, which lights up.',
   use: 'How we see: light, the cornea, the pupil, the lens, the retina, the optic nerve and the brain.',
-  params: 'labels: {light, cornea, pupil, lens, retina, opticNerve, brain} (each optional, 1 to 3 words from the narration; a part without a label is drawn without one), image (optional, default true; false leaves out the upside-down picture on the retina)',
+  params: 'labels: {light, cornea, pupil, lens, retina, opticNerve, brain} (each optional, 1 to 3 words from the narration; a part without a label is drawn without one), image (optional, default true; false leaves out the upside-down picture on the retina), signal (optional, default true; false leaves out the optic nerve and the brain)',
   example: { labels: { light: 'Light', cornea: 'Cornea', pupil: 'Pupil', lens: 'Lens', retina: 'Retina', opticNerve: 'Optic nerve', brain: 'Brain' } },
   build(p, c) {
     const { U, th } = c, id = c.id, L = labelsOf(p), E = EYE, { x, y, R, wall, cornea: C } = E, T = EYE_T;
@@ -195,12 +195,14 @@ register('eye_vision', {
     let o = '';
     // The tree the eye looks at.
     o += `<g${U.A('pop', 0.02, 0.06, { cx: E.tree.x, cy: E.tree.base })}><g transform="translate(${E.tree.x} ${E.tree.base})">${treeShape(th)}</g></g>`;
-    // The optic nerve and the brain, behind the eye's wall.
+    // The optic nerve and the brain, behind the eye's wall. Left out with signal false, for a scene that only speaks of
+    // the eye (added for Meko).
+    const signal = p.signal !== false;
     const nd = line(E.nerve);
-    o += `<g opacity="0"${U.A('fade', 0.04, 0.06)}>${ink ? `<path d="${nd}" fill="none" stroke="${ink}" stroke-width="${46 + 2 * th.card.width}" stroke-linecap="round"/>` : ''}<path d="${nd}" fill="none" stroke="${NERVE}" stroke-width="46" stroke-linecap="round"/>` +
+    if (signal) o += `<g opacity="0"${U.A('fade', 0.04, 0.06)}>${ink ? `<path d="${nd}" fill="none" stroke="${ink}" stroke-width="${46 + 2 * th.card.width}" stroke-linecap="round"/>` : ''}<path d="${nd}" fill="none" stroke="${NERVE}" stroke-width="46" stroke-linecap="round"/>` +
       `<path d="${nd}" fill="none" stroke="${NERVE_EDGE}" stroke-width="3" stroke-dasharray="2 16" stroke-linecap="round"/></g>`;
     const B = E.brain;
-    o += `<g${U.A('pop', 0.05, 0.07, { cx: B.x, cy: B.y })}><g transform="translate(${B.x} ${B.y})">` +
+    if (signal) o += `<g${U.A('pop', 0.05, 0.07, { cx: B.x, cy: B.y })}><g transform="translate(${B.x} ${B.y})">` +
       `<path d="M30 60L44 128H82L80 60Z" fill="${BRAIN_FOLD}"${edge(th)}/><ellipse cx="108" cy="80" rx="58" ry="36" fill="${BRAIN_FOLD}"${edge(th)}/>` +
       `<path d="${BRAIN_SHAPE}" fill="${BRAIN}"${edge(th)}/><path d="${BRAIN_FOLDS}" fill="none" stroke="${BRAIN_FOLD}" stroke-width="6" stroke-linecap="round"/>` +
       `<path id="${id}glow" d="${BRAIN_SHAPE}" fill="#FFFFFF" fill-opacity=".3" stroke="${th.accent}" stroke-width="9" stroke-linejoin="round" opacity="0"/></g></g>`;
@@ -234,7 +236,7 @@ register('eye_vision', {
     }
     // The signal on its way along the optic nerve: a bright stroke with a wider faint one around it (see render).
     const len = track(E.nerve).len.toFixed(0);
-    o += `<path id="${id}sigh" d="${nd}" fill="none" stroke="${th.accent}" stroke-width="40" stroke-linecap="round" stroke-dasharray="0 ${len}" opacity="0"/>` +
+    if (signal) o += `<path id="${id}sigh" d="${nd}" fill="none" stroke="${th.accent}" stroke-width="40" stroke-linecap="round" stroke-dasharray="0 ${len}" opacity="0"/>` +
       `<path id="${id}sig" d="${nd}" fill="none" stroke="${th.accent}" stroke-width="16" stroke-linecap="round" stroke-dasharray="0 ${len}" opacity="0"/>`;
     // The names, each as the light or the signal reaches its part.
     const [a0] = E.bundles[1];
@@ -245,7 +247,7 @@ register('eye_vision', {
       callout(U, th, L.lens, [lx, y - 88], 'top', x - 60, y - 222, 0.27, { w: 290 }) +
       callout(U, th, L.retina, [x + (inner - 7) * Math.cos(-0.9), y + (inner - 7) * Math.sin(-0.9)], 'top', x + 250, y - 222, 0.39, { w: 300 });
     const nm = E.nerve[22];
-    o += callout(U, th, L.opticNerve, nm, 'bottom', nm[0] + 20, nm[1] + 120, EYE_T.signal + 0.02, { w: 320 }) +
+    if (signal) o += callout(U, th, L.opticNerve, nm, 'bottom', nm[0] + 20, nm[1] + 120, EYE_T.signal + 0.02, { w: 320 }) +
       nameText(U, th, L.brain, B.x + 10, B.y - 128, 'top', EYE_T.brain, { w: 330 });
     return o;
   },

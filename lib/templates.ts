@@ -1519,11 +1519,15 @@ export const TEMPLATES = {
     plan: "light entering the eye through the lens, landing on the retina, and a signal running along the optic nerve to the brain",
     prompt: '"eye_vision" when the narration explains how the eye sees. "labels" names the parts: light, cornea, pupil, lens, retina, opticNerve, brain.',
     parts: ["light", "cornea", "pupil", "lens", "retina", "opticNerve", "brain"],
-    // The signal along the optic nerve to the brain is always drawn.
-    fits: (scene) => /\beyes?\b/i.test(scene.source) && /\b(retina|lens|cornea|pupil)\b/i.test(scene.source) && /\b(brain|optic nerve|nerves?)\b/i.test(scene.source),
+    fits: (scene) => /\beyes?\b/i.test(scene.source) && /\b(retina|lens|cornea|pupil)\b/i.test(scene.source),
     options: {},
-    // The picture on the retina is drawn upside down only when the narration says it lands that way.
-    params: (params, { source }) => ({ ...params, image: /\b(upside[- ]down|inverted|flipped|reversed)\b/i.test(source ?? "") }),
+    // The picture on the retina is drawn upside down only when the narration says it lands that way, and the signal
+    // along the optic nerve to the brain only when it speaks of them.
+    params: (params, { source }) => ({
+      ...params,
+      image: /\b(upside[- ]down|inverted|flipped|reversed)\b/i.test(source ?? ""),
+      signal: /\b(brain|optic nerve|nerves?)\b/i.test(source ?? ""),
+    }),
   }),
   digestion: labelDiagram({
     name: "digestion",

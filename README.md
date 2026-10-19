@@ -8,15 +8,22 @@ The point: explainer videos people can trust, made in under a minute.
 
 Meko is built for the Nebius x NVIDIA Global AI Hackathon (track: Best Apps and Agents). Every video is made by NVIDIA Nemotron, served by Nebius Token Factory.
 
+## Try it
+
+Open the live demo (the link is in this repository's About box and in the Devpost submission).
+
+- **Watch** shows videos Meko made, one per screen, to scroll through. Open **Fact-check** on any of them to see every sentence next to the source words behind it; in the Black Death video, four sentences were rewritten because the sources only say the plague "might have" ended feudalism. You can like and comment without an account.
+- **Make a video**: type a topic, pick an audience and a length, and choose **Make video**. Each step shows its progress, and the video plays when it is done, in about a minute. The hosted demo asks for a demo code, so strangers cannot spend the API credits; judges find it in the submission's testing instructions. A topic someone already made, with the same audience and length, plays at once from the library.
+
 ## Why you can trust a Meko video
 
 The language model writes and checks everything, but plain code checks the model at every step:
 
 - **Every fact has a quote.** When Meko reads a source, the model must copy the exact words that state each fact. The server looks for that quote in the source text and throws the fact away if it is not there, so the model cannot invent facts.
 - **Every sentence cites facts.** The script must name the facts behind each sentence. Unknown fact IDs send the script back for another try.
-- **Every claim is checked.** The fact-check splits each sentence into its separate claims (people, numbers, dates, places, causes) and judges each one only against the quotes of the cited facts. Links count as claims too: two true facts joined by a false "after" or "because" make a false sentence, so the code spells out each link for the model to judge. Two checks run side by side and the stricter verdict counts. A sentence with an unsupported claim is rewritten or removed, and the code makes sure it can never be marked as supported.
+- **Every claim is checked.** The fact-check splits each sentence into its separate claims (people, numbers, dates, places, causes) and judges each one only against the quotes of the cited facts. Links count as claims too: two true facts joined by a false "after" or "because" make a false sentence, so the code spells out each link for the model to judge. So do the order of steps ("first", "then") and certainty: when a source says the plague "might have" ended feudalism, the narration may not say it did. Two checks run side by side and the stricter verdict counts. A sentence with an unsupported claim is rewritten or removed, and the code makes sure it can never be marked as supported.
 - **The narration is not touched again.** The director only chooses what is shown on screen. The voice reads the fact-checked text word for word.
-- **What is on screen is checked too.** Numbers on screen must appear in the narration or the cited facts, and labels must use their words; a one-word answer like "Yes" or "No" on a scoreboard must be one of them too. A number the sources give as a range ("25 to 50 million") is shown as the whole range, with the uncertain part drawn as an outline. Each bar on a chart needs a sentence in the scene that gives that number for that thing. Each event on a timeline names the fact that states its year (and its date, for events in the same year), and the code checks that they are in it; a period drawn under the events must be one a fact states, like "ruled from 1451 to 1481". A quote must be a whole sentence copied word for word from a source, never a shortened one. Each city on a map comes with its coordinates and the country it lies in, and the code checks that the point is inside that country's borders and asks the model a second time where the city is. A country cannot carry the name of a region it is not in, and an arrow labeled "eastward" must point east, which it may only say when the narration does. A video that is not about places, and a scene about space, gets no map. Figures stand only for people the narration names, drawn by the role they play, never by gender or looks. Route stops and places on the Moon come from tables in the code (cities from Natural Earth, Moon seas and landing sites from the USGS and NASA), never from the model's memory, and icons come from a fixed set drawn in code. Dots that show a number as part of a whole need the narration to say exactly that, a chart cannot compare dates or one amount in two units, and a number in a name (Apollo 11) is never shown as an amount.
+- **What is on screen is checked too.** Numbers on screen must appear in the narration or the cited facts, and labels must use their words; a one-word answer like "Yes" or "No" on a scoreboard must be one of them too. A number the sources give as a range ("25 to 50 million") is shown as the whole range, with the uncertain part drawn as an outline. Each bar on a chart needs a sentence in the scene that gives that number for that thing. Each event on a timeline names the fact that states its year (and its date, for events in the same year), and the code checks that they are in it; a period drawn under the events must be one a fact states, like "ruled from 1451 to 1481". A quote must be a whole sentence copied word for word from a source, never a shortened one. Each city on a map comes with its coordinates and the country it lies in, and the code checks that the point is inside that country's borders and asks the model a second time, in a separate call, where the city is. The same second opinion checks the labels on countries: a label that names a city, or a place in another country (the model once labeled Georgia "Caffa", a port in Crimea), is taken off, and a map must show a place its own scene names. Words on screen keep the narration's hedges, so "may have helped end feudalism" never becomes a card that says "End of feudalism", and "up to half" never becomes "half". A country cannot carry the name of a region it is not in, and an arrow labeled "eastward" must point east, which it may only say when the narration does. A video that is not about places, and a scene about space, gets no map. Figures stand only for people the narration names, drawn by the role they play, never by gender or looks. Route stops and places on the Moon come from tables in the code (cities from Natural Earth, Moon seas and landing sites from the USGS and NASA), never from the model's memory, and icons come from a fixed set drawn in code. Dots that show a number as part of a whole need the narration to say exactly that, a chart cannot compare dates or one amount in two units, and a number in a name (Apollo 11) is never shown as an amount.
 - **You can see all of it.** Every scene names the sites its facts come from in a corner of the video, and the video ends with credits that list every source and the result of the fact-check. When a scene quotes a source, a marker sweeps over the source's words while the claim is spoken. Next to the video, the fact-check report lists every sentence as supported, revised or removed, with the reason, the quotes and links to the sources. The sentence being spoken is marked as the video plays, and clicking a sentence plays the video from there.
 
 ## How it works
@@ -31,9 +38,11 @@ The browser calls five API routes in order and shows live progress for each:
 
 The result is a storyboard (plain JSON, see `lib/storyboard.ts`) that [Remotion](https://www.remotion.dev) plays in the browser. All visuals and sounds are made in code: no stock footage, images, music or recorded sounds.
 
+**The feed.** `/watch` shows videos made by Meko, one per screen, to scroll through like a short-video app, with search over titles, narration and sources. Under each video it says how long the video took to make and what it cost, and that watching it again costs nothing, since it plays from saved files. Viewers can like and comment without an account: each browser gets a made-up name like "Curious Heron 17", comments are limited in length and in how often one can post, and comments with links, swear words or slurs are turned down.
+
 **The library.** Every finished video is saved in [Vercel Blob](https://vercel.com/docs/vercel-blob): the storyboard, the voice, the facts, the sources and the fact-check report. When someone asks for the same topic, audience and length again, the saved video plays at once and costs nothing, with a note saying when it was made and a button to make a new one. The diagrams the model draws are saved too, and a later scene about something similar gets the closest ones as examples, so the drawings improve as the library grows.
 
-A 90-second video takes about 35 seconds to make and costs about $0.09 in Token Factory calls. On 10 test topics, every video finished and 91% of the sentences were supported as written (see `docs/eval.md`).
+On 10 test topics across history, science, nature, the body and technology (none of them in the feed), every video finished, and 97% of the sentences were supported as written; the fact-check rewrote the rest. Asked for 90 seconds, Meko made videos of 66 to 81 seconds in about 42 seconds each, for about $0.15 in Token Factory calls, plus 3 to 12 Tavily searches and the voice. See `docs/eval.md`.
 
 ## How Meko uses Nemotron and Token Factory
 
@@ -74,7 +83,7 @@ You need Node.js 22.18 or newer and npm.
    npm run dev
    ```
 
-   To see finished videos without any API keys, pick one of the examples under the form, or open http://localhost:3000/?example=black-death.
+   To see finished videos without any API keys, open the feed at http://localhost:3000/watch.
 
 ## Commands
 
@@ -86,7 +95,7 @@ You need Node.js 22.18 or newer and npm.
 | `npm run lint` | Runs ESLint |
 | `npm run typecheck` | Generates route types and runs the TypeScript compiler |
 | `npm run eval -- 2` | Makes videos for the first 2 of 10 test topics and writes `docs/eval.md`. Leave out the number to run all 10. Needs the app running and makes paid API calls |
-| `npm run make-example -- black-death` | Remakes one example video in `public/examples` (the slugs are in `lib/example.ts`). Needs the app running and makes paid API calls |
+| `npm run make-example -- black-death` | Remakes one video of the feed in `public/examples`, with its voice (the slugs are in `lib/example.ts`). Needs the app running and makes paid API calls |
 | `npm run check-models` | Tests the NVIDIA models on Token Factory and writes `docs/model-check.md`. Makes paid API calls, capped at 1 USD |
 
 ## Deploy
@@ -94,7 +103,7 @@ You need Node.js 22.18 or newer and npm.
 Meko runs on [Vercel](https://vercel.com) with no extra configuration:
 
 1. In Vercel, choose Add New, then Project, and import the GitHub repository.
-2. Add the environment variables from the table above, including `DEMO_CODE`. The example video plays for everyone; making a new video asks for the code. A long random code is what stops people from guessing it, and a rate-limit rule on `/api/*` in the Vercel Firewall adds more protection. If you add or change a variable later, deploy again, since Vercel only applies it to new deployments.
+2. Add the environment variables from the table above, including `DEMO_CODE`. The feed plays for everyone; making a new video asks for the code. A long random code is what stops people from guessing it, and a rate-limit rule on `/api/*` in the Vercel Firewall adds more protection. If you add or change a variable later, deploy again, since Vercel only applies it to new deployments.
 3. For the library, open the project's Storage tab, create a Blob store with public access and connect it to the project. Vercel then sets `BLOB_STORE_ID`, and the app signs in to the store with OIDC on its own.
 4. Deploy. Every push to `main` deploys again.
 
@@ -104,12 +113,12 @@ Each API route sets its own `maxDuration`, at most 180 seconds, which is within 
 
 | Folder | What is in it |
 | --- | --- |
-| `app/` | The page, the five API routes and the library's routes |
-| `components/` | The topic form, the player and the fact-check report |
+| `app/` | The start page, the feed (`/watch`), the five API routes, and the routes for the library, likes and comments |
+| `components/` | The topic form, the player, the fact-check report and the feed |
 | `lib/` | One file per pipeline step, the Token Factory, Tavily and ElevenLabs clients, the storyboard contract and the theme |
 | `lib/prompts/` | One file per prompt |
 | `remotion/` | The video: its scenes, the captions and the template library with its drawings (`remotion/filmmotor`) |
-| `scripts/` | The model check, the eval and the example maker |
+| `scripts/` | The model check, the eval and the maker of the feed's videos |
 | `docs/` | The model check and eval reports |
 
 All colors, fonts, sizes and timings are in `lib/theme.ts`.
@@ -131,5 +140,5 @@ Meko's own code is MIT licensed, see [LICENSE](LICENSE).
 - The animated templates in `remotion/filmmotor` come from a film engine made for this project and adapted for Meko. They are part of this repository under its MIT license.
 - Country shapes come from [Natural Earth](https://www.naturalearthdata.com) (public domain) through [world-atlas](https://github.com/topojson/world-atlas) (ISC).
 - Country codes come from the [DataHub country-codes dataset](https://github.com/datasets/country-codes) (Public Domain Dedication and License).
-- Fonts: [Fraunces](https://fonts.google.com/specimen/Fraunces), [Archivo](https://fonts.google.com/specimen/Archivo), [Big Shoulders](https://fonts.google.com/specimen/Big+Shoulders), [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans), [IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono), [Young Serif](https://fonts.google.com/specimen/Young+Serif) and [Work Sans](https://fonts.google.com/specimen/Work+Sans), all under the SIL Open Font License.
+- Fonts: [Newsreader](https://fonts.google.com/specimen/Newsreader), [Geist](https://fonts.google.com/specimen/Geist), [Geist Mono](https://fonts.google.com/specimen/Geist+Mono), [Fraunces](https://fonts.google.com/specimen/Fraunces), [Archivo](https://fonts.google.com/specimen/Archivo), [Big Shoulders](https://fonts.google.com/specimen/Big+Shoulders), [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans), [IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono), [Young Serif](https://fonts.google.com/specimen/Young+Serif) and [Work Sans](https://fonts.google.com/specimen/Work+Sans), all under the SIL Open Font License.
 - Web search by [Tavily](https://tavily.com) and voice by [ElevenLabs](https://elevenlabs.io).
