@@ -43,9 +43,10 @@ export function groundedWords(text: string, source: string, { strict = false } =
   return { matched: claims.filter((word) => keys.has(wordKey(word))).length, total: claims.length };
 }
 
-// Words that say a claim may not hold, as in "may have helped end feudalism". "Could" and "estimated" are left out:
-// "peasants could demand higher wages" is no hedge, and an estimated number is shown as the number.
-const HEDGE = /\b(may|might|possibly|probably|perhaps|likely|reportedly|allegedly|believed|thought to|suggests?)\b/i;
+// Words that say a claim may not hold, as in "may have helped end feudalism", or only sets its upper bound, as in "up to
+// half". "Could" and "estimated" are left out: "peasants could demand higher wages" is no hedge, and an estimated
+// number is shown as the number.
+const HEDGE = /\b(may|might|possibly|probably|perhaps|likely|reportedly|allegedly|believed|thought to|suggests?|up to|as many as)\b/i;
 
 // Whether a text on screen states as certain what the narration only says may be true: most of its words come from a
 // hedged part of the narration, but it keeps no hedge. "End of feudalism" drops the "may" of "may have helped end

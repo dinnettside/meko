@@ -10,6 +10,7 @@ export function placesPrompt(title: string, places: { name: string; context: str
       content: [
         "For each place, give its latitude and longitude and the ISO 3166-1 alpha-3 code of the country where it lies today, in the same order.",
         'Set "isPlace" to false when the name is not a place on Earth at all, like a person, an institution, a group or an event.',
+        'Set "isCity" to true when the place is a city, a town, a port or a fortress, and to false for a country, a region, an empire, a sea or a landscape.',
         "Each place comes with the narration it appears in. Use it to tell apart places with similar names, like a city and a mountain range.",
       ].join("\n"),
     },

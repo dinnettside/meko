@@ -18,7 +18,7 @@ import {
   yearRangesIn,
   yearsIn,
 } from "./numbers.ts";
-import { isCountryName, isCountryOwnName, labelMismatch, namesAPlace, namesCity, namesCountry } from "./regions.ts";
+import { isCountryName, isCountryOwnName, labelMismatch, namesAPlace, namesCity, namesCountry, namesRegionOf } from "./regions.ts";
 import { questionProblems } from "./script.ts";
 import { claimWords, contentWords, dropsHedge, groundedWords, isSentenceOf, sameWords, sentencesOf, wholeSentencesOf } from "./words.ts";
 import {
@@ -949,6 +949,11 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
     }
     case "change":
       if (visual.from.trim().toLowerCase() === visual.to.trim().toLowerCase()) problems.push("The old and the new must be different.");
+      // Each side is one name or status: "wheat to livestock" struck out for "new plows adopted" showed the whole change
+      // as the old state.
+      if ([visual.from, visual.to].some((side) => /\s(?:to|into)\s|→|->/i.test(side))) {
+        problems.push('Give the old name or status in "from" and the new one in "to", like "Wheat" and "Livestock", not the change itself.');
+      }
       for (const side of [visual.from, visual.to]) {
         if (tooLong(side, 4)) problems.push(`"${side}" is too long: a change shows a name or a status, in at most 4 words.`);
         // Striking out a name says it was the name before, so the old one must be stated, word for word: no
@@ -1120,6 +1125,12 @@ function templateProblems(visual: TemplateVisual, allowed: Set<string>, source: 
   return [...problems, ...(spec.check?.(visual, { narration, source, quotable }) ?? [])];
 }
 
+const focusIsTold = (label: string, narration: string) => groundedWords(label, narration).matched > 0;
+
+// A quote is read while the scene's narration is spoken: 22 words under a 4-second sentence could not be read.
+const quoteWords = (narration: string) => Math.max(12, Math.ceil(countWords(narration) * 1.5));
+const quoteFits = (text: string, narration: string) => countWords(text) <= quoteWords(narration);
+
 // `avoid` names the kinds this scene should not switch to, `blocked` the kinds it may not use at all, and `offered`
 // the templates it may use.
 function sceneProblems(
@@ -1151,10 +1162,14 @@ function sceneProblems(
   for (const text of texts) {
     if (text && dropsHedge(text, narration)) problems.push(`"${text}" states as certain what the narration says only may be true. Keep its "may" or leave it out.`);
   }
-  // A quote is read while the scene's narration is spoken: 22 words under a 4-second sentence could not be read.
-  if (visual.kind === "quote") {
-    const most = Math.max(12, Math.ceil(countWords(narration) * 1.5));
-    if (countWords(visual.text) > most) problems.push(`The quote is too long to read while this scene is spoken. Pick a sentence of at most ${most} words, or another kind.`);
+  // The marked event of a timeline is the one this scene tells: a scene about ships reaching Sicily once marked the
+  // siege before it.
+  const focus = visual.kind === "timeline" ? visual.events[visual.focusIndex] : undefined;
+  if (focus && !focusIsTold(focus.label, narration)) {
+    problems.push(`The marked event "${focus.label}" is not what this scene tells. Mark the event its narration is about, with a label in its words.`);
+  }
+  if (visual.kind === "quote" && !quoteFits(visual.text, narration)) {
+    problems.push(`The quote is too long to read while this scene is spoken. Pick a sentence of at most ${quoteWords(narration)} words, or another kind.`);
   }
   const hint =
     problems.length > 0 && visual.kind !== "text" && others.length > 0
@@ -1215,6 +1230,7 @@ function repairScene(
         event.date !== undefined && isDayAndMonth(event.date) && statesDate(event.date, facts.get(event.factId)?.text ?? "", event.year);
       const backed = visual.events.map((event) => (event.date && !dateIsBacked(event) ? { ...event, date: undefined } : event));
       const focus = backed[visual.focusIndex];
+      if (focus && !focusIsTold(focus.label, scene.narration)) return fallback;
       const key = (event: (typeof backed)[number]) => timeKey(event.year, event.date);
       const events = backed
         .filter((event) => eventIsBacked(event, facts) && safeLabel(event.label) && event.label.length <= maxEventLabelChars(visual.events.length))
@@ -1363,6 +1379,8 @@ function repairScene(
       const repaired = { ...visual, title, items, links };
       return visualProblems(repaired, allowed, facts, source).length === 0 ? repaired : fallback;
     }
+    case "quote":
+      return visualProblems(visual, allowed, facts, source).length === 0 && quoteFits(visual.text, scene.narration) ? visual : fallback;
     default:
       return visualProblems(visual, allowed, facts, source).length === 0 ? visual : fallback;
   }
@@ -1587,10 +1605,14 @@ async function verifyMarkers(
   visuals.forEach((visual, index) => {
     if (visual.kind !== "map") return;
     for (const marker of visual.markers) if (!contextOf.has(marker.label)) contextOf.set(marker.label, narrations[index]);
+    // A label on a country is asked about too: "Caffa" once stood on Georgia, and it is a port in Crimea.
+    for (const highlight of visual.highlights) {
+      if (highlight.label && !isCountryName(highlight.label, highlight.country) && !contextOf.has(highlight.label)) contextOf.set(highlight.label, narrations[index]);
+    }
   });
   const places = [...contextOf.keys()];
   if (places.length === 0) return { visuals, usage: emptyUsage() };
-  let secondOpinion = new Map<string, { isPlace: boolean; country: string; lat: number; lon: number }>();
+  let secondOpinion = new Map<string, { isPlace: boolean; isCity: boolean; country: string; lat: number; lon: number }>();
   let usage = emptyUsage();
   try {
     const reply = await chatJson({
@@ -1598,7 +1620,7 @@ async function verifyMarkers(
       schemaName: "places",
       schema: z.object({
         places: z
-          .array(z.object({ isPlace: z.boolean(), country: z.string(), lat: z.number(), lon: z.number() }))
+          .array(z.object({ isPlace: z.boolean(), isCity: z.boolean(), country: z.string(), lat: z.number(), lon: z.number() }))
           .length(places.length),
       }),
       messages: placesPrompt(title, places.map((name) => ({ name, context: contextOf.get(name) ?? "" }))),
@@ -1625,11 +1647,23 @@ async function verifyMarkers(
         return km <= MAX_MARKER_GAP_KM;
       });
       if (markers.length < visual.markers.length) console.warn(`[direct/places] Dropped ${visual.markers.length - markers.length} marker(s)`);
+      // A country labeled with a city, or with a place that lies in another country, loses the label: cities are
+      // markers. Then the country stays bright only if the scene names it. A region the country lies in, like Central
+      // Asia, keeps its label whatever country the second opinion gives for it.
+      const misplaced = (label: string, country: string) => {
+        const other = secondOpinion.get(label);
+        return other !== undefined && (other.isCity || (other.isPlace && other.country.toUpperCase() !== country && !namesRegionOf(label, country)));
+      };
+      const highlights = visual.highlights.map((highlight) =>
+        highlight.label && misplaced(highlight.label, highlight.country) ? { ...highlight, label: undefined } : highlight,
+      );
+      const unlabeled = highlights.filter((highlight, index) => highlight.label !== visual.highlights[index].label).length;
+      if (unlabeled > 0) console.warn(`[direct/places] Took a city's name off ${unlabeled} countr${unlabeled === 1 ? "y" : "ies"}`);
       // A route stop at a dropped marker goes too, rather than being looked up by name in the table, where the same
       // name may be another city.
       const dropped = new Set(visual.markers.filter((marker) => !markers.includes(marker)).map((marker) => marker.label.trim().toLowerCase()));
       const routes = visual.routes.map((route) => ({ ...route, stops: route.stops.filter((stop) => !dropped.has(stop.trim().toLowerCase())) }));
-      return { ...visual, markers, routes };
+      return { ...visual, highlights, markers, routes };
     }),
   };
 }
