@@ -79,7 +79,7 @@ Factory, Tavily, ElevenLabs, Vercel, Vercel Blob, zod, d3-geo, Natural Earth.
 
 ## Testing instructions
 
-1. Open the demo URL.
+1. Open https://meko-kappa.vercel.app.
 2. Choose **Watch** to scroll through videos Meko made. Open **Fact-check** under a video to see each sentence with the
    source words behind it, and click a sentence to play the video from there.
 3. To make a video, go back to the start page, type a topic, pick an audience and a length, and choose **Make video**.
