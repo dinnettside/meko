@@ -6,12 +6,7 @@ import { useTheme } from "./theme";
 
 type CaptionLine = { words: TimedWord[]; start: number };
 
-// Without recorded timings, spread the words evenly over the scene, leaving a short pause at the end.
-export function estimateWords(narration: string, durationSec: number): TimedWord[] {
-  const texts = narration.split(/\s+/).filter(Boolean);
-  const step = Math.max(0.5, durationSec - 0.6) / Math.max(1, texts.length);
-  return texts.map((text, index) => ({ text, start: index * step, end: (index + 1) * step }));
-}
+export { estimateWords } from "./timing";
 
 // Short caption lines: at most 7 words, a new line after each sentence, and after a comma once a line has 4 words.
 function captionLines(words: TimedWord[]): CaptionLine[] {

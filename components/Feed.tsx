@@ -1,6 +1,7 @@
 "use client";
 
 import type { PlayerRef } from "@remotion/player";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -9,16 +10,22 @@ import { checkedLine } from "@/lib/example";
 import type { FeedItem } from "@/lib/example";
 import { viewerName } from "@/lib/names";
 import type { FeedComment, VideoSocial } from "@/lib/social";
-import { sceneSites } from "@/remotion/SourceChip";
+import { sceneSites } from "@/remotion/sites";
 import { FactCheckReport } from "./FactCheckReport";
 import { loadSavedVideo } from "./saved-video";
 import type { SavedVideo } from "./saved-video";
 import { sentenceSpans } from "./sentence-timing";
-import { StoryboardPlayer } from "./StoryboardPlayer";
 import { ThemeToggle } from "./ThemeToggle";
 
 // The feed: videos made by Meko, one per screen, played as they scroll into view, with likes and comments without an
 // account, the fact-check behind each one, and a search through all of them.
+
+// The player and the whole video, with its scenes, drawings and maps, load only when a video is shown, so the page
+// itself opens fast on a phone.
+const StoryboardPlayer = dynamic(() => import("./StoryboardPlayer").then((module) => module.StoryboardPlayer), {
+  ssr: false,
+  loading: () => <div className="aspect-video w-full bg-black" />,
+});
 
 const VIEWER_KEY = "meko-viewer";
 const COMMENT_CHARS = 280;
@@ -323,11 +330,13 @@ function ActionButton({
   pressed?: boolean;
   children: React.ReactNode;
 }) {
+  // The name read aloud holds what the button shows, so voice control finds it by its number or word too.
+  const name = [label, count !== undefined ? String(count) : null, text && !label.includes(text) ? text : null].filter(Boolean).join(", ");
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={label}
+      aria-label={name}
       aria-pressed={pressed}
       title={label}
       className="flex h-10 items-center gap-1.5 rounded-full border border-rule px-3.5 text-sm text-fg transition-colors hover:bg-surface"

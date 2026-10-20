@@ -15,13 +15,20 @@ import type { Source, Storyboard } from "@/lib/storyboard";
 import type { SceneVoice, VoiceResult } from "@/lib/voice";
 import { FactCheckReport } from "./FactCheckReport";
 import { loadSavedVideo } from "./saved-video";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { HowItWorks } from "./HowItWorks";
 import { sentenceSpans } from "./sentence-timing";
 import { SiteFooter, SiteHeader } from "./SiteChrome";
-import { StoryboardPlayer } from "./StoryboardPlayer";
-import { sceneSites } from "@/remotion/SourceChip";
+import { sceneSites } from "@/remotion/sites";
+
+// The player and the whole video, with its scenes, drawings and maps, load only when a video is shown, so the page
+// itself opens fast on a phone.
+const StoryboardPlayer = dynamic(() => import("./StoryboardPlayer").then((module) => module.StoryboardPlayer), {
+  ssr: false,
+  loading: () => <div className="aspect-video w-full bg-black" />,
+});
 
 type StepId = "research" | "script" | "factcheck" | "direct" | "voice";
 type StepState = {

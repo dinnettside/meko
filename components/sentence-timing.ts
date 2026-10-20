@@ -1,8 +1,7 @@
 import type { SentenceCheck } from "@/lib/pipeline";
 import type { Storyboard } from "@/lib/storyboard";
 import type { SceneVoice } from "@/lib/voice";
-import { estimateWords } from "@/remotion/Caption";
-import { sceneFrames, sceneStarts } from "@/remotion/StoryboardVideo";
+import { estimateWords, sceneFrames, sceneStarts } from "@/remotion/timing";
 
 export type SentenceSpan = { sentenceId: string; startFrame: number; endFrame: number };
 
