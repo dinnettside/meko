@@ -148,7 +148,7 @@ Current phase: **4**
 - [x] Deploy to Vercel with environment variables
 - [x] README: setup, architecture, how Nemotron and Token Factory are used
 - [ ] Design polish, demo video (under 3 min, public on YouTube), Devpost text
-- [ ] Make the repo public
+- [ ] Make the repo public (Trym does it right before submitting on Oct 29; a hackathon rule, and it must stay public through judging, Dec 1-15. History checked for secrets on Oct 20: none)
 
 ## How to work with Trym
 
