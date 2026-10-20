@@ -24,6 +24,12 @@ const BYTES_PER_SECOND = 64_000 / 8;
 // Norwegian uses Flash v2.5.
 const MODELS = { en: "eleven_multilingual_v2", no: "eleven_flash_v2_5" } as const;
 
+const SUBSCRIPTION_URL = "https://api.elevenlabs.io/v1/user/subscription";
+// Fewer characters than this left counts as low: about ten videos (one uses about 1,000).
+const LOW_VOICE_CHARACTERS = 10_000;
+
+const SubscriptionSchema = z.object({ character_count: z.number(), character_limit: z.number(), status: z.string() });
+
 const AlignmentSchema = z.object({
   characters: z.array(z.string()),
   character_start_times_seconds: z.array(z.number()),
@@ -156,4 +162,19 @@ export async function speak(input: {
     `[elevenlabs] ${input.text.length} characters, ${durationSec.toFixed(1)} s of speech, ${Math.round(performance.now() - started)} ms`,
   );
   return { audioBase64: speech.audio_base64, durationSec, words };
+}
+
+// Whether this month's voice characters are running out, for the daily health check, from ElevenLabs' subscription
+// endpoint, which costs nothing: "ok", "low" or "out". "unknown" when the key may not read the subscription, and
+// "off" without a voice. A subscription with an unpaid invoice counts as low, since it may stop.
+export async function voiceCredits(): Promise<"ok" | "low" | "out" | "unknown" | "off"> {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey || !voiceIsConfigured()) return "off";
+  const response = await fetch(SUBSCRIPTION_URL, { headers: { "xi-api-key": apiKey }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+  if (response.status === 401 || response.status === 403) return "unknown";
+  if (!response.ok) throw new Error(`ElevenLabs subscription failed with HTTP ${response.status}`);
+  const subscription = SubscriptionSchema.parse(await response.json());
+  const left = subscription.character_limit - subscription.character_count;
+  if (left <= 0) return "out";
+  return left < LOW_VOICE_CHARACTERS || ["past_due", "incomplete"].includes(subscription.status) ? "low" : "ok";
 }

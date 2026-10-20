@@ -66,6 +66,20 @@ function getModel(role: ModelRole = "main"): string {
   return process.env.NEBIUS_MODEL || DEFAULT_MAIN_MODEL;
 }
 
+// One token from the fast model, for the daily health check (app/api/health): it fails when Token Factory turns the
+// key away or the account is out of credit. Logged like every call; it costs about $0.000002.
+export async function pingModel(): Promise<Usage> {
+  const { usage } = await callModel(
+    "health",
+    { messages: [{ role: "user", content: "Answer with the word OK." }], max_tokens: 1 },
+    { timeoutMs: 15_000, retryUntil: Date.now() },
+    true,
+    false,
+    "fast",
+  );
+  return usage;
+}
+
 export function emptyUsage(): Usage {
   return { calls: 0, promptTokens: 0, completionTokens: 0, costUsd: 0 };
 }

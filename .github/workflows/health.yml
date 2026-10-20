@@ -1,6 +1,7 @@
 # Checks the live demo once a day through the judging period, and fails (GitHub then emails the repository's owner)
-# when the start page, the feed, a saved video or the API is down, or when the API no longer asks for the demo code.
-# Nothing here spends API credits: the API check sends no demo code, so it is refused before any model call.
+# when the start page, the feed, a saved video or the API is down, when the API no longer asks for the demo code, or
+# when the language model, the web search or the voice is out of credit or running low. The API check sends no demo
+# code, so it is refused before any model call; the credit check (/api/health) spends one token of the fast model.
 name: Health check
 
 on:
@@ -28,3 +29,16 @@ jobs:
           status=$(curl -s -o body.json -w "%{http_code}" --max-time 30 -X POST "$SITE/api/research" -H "Content-Type: application/json" -d '{}')
           cat body.json; echo
           test "$status" = "401" || { echo "Expected 401 without a demo code, got $status"; exit 1; }
+      - name: The language model, the search and the voice have credit left
+        run: |
+          curl -fsS --max-time 60 "$SITE/api/health" -o health.json
+          cat health.json; echo
+          failed=""
+          for service in models search voice; do
+            state=$(jq -r ".$service" health.json)
+            case "$state" in
+              ok|off|unknown) ;;
+              *) echo "::error::$service is $state (low: little credit left; out: none left; error: the service did not answer)"; failed=1 ;;
+            esac
+          done
+          test -z "$failed"

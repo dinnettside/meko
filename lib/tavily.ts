@@ -6,6 +6,20 @@ import { z } from "zod";
 const SEARCH_URL = "https://api.tavily.com/search";
 const TIMEOUT_MS = 20_000;
 
+const USAGE_URL = "https://api.tavily.com/usage";
+// Fewer search credits than this left counts as low: about a dozen videos (one uses 10 to 18).
+const LOW_SEARCH_CREDITS = 200;
+
+const UsageSchema = z.object({
+  key: z.object({ usage: z.number(), limit: z.number().nullish() }),
+  account: z.object({
+    plan_usage: z.number(),
+    plan_limit: z.number(),
+    paygo_usage: z.number().nullish(),
+    paygo_limit: z.number().nullish(),
+  }),
+});
+
 const SearchResponseSchema = z.object({
   results: z.array(
     z.object({
@@ -69,4 +83,17 @@ export async function searchWeb(query: string): Promise<SearchResult[]> {
   const { results } = SearchResponseSchema.parse(await response.json());
   console.log(`[tavily] "${query}": ${results.length} results, ${Math.round(performance.now() - started)} ms`);
   return results;
+}
+
+// Whether this month's search credits are running out, for the daily health check, from Tavily's usage endpoint, which
+// costs nothing: "ok", "low" or "out". "unknown" without a key. The numbers may lag a little behind the searches.
+export async function searchCredits(): Promise<"ok" | "low" | "out" | "unknown"> {
+  if (!process.env.TAVILY_API_KEY) return "unknown";
+  const response = await fetch(USAGE_URL, { headers: headers(), signal: AbortSignal.timeout(TIMEOUT_MS) });
+  if (!response.ok) throw new Error(`Tavily usage failed with HTTP ${response.status}`);
+  const { key, account } = UsageSchema.parse(await response.json());
+  // plan_usage counts every credit, those billed as pay-as-you-go after the plan ran out too.
+  const accountLeft = Math.max(0, account.plan_limit - account.plan_usage) + Math.max(0, (account.paygo_limit ?? 0) - (account.paygo_usage ?? 0));
+  const left = key.limit == null ? accountLeft : Math.min(accountLeft, key.limit - key.usage);
+  return left <= 0 ? "out" : left < LOW_SEARCH_CREDITS ? "low" : "ok";
 }
