@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { barIsStated, hasPhrase, isNotAPerson, isYearLike, roleOf, statedTogether } from "./grounding.ts";
+import { barIsStated, hasPhrase, isNotAPerson, isYearLike, roleOf, statedTogether, unitKey, unitSaidWith } from "./grounding.ts";
 import { iconKey } from "./icons.ts";
 import { isDateIn, isNameNumber, numbersIn, statesDate, yearsIn } from "./numbers.ts";
 import { groundedWords, sameWords, sentencesOf } from "./words.ts";
@@ -92,6 +92,18 @@ const DEMAND_RISES = /\b(demand\s+(?:\w+\s+){0,2}(?:rose|rises|rising|increas\w*
 const DEMAND_FALLS = /\b(demand\s+(?:\w+\s+){0,2}(?:fell|falls|falling|dropp\w*|drops|decreas\w*|declin\w*|shr[ai]nk\w*|collaps\w*|went down)|(?:falling|lower|less|weaker|decreased|declining)\s+demand)\b/i;
 const SUPPLY_RISES = /\b(supply\s+(?:\w+\s+){0,2}(?:rose|rises|rising|increas\w*|grew|grows|growing|jumped|soared|surged|went up)|(?:rising|higher|greater|growing|increased|bigger|more)\s+(?:\w+\s+)?supply|surplus|glut)\b/i;
 const SUPPLY_FALLS = /\b(supply\s+(?:\w+\s+){0,2}(?:fell|falls|falling|dropp\w*|drops|decreas\w*|declin\w*|shr[ai]nk\w*|collaps\w*|went down|ran out)|(?:shatter\w*|collaps\w*|cut|reduc\w*|shr[ai]nk\w*|disrupt\w*)\s+(?:\w+\s+){0,2}supply|(?:falling|lower|less|smaller|reduced|shrinking)\s+(?:\w+\s+)?supply|shortages?|scarc\w*)\b/i;
+
+// Units that measure the same thing, so two numbers in them side by side are one number twice: "30,000 °C" and
+// "50,000 °F" in a lightning video.
+const MEASURE_FAMILIES = [
+  /^(°\s?c|°\s?f|celsius|fahrenheit|kelvin|degrees( celsius| fahrenheit)?)$/i,
+  /^(km|kilomet(re|er)s?|mi|miles?)$/i,
+  /^(kg|kilograms?|lbs?|pounds?)$/i,
+  /^(m|metres?|meters?|ft|feet|foot)$/i,
+  /^(km\/h|mph|kilomet(re|er)s per hour|miles per hour)$/i,
+];
+const sameMeasure = (a?: string, b?: string) =>
+  Boolean(a && b) && unitKey(a ?? "") !== unitKey(b ?? "") && MEASURE_FAMILIES.some((family) => family.test((a ?? "").trim()) && family.test((b ?? "").trim()));
 
 const namedTogether = (a: string, b: string, source: string) =>
   sentencesOf(source).some((sentence) => groundedWords(a, sentence).matched > 0 && groundedWords(b, sentence).matched > 0);
@@ -501,9 +513,19 @@ export const TEMPLATES = {
     check: (visual, { source }) => [
       ...distinct(visual.stats.map((stat) => stat.label), "Two numbers have the same label."),
       ...visual.stats.flatMap((stat) => amountProblems(stat, source)),
+      ...visual.stats.flatMap((stat) => {
+        const said = unitSaidWith(stat.value, source);
+        return said && !stat.unit ? [`Give the unit the narration gives with ${stat.value}: "${said}".`] : [];
+      }),
+      ...(visual.stats.some((stat, index) => visual.stats.slice(0, index).some((other) => sameMeasure(stat.unit, other.unit)))
+        ? ["Two numbers show the same thing in two units. Show it once."]
+        : []),
     ],
     repair: (visual, keep, { source }) => {
-      const stats = visual.stats.filter((stat) => keep(stat.label, 5) && keep(stat.unit, 2) && amountProblems(stat, source).length === 0);
+      const stats = visual.stats
+        .map((stat) => (stat.unit ? stat : { ...stat, unit: unitSaidWith(stat.value, source) }))
+        .filter((stat) => keep(stat.label, 5) && keep(stat.unit, 2) && amountProblems(stat, source).length === 0)
+        .filter((stat, index, all) => !all.slice(0, index).some((other) => sameMeasure(stat.unit, other.unit)));
       return stats.length >= 2 && distinct(stats.map((stat) => stat.label), "").length === 0 ? { ...visual, stats } : null;
     },
     params: (visual) => ({

@@ -68,6 +68,21 @@ export const unitKey = (unit: string) => {
   return (UNIT_NAMES[word] ?? word).replace(/s$/, "");
 };
 
+// The unit a text gives right after a number, as in "30-metre steps", "30 metres" or "30,000 degrees Celsius", in the
+// plural for any number but 1. A big number shows it, so "30" never stands alone for 30-metre steps.
+const SAID_UNIT = /^[\s-]*(%|(?:metres?|meters?|kilometres?|kilometers?|km|miles?|feet|foot|ft|centimetres?|centimeters?|cm|millimetres?|millimeters?|mm|kilograms?|kg|grams?|tonnes?|tons?|pounds?|lbs?|degrees(?:\s+(?:Celsius|Fahrenheit))?|percent|per cent|seconds?|minutes?|hours?|days?|weeks?|months?|years?|million|billion|thousand)\b)/i;
+export function unitSaidWith(value: number, text: string): string | undefined {
+  const plain = text.replace(/(\d),(\d{3})/g, "$1$2");
+  const number = String(value).replace(".", "\\.");
+  for (const match of plain.matchAll(new RegExp(`(^|[^\\d.])${number}(?![\\d.])`, "g"))) {
+    const unit = SAID_UNIT.exec(plain.slice((match.index ?? 0) + match[0].length))?.[1];
+    if (!unit) continue;
+    if (value === 1 || /s$|^(%|percent|per cent|feet|ft|km|cm|mm|kg|lbs?|million|billion|thousand)$|^degrees/i.test(unit)) return unit;
+    return unit.toLowerCase() === "foot" ? "feet" : `${unit}s`;
+  }
+  return undefined;
+}
+
 // The amounts a text gives: not the day of a date like "9 November", and not a number in a name like "Apollo 11".
 export const amountsFor = (text: string) =>
   amountsIn(text).filter((amount) => {

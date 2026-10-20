@@ -253,8 +253,9 @@ export function runAnims(list, p, t) {
       case 'hl': e.setAttribute('transform', `translate(${a.x0} 0) scale(${Math.max(0.0001, ease.io(q)).toFixed(4)} 1) translate(${-a.x0} 0)`); break;
       case 'type': { const s = a.txt.slice(0, Math.round(a.txt.length * q)); if (s !== a.last) { e.textContent = s; a.last = s; } break; }
       // Meko: a count toward 10,000 or more uses thousands separators all the way, so it does not jump from 9999 to 10,001.
-      // A count from zero stays hidden until it starts, so no zero waits on screen.
-      case 'count': { if (a.from === 0) e.setAttribute('opacity', p >= a.at ? '1' : '0'); const s = a.pre + fmtNum(lerp(a.from, a.to, ease.io(q)), a.dec, a.sep || (Math.max(Math.abs(a.from), Math.abs(a.to)) >= 10000 ? 'always' : '')) + a.suf; if (s !== a.last) { e.textContent = s; a.last = s; } break; }
+      // A count from zero stays hidden until it starts, so no zero waits on screen. A small whole number shows as it is:
+      // counting from 0 to 1 showed a "0 nanosecond" that no source says.
+      case 'count': { if (a.from === 0) e.setAttribute('opacity', p >= a.at ? '1' : '0'); const small = !a.dec && Math.abs(a.to - a.from) < 10; const s = a.pre + fmtNum(small ? a.to : lerp(a.from, a.to, ease.io(q)), a.dec, a.sep || (Math.max(Math.abs(a.from), Math.abs(a.to)) >= 10000 ? 'always' : '')) + a.suf; if (s !== a.last) { e.textContent = s; a.last = s; } break; }
       case 'rot': e.setAttribute('transform', `${a.base} rotate(${lerp(a.a0, a.a1, ease.io(q)).toFixed(2)} ${a.cx} ${a.cy})`); break;
       case 'wipe': e.setAttribute('width', Math.max(0, a.w * ease.io(q)).toFixed(1)); break;
       case 'move': { const k = ease.io(q); e.setAttribute('transform', `${a.base} translate(${lerp(a.x0, a.x1, k).toFixed(1)} ${lerp(a.y0, a.y1, k).toFixed(1)})`); break; }

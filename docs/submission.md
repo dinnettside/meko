@@ -100,14 +100,19 @@ round of Tavily searches fills it.
 
 ## Demo video script (under 3 minutes)
 
+Make the video live with the topic "How do rockets reach space?", for high school, in about 60 seconds. Tested on
+Oct 20, 2026: all 9 sentences supported, a diagram of the forces on the rocket, and the animated launch with its stages
+falling away on the way to orbit, in about 45 seconds for about 5 cents. Do not make this topic on the site before
+recording: once it is made, the same request plays at once from the library. That can be a shot of its own at the end.
+
 | Time | Picture | Voice |
 | --- | --- | --- |
 | 0:00 | The start page | "AI can make a video about anything. But can you trust what it says?" |
-| 0:10 | Type a topic, choose Make video | "Meko makes short explainer videos you can check. I ask for how airplanes fly, for high school, in about a minute." |
-| 0:20 | The progress steps | "An agent built on NVIDIA Nemotron, on Nebius Token Factory, plans searches and Tavily runs them. Nemotron pulls out facts, each with the exact words from its source, writes the script and fact-checks every claim." |
-| 0:45 | The video plays | "About a minute later the video plays. Every picture is drawn in code: the wing, the forces, the captions that follow the voice." |
+| 0:10 | Type the topic, choose Make video | "Meko makes short explainer videos you can check. I ask how rockets reach space, for high school, in about a minute." |
+| 0:20 | The progress steps | "An agent built on NVIDIA Nemotron, on Nebius Token Factory, checks the topic and plans searches, and Tavily runs them. Nemotron pulls out facts, each with the exact words from its source, writes the script and fact-checks every claim." |
+| 0:45 | The video plays | "About a minute later the video plays. Every picture is drawn in code: the forces on the rocket, the stages burning out, the path into orbit, and captions that follow the voice." |
 | 1:15 | The fact-check report, click a sentence | "Next to it, every sentence with the source words behind it. Click one and the video jumps there." |
 | 1:35 | The feed, open the Black Death fact-check | "In the feed, here is the Black Death. Four sentences were rewritten, because the sources only say the plague might have ended feudalism. Meko says what its sources say, no more." |
 | 2:00 | Like, comment, search | "Anyone can watch, like and comment, without an account." |
-| 2:15 | README section on checks, or a slide | "Under the hood: Nemotron 3 Ultra for reasoning, Lightning for the many small calls, and checks in code for every number, place and label on screen." |
+| 2:15 | Ask for the rocket video again | "Ask for the same video again and it plays at once from the library, for free. Making it took about 5 cents of Nemotron calls: Ultra for the reasoning, Super for directing the scenes, Lightning for the many small calls." |
 | 2:40 | The start page | "Meko. Explainer videos you can check. The code is open source under the MIT license." |

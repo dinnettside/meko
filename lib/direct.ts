@@ -35,6 +35,7 @@ import {
   roleOf,
   statedTogether,
   unitKey,
+  unitSaidWith,
 } from "./grounding.ts";
 import { BACKDROPS, DRAWING_TONES, FIGURE_LOOKS, SPACE_BODIES, StoryboardSchema, storyboardProblems } from "./storyboard.ts";
 import { ICON_NAMES, iconKey } from "./icons.ts";
@@ -840,6 +841,9 @@ function visualProblems(visual: SceneVisual, allowed: Set<string>, facts: FactMa
     }
     case "stat": {
       if (tooLong(visual.label, MAX_LINE_WORDS)) problems.push("The stat label is too long. Use at most 8 words.");
+      // A number the narration gives with a unit shows it: "30" alone stood for 30-metre steps.
+      const said = unitSaidWith(visual.value, source);
+      if (said && !visual.unit) problems.push(`Give the unit the narration gives with ${visual.value}: "${said}".`);
       if (visual.unit && tooLong(visual.unit, 2)) problems.push("The unit is too long. Use one or two words, like million or km.");
       // A percentage is already out of 100. Other totals draw value out of total as dots, so the narration must say
       // exactly that.
@@ -1318,8 +1322,11 @@ function repairScene(
     }
     case "stat": {
       // Most often only the total or the end of the range is wrong. Without them the number may still stand. A range
-      // is never made up here: a number the narration gives as a range shows as lines instead.
-      const tries = [visual, { ...visual, total: undefined }, { ...visual, valueMax: undefined }, { ...visual, total: undefined, valueMax: undefined }];
+      // is never made up here: a number the narration gives as a range shows as lines instead. A missing unit the
+      // narration gives is filled in.
+      const said = unitSaidWith(visual.value, source);
+      const base = said && !visual.unit ? { ...visual, unit: said } : visual;
+      const tries = [base, { ...base, total: undefined }, { ...base, valueMax: undefined }, { ...base, total: undefined, valueMax: undefined }];
       return tries.find((attempt) => visualProblems(attempt, allowed, facts, source).length === 0) ?? fallback;
     }
     case "people": {
