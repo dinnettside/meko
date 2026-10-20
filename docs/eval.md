@@ -34,3 +34,67 @@ The director's calls for each scene now use `nvidia/nemotron-3-super-120b-a12b` 
 - Scenes shown as plain text: 9 of 84 (11 %), as before.
 - The other steps cost $0.026 per video in the run above, and the new topic check adds $0.0004, so a video now costs about $0.065 in Token Factory calls.
 
+
+## Trust test, 2026-10-20: planted errors and a hand-check against the source pages
+
+The table above counts the fact-check's own verdicts. These two checks test the fact-check against answers known in
+advance, so they do not rest on the model's word.
+
+### Planted errors
+
+We wrote 44 sentences that each contain one known error, built from real facts in nine of the saved runs above, and
+14 faithful sentences as controls. Each sentence cites the fact it was built from. All 58 went through
+`factCheck` in `lib/factcheck.ts`, the same code the app runs (two Ultra checks side by side, with links and hedges
+spelled out as claims). A planted error counts as caught when its sentence came back revised or removed.
+
+| Error | Example: planted, then the fact-check's version | Caught |
+| --- | --- | --- |
+| Number | "lift ships 36 meters" became "lift ships 26 meters" | 7 of 7 |
+| Date | "invented the Daniell cell in 1863" became "in 1836" | 6 of 6 |
+| Order | "first a tropical storm at 35 knots, and then a tropical depression at 20 knots" was put back in order | 6 of 6 |
+| Cause | "Because Vasco da Gama reached India in 1498, Cabral discovered Brazil" lost its "because" | 6 of 6 |
+| Hedge | "Exactly 1 million people died" became "Approximately 1 million" | 7 of 7 |
+| Person | "hired by President Taft" became "by President Roosevelt" | 6 of 6 |
+| Place | "Columbus died in Seville" became "in Valladolid" | 6 of 6 |
+| **All errors** | 38 revised, 6 removed | **44 of 44** |
+| Controls | kept as written | 14 of 14 (no false alarms) |
+
+- We read all 38 revised sentences: each was put back to what its source says.
+- Before commit `a171309`, which spells out a source's hedge as a claim of its own, the same test caught 43 of 44. The
+  miss was a hedge: "Variations in Earth's axial tilt cause long-term climatic change" passed, although its source
+  says they likely do.
+- The run cost $0.075 in Token Factory calls.
+- Limits: the errors are single, clear changes in short sentences, written for this test rather than taken from real
+  mistakes. With 6 or 7 sentences of each type, a perfect score shows only that the catch rate per type is likely above
+  54 to 59 %, and above 92 % for all 44 together (95 % confidence). The hand-check below shows the kind of error that
+  gets through.
+
+The sentences, the facts behind them and every verdict are in `docs/trust-test/planted-errors.json`.
+
+### Hand-check of 30 feed claims against the source pages
+
+From each of the ten feed videos we took the three sentences with the most checkable detail (numbers, names and
+places), 30 sentences backed by 82 quotes on 41 pages, and read each against the source page itself rather than the
+quote Meko saved. Where a site blocked automated access we used an archived copy, the PDF or the Europe PMC API.
+
+- Quotes: 74 of 82 were found word for word on their page or its archived copy, and none differed from it. The other 8
+  could not be checked: 4 are on Khan Academy pages that load their text with JavaScript and 4 on Britannica pages that
+  block automated access.
+- Sentences: 25 of 30 are supported by their pages, 5 partly and none is contradicted.
+
+| Video | Sentence | What the source says | Now |
+| --- | --- | --- | --- |
+| The Black Death | "It entered Europe in 1347 when Mongols catapulted infected corpses into Caffa during a siege." | It was "reportedly" first introduced this way | Fixed: "It reportedly entered Europe" |
+| Volcanoes | "The 1991 Pinatubo eruption shot over 250 megatons of gas into the upper air in one day." | It "is thought to have" injected the gas | Fixed: "is thought to have shot" |
+| The Black Death | "... and launched the first public health responses." | "leading to early forms of quarantine and disease control" | As made: "first" says more than "early forms" |
+| The Berlin Wall | "A single border guard's decision opened the Berlin Wall on November 9, 1989." | He opened "the largest checkpoint of the Berlin Wall" and was the senior Stasi officer on duty | As made: one checkpoint, and not a border guard |
+| The heart | "Your heart pumps blood in a continuous loop through chambers." | The quotes trace blood through the chambers and the lungs but do not say "continuous loop"; the page could not be checked | As made |
+
+Two more sentences are true on their pages but say more than the quote Meko saved: the earthquake video's opener
+("suddenly snap and slip", which the page describes but the quote does not) and the Apollo 11 splashdown date (July 24
+is in the sentence before the quote).
+
+What this shows: the fact-check catches clear errors of every type we planted, and the quotes are real. What gets
+through is overstatement: a word like "first" or "a single guard opened the Wall" that goes a step beyond the source.
+Meko shows every sentence next to its source words, so a viewer can see that step. All 30 verdicts, with links to the
+pages, are in `docs/trust-test/hand-check.md`.

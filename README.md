@@ -53,6 +53,8 @@ The result is a storyboard (plain JSON, see `lib/storyboard.ts`) that [Remotion]
 
 On 10 test topics across history, science, nature, the body and technology (none of them in the feed), every video finished, and 97% of the sentences were supported as written; the fact-check rewrote the rest. Asked for 90 seconds, Meko made videos of 66 to 81 seconds in about 42 seconds each, for about $0.15 in Token Factory calls, plus 3 to 12 Tavily searches and the voice. Since Nemotron 3 Super directs the scenes, the same videos come to about $0.065 each. See `docs/eval.md`.
 
+We also tested the fact-check against answers known in advance. It caught all 44 sentences with a planted error (wrong numbers, dates, order, causes, hedges, people and places) and left all 14 correct ones alone. Reading 30 feed claims against the source pages themselves, 25 were supported, 5 went a step beyond their source (two of them since fixed), and none was false; 74 of the 82 quotes behind them were found word for word on the pages, and the other 8 could not be checked. See the trust test in `docs/eval.md`.
+
 ## How Meko uses Nemotron and Token Factory
 
 - **Models.** Three Nemotron models on Nebius Token Factory, each where it does best, called with the `openai` SDK through Token Factory's OpenAI-compatible API (`https://api.tokenfactory.nebius.com/v1/`). `nvidia/Nemotron-3-Ultra-550b-a55b` does everything that needs careful reasoning: the topic check, planning the searches, writing the script, the fact-check, planning the video and checking every place on a map. `nvidia/nemotron-3-super-120b-a12b`, at about a third of Ultra's price, directs each scene: re-directing the ten eval videos with it cost $0.037 a video for that step instead of $0.120 with Ultra, about as fast, with the same share of plain-text scenes (11 %) and the same checks passed. `nvidia/Nemotron-3_5-Lightning`, at about 6 % of Ultra's price, does the fast everyday calls: pulling facts with their quotes out of each source page (many small calls at once) and naming the opening card. On the same topics, extraction with Lightning kept about 90 % as many facts at a sixth of the cost (Ultra still plans the searches; when Lightning planned them too, it read fewer sources), and the share of supported sentences held. We picked the models with `scripts/check-models.ts`, which tested the four Nemotron models on Token Factory for strict JSON, tool calling, speed and price; Ultra was the only one that got every storyboard right. See `docs/model-check.md`.
@@ -114,7 +116,7 @@ You need Node.js 22.18 or newer and npm.
 | `npm run start` | Serves the production build |
 | `npm run lint` | Runs ESLint |
 | `npm run typecheck` | Generates route types and runs the TypeScript compiler |
-| `npm run eval -- 2` | Makes videos for the first 2 of 10 test topics and writes `docs/eval.md`. Leave out the number to run all 10. Needs the app running and makes paid API calls |
+| `npm run eval -- 2` | Makes videos for the first 2 of 10 test topics and writes the table at the top of `docs/eval.md`. Leave out the number to run all 10. Needs the app running and makes paid API calls |
 | `npm run make-example -- black-death` | Remakes one video of the feed in `public/examples`, with its voice (the slugs are in `lib/example.ts`). Needs the app running and makes paid API calls |
 | `npm run check-models` | Tests the NVIDIA models on Token Factory and writes `docs/model-check.md`. Makes paid API calls, capped at 1 USD |
 

@@ -14,6 +14,26 @@ What would help builders most, in order:
 
 What worked well: strict `json_schema` made replies parse reliably (only answers cut off at `max_tokens` did not); with thinking off, Ultra was fast enough for a pipeline that makes a video in under a minute; the OpenAI-compatible API worked with the `openai` SDK unchanged; and Lightning, at about 6 % of Ultra's price, is a very good fit for many small extraction calls.
 
+## What we used
+
+Token Factory's OpenAI-compatible chat completions API and its models list, called from a Next.js app on Vercel, with three NVIDIA models: Nemotron 3 Ultra for reasoning (topic check, search plan, script, fact-check, video plan, place checks), Nemotron 3 Super for directing each scene, and Nemotron 3.5 Lightning for pulling facts out of source pages. Every call uses a strict JSON schema with thinking off. We did not use AI Cloud.
+
+## Onboarding: zero to hello world
+
+- With a key in hand, the first call needed nothing new: the `openai` npm SDK with `baseURL` set to `https://api.tokenfactory.nebius.com/v1/`. Our first script, which compared the four Nemotron 3 models on strict JSON, tool calling, speed and price (92 calls for $0.07), ran about 40 minutes after we started the project.
+- The time went into the docs, not the API: examples that do not run, two shapes for `json_schema`, no list of supported schema features, nothing on the thinking switch, and `supported_features` that leaves out JSON. Each one took a test to answer (details below).
+- The model IDs are spelled three ways: `nvidia/Nemotron-3-Ultra-550b-a55b`, `nvidia/nemotron-3-super-120b-a12b` and `nvidia/Nemotron-3_5-Lightning`. That makes them easy to get wrong, so we copy them from `/v1/models` instead of typing them.
+
+## Would we build with them again?
+
+Yes, for an app like Meko, for three reasons:
+
+- Strict JSON schemas hold, list lengths included, so a video can take more than 20 model calls with a check in code after each one.
+- Three sizes of one model family behind one API let each call go where it fits. Moving the scene calls from Ultra to Super and the extraction to Lightning cut the cost of a video from about $0.15 to about $0.065, with the same checks passed.
+- With thinking off, Ultra answers in a few seconds, fast enough to make a video while the viewer waits.
+
+What would make it an easy yes: prompt caching for shared prompt starts (most of our cost), complete docs for structured output, and a models list that names the features each model really has.
+
 ## Token Factory docs
 
 - The code examples on the [structured output page](https://docs.tokenfactory.nebius.com/ai-models-inference/json) do not run as written. The Python example is missing commas in `response_format` and after it. The cURL example sends `"response format"` (with a space) instead of `response_format`, and is also missing a comma.

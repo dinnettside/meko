@@ -1,0 +1,1173 @@
+{
+ "about": "Sentences with one known error each, built from real facts of saved Meko runs, plus faithful controls (error: null). Each went through lib/factcheck.ts on 2026-10-20. An error counts as caught when the sentence came back revised or removed. statusBeforeHedgeClaims is the same test before commit a171309. See docs/eval.md.",
+ "sentences": [
+  {
+   "topic": "How the Panama Canal was built",
+   "error": null,
+   "sentence": "Among the 136 delegates from 26 countries, 42 were engineers.",
+   "facts": [
+    {
+     "id": "f5",
+     "text": "The 1879 Congress included 136 delegates from 26 countries, with 42 engineers presenting technical proposals.",
+     "quote": "Among the 136 delegates of 26 countries, 42 were engineers and made technical proposals before the congress.",
+     "source": "https://en.wikipedia.org/wiki/History_of_the_Panama_Canal"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "How the internet sends data",
+   "error": null,
+   "sentence": "The cable is about 18,800 kilometres long.",
+   "facts": [
+    {
+     "id": "f12",
+     "text": "The cable is about 18,800 kilometres long",
+     "quote": "About 18,800 kilometres long, the cable provides the primary Internet backbone between South East Asia, the Indian subcontinent, the Middle East, and Europe.",
+     "source": "https://en.wikipedia.org/wiki/SEA-ME-WE_4"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "How hurricanes form",
+   "error": null,
+   "sentence": "Hurricanes cannot form within 300 miles of the equator, because there is no Coriolis effect there.",
+   "facts": [
+    {
+     "id": "f10",
+     "text": "Hurricanes cannot form within 300 miles of the equator due to lack of Coriolis effect",
+     "quote": "However, hurricanes cannot form within 300 miles (500 kilometers) of the equator because there is no Coriolis effect there.",
+     "source": "https://scied.ucar.edu/learning-zone/storms/how-hurricanes-form"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "The voyages of Christopher Columbus",
+   "error": null,
+   "sentence": "Columbus died in Valladolid in 1506.",
+   "facts": [
+    {
+     "id": "f21",
+     "text": "Columbus died in Valladolid in 1506 after returning from his voyages.",
+     "quote": "Surrounded by family and friends, Columbus died in Valladolid in 1506, rich but dissatisfied.",
+     "source": "http://www.encyclopedia.com/humanities/encyclopedias-almanacs-transcripts-and-maps/columbus-christopher-c-1451-1506"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "The voyages of Christopher Columbus",
+   "error": null,
+   "sentence": "On 3 August 1492, the expedition departed from the Port of Palos.",
+   "facts": [
+    {
+     "id": "f2",
+     "text": "The expedition departed from the Port of Palos on 3 August 1492.",
+     "quote": "On the morning of 3 August 1492, the expedition departed from the Port of Palos, going down the Rio Tinto.",
+     "source": "https://en.wikipedia.org/wiki/Voyages_of_Christopher_Columbus"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "The French Revolution",
+   "error": null,
+   "sentence": "Louis XVI was executed by guillotine on 21 January 1793 at the Place de la Révolution in Paris.",
+   "facts": [
+    {
+     "id": "f37",
+     "text": "Louis XVI was executed by guillotine on January 21, 1793, in Paris at the Place de la Révolution.",
+     "quote": "The execution of Louis XVI by guillotine is an important event of the French Revolution, it took place publicly on 21 January 1793 at the Place de la Révolution (renamed Place de la Concorde in 1795) in Paris.",
+     "source": "https://simple.wikipedia.org/wiki/Execution_of_Louis_XVI"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "The French Revolution",
+   "error": null,
+   "sentence": "The execution was performed by Charles-Henri Sanson, the High Executioner of the French First Republic.",
+   "facts": [
+    {
+     "id": "f40",
+     "text": "Charles-Henri Sanson performed the execution of Louis XVI as the High Executioner of the French First Republic.",
+     "quote": "The execution was performed four days later by Charles-Henri Sanson, who was the High Executioner of the French First Republic.",
+     "source": "https://simple.wikipedia.org/wiki/Execution_of_Louis_XVI"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "The partition of India in 1947",
+   "error": null,
+   "sentence": "Radcliffe arrived in India on 8 July 1947 and was given just five weeks to decide on a border.",
+   "facts": [
+    {
+     "id": "f7",
+     "text": "Radcliffe arrived in India on July 8, 1947, and had only five weeks to decide the border.",
+     "quote": "After arriving in India on 8 July 1947, Radcliffe was given just five weeks to decide on a border.",
+     "source": "https://en.wikipedia.org/wiki/Radcliffe_Line"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "The partition of India in 1947",
+   "error": null,
+   "sentence": "The House of Commons voted for the bill on 15 July 1947, and the House of Lords gave its consent the next day.",
+   "facts": [
+    {
+     "id": "f18",
+     "text": "The House of Commons voted for the bill on 15 July 1947 and the House of Lords gave consent on 16 July 1947.",
+     "quote": "On 15 July 1947 the House of Commons voted for the bill and the House of Lords gave its consent on the next day.",
+     "source": "https://en.wikipedia.org/wiki/Indian_Independence_Act,_1947"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "How hurricanes form",
+   "error": null,
+   "sentence": "At sustained winds of at least 20 knots a disturbance becomes a tropical depression, and at 35 knots it becomes a tropical storm.",
+   "facts": [
+    {
+     "id": "f12",
+     "text": "A tropical depression forms when sustained winds reach at least 20 knots",
+     "quote": "If sustained winds increase to at least 20 knots, a disturbance is upgraded to a tropical depression",
+     "source": "http://ww2010.atmos.uiuc.edu/(Gh)/guides/mtr/hurr/stages.rxml"
+    },
+    {
+     "id": "f13",
+     "text": "A tropical storm forms when sustained winds reach at least 35 knots",
+     "quote": "If sustained wind speeds increase to at least 35 knots, a tropical depression is upgraded to a tropical storm",
+     "source": "http://ww2010.atmos.uiuc.edu/(Gh)/guides/mtr/hurr/stages.rxml"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "The voyages of Christopher Columbus",
+   "error": null,
+   "sentence": "The whole company in all three ships likely numbered 90 men.",
+   "facts": [
+    {
+     "id": "f7",
+     "text": "The whole company in all three ships likely numbered 90 men",
+     "quote": "The whole company in all three ships likely numbered 90 men (Santa Maria 40, La Nina 24, La Pinta 26) although some historians cite 120 men.",
+     "source": "https://en.wikipedia.org/wiki/Pinta_(ship)"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "How the internet sends data",
+   "error": null,
+   "sentence": "Each datagram is sent on its own and may be routed via a different path.",
+   "facts": [
+    {
+     "id": "f25",
+     "text": "Each datagram in connectionless switching may be routed via a different path",
+     "quote": "Each datagram is dispatched independently and each may be routed via a different path.",
+     "source": "https://en.wikipedia.org/wiki/Circuit_switching"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "How the Panama Canal was built",
+   "error": null,
+   "sentence": "John Stevens, an engineer of the Great Northern Railroad, was hired by President Roosevelt.",
+   "facts": [
+    {
+     "id": "f9",
+     "text": "John F. Stevens was hired by President Roosevelt after serving as engineer of the Great Northern Railroad.",
+     "quote": "John Stevens, engineer of the Great Northern Railroad, was then hired by President Roosevelt.",
+     "source": "https://archives.rpi.edu/blog/2014/10/24/panama-canal-centennial-american-success"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "How batteries store energy",
+   "error": null,
+   "sentence": "In 1836, John Frederic Daniell invented the Daniell cell.",
+   "facts": [
+    {
+     "id": "f23",
+     "text": "John Frederic Daniell invented the Daniell cell in 1836 to solve the hydrogen bubble problem in Voltaic Piles.",
+     "quote": "An English professor of chemistry named John Frederic Daniell found a way to solve the hydrogen bubble problem in the Voltaic Pile by using a second electrolyte to consume the hydrogen produced by the first. In 1836, he invented the Daniell cell",
+     "source": "https://en.wikipedia.org/wiki/History_of_the_battery"
+    }
+   ],
+   "factCheck": {
+    "status": "supported",
+    "revised": null,
+    "reason": null
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "How the Panama Canal was built",
+   "error": "number",
+   "sentence": "Among the 236 delegates from 26 countries, 42 were engineers.",
+   "facts": [
+    {
+     "id": "f5",
+     "text": "The 1879 Congress included 136 delegates from 26 countries, with 42 engineers presenting technical proposals.",
+     "quote": "Among the 136 delegates of 26 countries, 42 were engineers and made technical proposals before the congress.",
+     "source": "https://en.wikipedia.org/wiki/History_of_the_Panama_Canal"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Among the 136 delegates from 26 countries, 42 were engineers.",
+    "reason": "The quote states 136 delegates, not 236."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How the internet sends data",
+   "error": "number",
+   "sentence": "The cable is about 8,800 kilometres long.",
+   "facts": [
+    {
+     "id": "f12",
+     "text": "The cable is about 18,800 kilometres long",
+     "quote": "About 18,800 kilometres long, the cable provides the primary Internet backbone between South East Asia, the Indian subcontinent, the Middle East, and Europe.",
+     "source": "https://en.wikipedia.org/wiki/SEA-ME-WE_4"
+    }
+   ],
+   "factCheck": {
+    "status": "removed",
+    "revised": null,
+    "reason": "The quote states the cable is about 18,800 kilometres long, not 8,800 kilometres long."
+   },
+   "statusBeforeHedgeClaims": "removed"
+  },
+  {
+   "topic": "How hurricanes form",
+   "error": "number",
+   "sentence": "The strongest hurricanes can exceed wind speeds of 200 miles per hour.",
+   "facts": [
+    {
+     "id": "f5",
+     "text": "The strongest hurricanes can exceed wind speeds of 157 miles per hour.",
+     "quote": "The strongest hurricanes can exceed wind speeds of 157 miles per hour.",
+     "source": "https://www.pbs.org/video/how-do-hurricanes-form-gnog7s"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "The strongest hurricanes can exceed wind speeds of 157 miles per hour.",
+    "reason": "The quote states 157 mph, not 200 mph."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How batteries store energy",
+   "error": "number",
+   "sentence": "The Daniell cell has an operating voltage of roughly 1.5 volts.",
+   "facts": [
+    {
+     "id": "f26",
+     "text": "The Daniell cell had an operating voltage of roughly 1.1 volts.",
+     "quote": "It has an operating voltage of roughly 1.1 volts",
+     "source": "https://en.wikipedia.org/wiki/History_of_the_battery"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "The Daniell cell has an operating voltage of roughly 1.1 volts.",
+    "reason": "The quote states the voltage is roughly 1.1 volts, not 1.5 volts."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The voyages of Christopher Columbus",
+   "error": "number",
+   "sentence": "A much larger expedition of 27 ships left Cádiz in 1493 to expand Spanish colonization.",
+   "facts": [
+    {
+     "id": "f34",
+     "text": "The second voyage, departing in 1493, consisted of 17 ships leaving Cádiz to expand Spanish colonization.",
+     "quote": "a much larger expedition of 17 ships left Cádiz on 25 September 1493 to expand Spanish colonization.",
+     "source": "https://www.worldhistory.org/image/14653/map-of-the-four-voyages-of-christopher-columbus-14"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "A much larger expedition of 17 ships left Cádiz in 1493 to expand Spanish colonization.",
+    "reason": "The quote states 17 ships, not 27."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How the Panama Canal was built",
+   "error": "number",
+   "sentence": "The Gatún Locks have 3 chambers and lift ships 36 meters.",
+   "facts": [
+    {
+     "id": "f17",
+     "text": "The Gatun locks have three chambers and lift ships 26 meters (85 feet).",
+     "quote": "Gatún Locks 3 chambers, +26 m (85 ft)",
+     "source": "https://en.wikipedia.org/wiki/Panama_Canal_locks"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "The Gatún Locks have 3 chambers and lift ships 26 meters.",
+    "reason": "The quote states the lift is 26 meters, not 36 meters."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The partition of India in 1947",
+   "error": "number",
+   "sentence": "Radcliffe was given just three weeks to decide on a border.",
+   "facts": [
+    {
+     "id": "f7",
+     "text": "Radcliffe arrived in India on July 8, 1947, and had only five weeks to decide the border.",
+     "quote": "After arriving in India on 8 July 1947, Radcliffe was given just five weeks to decide on a border.",
+     "source": "https://en.wikipedia.org/wiki/Radcliffe_Line"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Radcliffe was given just five weeks to decide on a border.",
+    "reason": "The quote says five weeks, not three."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The French Revolution",
+   "error": "date",
+   "sentence": "The storming of the Bastille took place on July 4, 1789.",
+   "facts": [
+    {
+     "id": "f15",
+     "text": "The storming of the Bastille occurred on July 14, 1789",
+     "quote": "storming of the Bastille, iconic conflict of the French Revolution. On July 14, 1789, fears that King Louis XVI was about to arrest France’s newly constituted National Assembly led a crowd of Parisians to successfully besiege the Bastille",
+     "source": "https://www.britannica.com/event/storming-of-the-Bastille"
+    }
+   ],
+   "factCheck": {
+    "status": "removed",
+    "revised": null,
+    "reason": "The quote states the storming occurred on July 14, 1789, not July 4, 1789."
+   },
+   "statusBeforeHedgeClaims": "removed"
+  },
+  {
+   "topic": "The French Revolution",
+   "error": "date",
+   "sentence": "Louis XVI was executed by guillotine on 21 January 1792.",
+   "facts": [
+    {
+     "id": "f37",
+     "text": "Louis XVI was executed by guillotine on January 21, 1793, in Paris at the Place de la Révolution.",
+     "quote": "The execution of Louis XVI by guillotine is an important event of the French Revolution, it took place publicly on 21 January 1793 at the Place de la Révolution (renamed Place de la Concorde in 1795) in Paris.",
+     "source": "https://simple.wikipedia.org/wiki/Execution_of_Louis_XVI"
+    }
+   ],
+   "factCheck": {
+    "status": "removed",
+    "revised": null,
+    "reason": "The quote states the execution took place on 21 January 1793, not 1792."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The partition of India in 1947",
+   "error": "date",
+   "sentence": "Radcliffe arrived in India on 8 June 1947.",
+   "facts": [
+    {
+     "id": "f7",
+     "text": "Radcliffe arrived in India on July 8, 1947, and had only five weeks to decide the border.",
+     "quote": "After arriving in India on 8 July 1947, Radcliffe was given just five weeks to decide on a border.",
+     "source": "https://en.wikipedia.org/wiki/Radcliffe_Line"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Radcliffe arrived in India on 8 July 1947.",
+    "reason": "The quote says 8 July 1947, not 8 June."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The voyages of Christopher Columbus",
+   "error": "date",
+   "sentence": "Columbus reached Guanahani in the Bahamas on 21 October.",
+   "facts": [
+    {
+     "id": "f31",
+     "text": "Columbus made his first landfall in the Americas on Guanahani in the Bahamas on October 12, 1492.",
+     "quote": "Columbus reached Guanahani (San Salvador) in the Bahamas on 12 October.",
+     "source": "https://www.worldhistory.org/image/14653/map-of-the-four-voyages-of-christopher-columbus-14"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Columbus reached Guanahani in the Bahamas on 12 October.",
+    "reason": "The quote states 12 October, not 21 October."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How batteries store energy",
+   "error": "date",
+   "sentence": "John Frederic Daniell invented the Daniell cell in 1863.",
+   "facts": [
+    {
+     "id": "f23",
+     "text": "John Frederic Daniell invented the Daniell cell in 1836 to solve the hydrogen bubble problem in Voltaic Piles.",
+     "quote": "An English professor of chemistry named John Frederic Daniell found a way to solve the hydrogen bubble problem in the Voltaic Pile by using a second electrolyte to consume the hydrogen produced by the first. In 1836, he invented the Daniell cell",
+     "source": "https://en.wikipedia.org/wiki/History_of_the_battery"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "John Frederic Daniell invented the Daniell cell in 1836.",
+    "reason": "The quote states the invention was in 1836, not 1863."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How the Panama Canal was built",
+   "error": "date",
+   "sentence": "Ancon made the first official transit of the canal on 15 August 1915.",
+   "facts": [
+    {
+     "id": "f23",
+     "text": "Ancon made the first official transit of the Panama Canal on August 15, 1914.",
+     "quote": "On 15 August 1914 Ancon made the first official transit of the canal with a delegation of some two hundred dignitaries aboard as part of the canal's opening ceremonies.",
+     "source": "https://en.wikipedia.org/wiki/SS_Ancon"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Ancon made the first official transit of the canal on 15 August 1914.",
+    "reason": "The quote states the date was August 15, 1914, not 1915."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The partition of India in 1947",
+   "error": "order",
+   "sentence": "The House of Lords gave its consent, and the next day the House of Commons voted for the bill.",
+   "facts": [
+    {
+     "id": "f18",
+     "text": "The House of Commons voted for the bill on 15 July 1947 and the House of Lords gave consent on 16 July 1947.",
+     "quote": "On 15 July 1947 the House of Commons voted for the bill and the House of Lords gave its consent on the next day.",
+     "source": "https://en.wikipedia.org/wiki/Indian_Independence_Act,_1947"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "The House of Commons voted for the bill, and the next day the House of Lords gave its consent.",
+    "reason": "The quote states the Commons voted first, then the Lords consented the next day; the sentence reverses the order."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How the Panama Canal was built",
+   "error": "order",
+   "sentence": "Ancon made the first official transit, and after that Cristobal made the first unofficial transit.",
+   "facts": [
+    {
+     "id": "f23",
+     "text": "Ancon made the first official transit of the Panama Canal on August 15, 1914.",
+     "quote": "On 15 August 1914 Ancon made the first official transit of the canal with a delegation of some two hundred dignitaries aboard as part of the canal's opening ceremonies.",
+     "source": "https://en.wikipedia.org/wiki/SS_Ancon"
+    },
+    {
+     "id": "f24",
+     "text": "The first unofficial transit occurred on August 3, 1914, when Cristobal delivered a load of cement.",
+     "quote": "Cristobal had made the first unofficial transit on 3 August, delivering a load of cement.",
+     "source": "https://en.wikipedia.org/wiki/SS_Ancon"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Ancon made the first official transit, and before that Cristobal made the first unofficial transit.",
+    "reason": "The quote shows Cristobal's unofficial transit on August 3, 1914, which was before Ancon's official transit on August 15, 1914, not after."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How hurricanes form",
+   "error": "order",
+   "sentence": "A disturbance first becomes a tropical storm at 35 knots, and then a tropical depression at 20 knots.",
+   "facts": [
+    {
+     "id": "f12",
+     "text": "A tropical depression forms when sustained winds reach at least 20 knots",
+     "quote": "If sustained winds increase to at least 20 knots, a disturbance is upgraded to a tropical depression",
+     "source": "http://ww2010.atmos.uiuc.edu/(Gh)/guides/mtr/hurr/stages.rxml"
+    },
+    {
+     "id": "f13",
+     "text": "A tropical storm forms when sustained winds reach at least 35 knots",
+     "quote": "If sustained wind speeds increase to at least 35 knots, a tropical depression is upgraded to a tropical storm",
+     "source": "http://ww2010.atmos.uiuc.edu/(Gh)/guides/mtr/hurr/stages.rxml"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "A disturbance first becomes a tropical depression at 20 knots, and then a tropical storm at 35 knots.",
+    "reason": "The quotes show the correct order is tropical depression at 20 knots, then tropical storm at 35 knots, not the reverse."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The voyages of Christopher Columbus",
+   "error": "order",
+   "sentence": "Columbus first explored Cuba and Hispaniola, and then reached Guanahani in the Bahamas.",
+   "facts": [
+    {
+     "id": "f31",
+     "text": "Columbus made his first landfall in the Americas on Guanahani in the Bahamas on October 12, 1492.",
+     "quote": "Columbus reached Guanahani (San Salvador) in the Bahamas on 12 October.",
+     "source": "https://www.worldhistory.org/image/14653/map-of-the-four-voyages-of-christopher-columbus-14"
+    },
+    {
+     "id": "f32",
+     "text": "On his first voyage, Columbus explored the islands of Cuba and Hispaniola after landing in the Bahamas.",
+     "quote": "then explored Cuba and Hispaniola.",
+     "source": "https://www.worldhistory.org/image/14653/map-of-the-four-voyages-of-christopher-columbus-14"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Columbus reached Guanahani in the Bahamas, then explored Cuba and Hispaniola.",
+    "reason": "The quote states Columbus reached Guanahani first, then explored Cuba and Hispaniola."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The French Revolution",
+   "error": "order",
+   "sentence": "Marat denounced the reforms in a pamphlet before the Assembly voted to abolish the privileges of the nobility.",
+   "facts": [
+    {
+     "id": "f33",
+     "text": "The Assembly voted to abolish the privileges and feudal rights of the nobility on August 4, 1789.",
+     "quote": "August Decrees: The Assembly votes to abolish the privileges and feudal rights of the nobility.",
+     "source": "https://en.wikipedia.org/wiki/Timeline_of_the_French_Revolution"
+    },
+    {
+     "id": "f34",
+     "text": "Jean-Paul Marat published a pamphlet on August 7 denouncing the August 4 reforms as insufficient.",
+     "quote": "Publication of \"A plot uncovered to lull the people to sleep\" by Jean-Paul Marat, denouncing the reforms of August 4 as insufficient and demanding a much more radical revolution.",
+     "source": "https://en.wikipedia.org/wiki/Timeline_of_the_French_Revolution"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "The Assembly voted to abolish the privileges of the nobility on August 4, 1789, and Marat denounced the reforms in a pamphlet published on August 7.",
+    "reason": "The quotes show the Assembly voted on August 4 and Marat's pamphlet was published on August 7, so the pamphlet came after the vote, not before."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The partition of India in 1947",
+   "error": "order",
+   "sentence": "The act received Royal Assent before the House of Commons voted for the bill.",
+   "facts": [
+    {
+     "id": "f18",
+     "text": "The House of Commons voted for the bill on 15 July 1947 and the House of Lords gave consent on 16 July 1947.",
+     "quote": "On 15 July 1947 the House of Commons voted for the bill and the House of Lords gave its consent on the next day.",
+     "source": "https://en.wikipedia.org/wiki/Indian_Independence_Act,_1947"
+    },
+    {
+     "id": "f19",
+     "text": "The act received Royal Assent on 18 July 1947, and India and Pakistan came into being on 15 August 1947.",
+     "quote": "The act received Royal Assent on 18 July 1947 and thus India and Pakistan (the latter including modern-day Bangladesh) came into being on 15 August.",
+     "source": "https://en.wikipedia.org/wiki/Indian_Independence_Act,_1947"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "The act received Royal Assent after the House of Commons voted for the bill.",
+    "reason": "Royal Assent was on 18 July 1947, while the Commons voted on 15 July 1947, so Assent came after, not before."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The French Revolution",
+   "error": "cause",
+   "sentence": "Louis XVI was executed because he had tried to flee France.",
+   "facts": [
+    {
+     "id": "f37",
+     "text": "Louis XVI was executed by guillotine on January 21, 1793, in Paris at the Place de la Révolution.",
+     "quote": "The execution of Louis XVI by guillotine is an important event of the French Revolution, it took place publicly on 21 January 1793 at the Place de la Révolution (renamed Place de la Concorde in 1795) in Paris.",
+     "source": "https://simple.wikipedia.org/wiki/Execution_of_Louis_XVI"
+    },
+    {
+     "id": "f39",
+     "text": "Louis XVI was convicted of high treason and sentenced to death after a trial that lasted one month.",
+     "quote": "even though they were close to escaping, Louis XVI was put on a trial, which lasted a month, after being convicted of high treason, he was sentenced to death by guilotine.",
+     "source": "https://simple.wikipedia.org/wiki/Execution_of_Louis_XVI"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Louis XVI was executed after being convicted of high treason.",
+    "reason": "The quotes state Louis XVI was convicted of high treason and sentenced to death after a trial; they mention he was close to escaping but do not state the execution was because he tried to flee."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How the Panama Canal was built",
+   "error": "cause",
+   "sentence": "Because mosquitoes were shown to transmit disease in 1898, construction began in earnest in 1907.",
+   "facts": [
+    {
+     "id": "f22",
+     "text": "Yellow fever and malaria were shown to be transmitted by mosquitoes in 1898.",
+     "quote": "which had also been shown to be transmitted by mosquitoes in 1898",
+     "source": "https://en.wikipedia.org/wiki/William_C._Gorgas"
+    },
+    {
+     "id": "f45",
+     "text": "Excavation and construction of the canal began in earnest in 1907",
+     "quote": "Excavation and construction of the canal began in earnest in 1907.",
+     "source": "https://history.house.gov/HouseRecord/Detail/25769816229?current_search_qs=%3FPreviousSearch%3DSearch%252cAll%252c%252c%252cTitle%26CurrentPage%3D11%26SortOrder%3DTitle%26Command%3D15"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Mosquitoes were shown to transmit disease in 1898, and construction began in earnest in 1907.",
+    "reason": "The quotes state both facts but do not state a causal link between them."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The voyages of Christopher Columbus",
+   "error": "cause",
+   "sentence": "Because Vasco da Gama reached India in 1498, Pedro Alvares Cabral discovered Brazil in 1500.",
+   "facts": [
+    {
+     "id": "f13",
+     "text": "Vasco da Gama reached India by sailing around Africa in 1498.",
+     "quote": "not until later was it concluded that Columbus' findings were not in the East. Portugal maintained its interest in seeking a route around Africa, and navigator Vasco da Gama (1469–1525) reached India in 1498.",
+     "source": "https://www.encyclopedia.com/history/modern-europe/spanish-and-portuguese-history/treaty-tordesillas"
+    },
+    {
+     "id": "f14",
+     "text": "Pedro Alvares Cabral claimed Brazil for Portugal in 1500 east of the treaty line.",
+     "quote": "subsequent voyages by Portuguese explorer Pedro Alvares Cabral in 1500 east of the line established by the treaty led to the discovery of Brazil.",
+     "source": "https://www.encyclopedia.com/history/modern-europe/spanish-and-portuguese-history/treaty-tordesillas"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Vasco da Gama reached India in 1498, and Pedro Alvares Cabral discovered Brazil in 1500.",
+    "reason": "The quotes do not state a causal link between the two events."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How hurricanes form",
+   "error": "cause",
+   "sentence": "Hurricanes cannot form within 300 miles of the equator because the ocean there is too cold.",
+   "facts": [
+    {
+     "id": "f10",
+     "text": "Hurricanes cannot form within 300 miles of the equator due to lack of Coriolis effect",
+     "quote": "However, hurricanes cannot form within 300 miles (500 kilometers) of the equator because there is no Coriolis effect there.",
+     "source": "https://scied.ucar.edu/learning-zone/storms/how-hurricanes-form"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Hurricanes cannot form within 300 miles of the equator because there is no Coriolis effect there.",
+    "reason": "The quote attributes the inability to form to lack of Coriolis effect, not cold ocean."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How the internet sends data",
+   "error": "cause",
+   "sentence": "Packets arrive out of sequence because the recipient deletes their numbers.",
+   "facts": [
+    {
+     "id": "f47",
+     "text": "Packets may take different routes to find the quickest transmission path",
+     "quote": "Packets may or may not follow the same route - they are sent along whichever route allows the quickest transmission.",
+     "source": "https://www.bbc.co.uk/bitesize/guides/z7mxh39/revision/10"
+    },
+    {
+     "id": "f48",
+     "text": "Packets may arrive out of sequence and are numbered for reassembly",
+     "quote": "Packets, therefore, may arrive out of sequence. The recipient takes each packet, makes a note of its number and assembles them into the correct order.",
+     "source": "https://www.bbc.co.uk/bitesize/guides/z7mxh39/revision/10"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Packets may arrive out of sequence because they may take different routes; they are numbered so the recipient can reassemble them in the correct order.",
+    "reason": "The quotes state packets may arrive out of sequence and are numbered for reassembly, not that the recipient deletes their numbers. The causal link 'because the recipient deletes their numbers' is unsupported. Certainty claims require hedging."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The partition of India in 1947",
+   "error": "cause",
+   "sentence": "Because Clement Attlee made his announcement on 20 February 1947, about 1 million people died in the partition violence.",
+   "facts": [
+    {
+     "id": "f21",
+     "text": "Clement Attlee, the UK Prime Minister, announced on 20 February 1947 that Britain would grant independence to India.",
+     "quote": "Clement Attlee, the prime minister of the United Kingdom, announced on 20 February 1947 that:",
+     "source": "https://en.wikipedia.org/wiki/Indian_Independence_Act,_1947"
+    },
+    {
+     "id": "f13",
+     "text": "Between 200,000 and 2 million people died during the partition violence, with most scholars estimating approximately 1 million deaths.",
+     "quote": "While estimates of the number of deaths vary greatly, ranging from 200,000 to 2,000,000, most of the scholars accept approximately 1 million died in the partition violence.",
+     "source": "https://en.wikipedia.org/wiki/Partition_of_India"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Clement Attlee made his announcement on 20 February 1947. About 1 million people died in the partition violence.",
+    "reason": "The quotes do not state a causal link between Attlee's announcement and the partition deaths."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The voyages of Christopher Columbus",
+   "error": "hedge",
+   "sentence": "The whole company in all three ships numbered 90 men.",
+   "facts": [
+    {
+     "id": "f7",
+     "text": "The whole company in all three ships likely numbered 90 men",
+     "quote": "The whole company in all three ships likely numbered 90 men (Santa Maria 40, La Nina 24, La Pinta 26) although some historians cite 120 men.",
+     "source": "https://en.wikipedia.org/wiki/Pinta_(ship)"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "The whole company in all three ships likely numbered 90 men.",
+    "reason": "The quote says 'likely numbered 90 men', not a definite number."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How the internet sends data",
+   "error": "hedge",
+   "sentence": "Each datagram is routed via a different path.",
+   "facts": [
+    {
+     "id": "f25",
+     "text": "Each datagram in connectionless switching may be routed via a different path",
+     "quote": "Each datagram is dispatched independently and each may be routed via a different path.",
+     "source": "https://en.wikipedia.org/wiki/Circuit_switching"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Each datagram may be routed via a different path.",
+    "reason": "The quote uses 'may be routed', indicating possibility, not certainty. The certainty claim requires the sentence to hedge accordingly."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The partition of India in 1947",
+   "error": "hedge",
+   "sentence": "Exactly 1 million people died in the partition violence.",
+   "facts": [
+    {
+     "id": "f13",
+     "text": "Between 200,000 and 2 million people died during the partition violence, with most scholars estimating approximately 1 million deaths.",
+     "quote": "While estimates of the number of deaths vary greatly, ranging from 200,000 to 2,000,000, most of the scholars accept approximately 1 million died in the partition violence.",
+     "source": "https://en.wikipedia.org/wiki/Partition_of_India"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Approximately 1 million people died in the partition violence.",
+    "reason": "The quote says most scholars accept approximately 1 million died, not exactly 1 million."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "Why we have seasons",
+   "error": "hedge",
+   "sentence": "Variations in Earth's axial tilt cause long-term climatic change.",
+   "facts": [
+    {
+     "id": "f10",
+     "text": "Axial tilt variations may influence long-term climate patterns.",
+     "quote": "Variations in Earth's axial tilt can influence the seasons and is likely a factor in long-term climatic change.",
+     "source": "https://en.wikipedia.org/wiki/Axial_tilt"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Variations in Earth's axial tilt likely cause long-term climatic change.",
+    "reason": "The source uses 'likely a factor' and 'can influence', indicating probability rather than certainty. The original sentence states the link as a definite fact, which overstates the source's certainty."
+   },
+   "statusBeforeHedgeClaims": "supported"
+  },
+  {
+   "topic": "How batteries store energy",
+   "error": "hedge",
+   "sentence": "The Daniell cell has an operating voltage of exactly 1.1 volts.",
+   "facts": [
+    {
+     "id": "f26",
+     "text": "The Daniell cell had an operating voltage of roughly 1.1 volts.",
+     "quote": "It has an operating voltage of roughly 1.1 volts",
+     "source": "https://en.wikipedia.org/wiki/History_of_the_battery"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "The Daniell cell has an operating voltage of roughly 1.1 volts.",
+    "reason": "The quote says 'roughly 1.1 volts', not 'exactly 1.1 volts'."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How the internet sends data",
+   "error": "hedge",
+   "sentence": "The cable is exactly 18,800 kilometres long.",
+   "facts": [
+    {
+     "id": "f12",
+     "text": "The cable is about 18,800 kilometres long",
+     "quote": "About 18,800 kilometres long, the cable provides the primary Internet backbone between South East Asia, the Indian subcontinent, the Middle East, and Europe.",
+     "source": "https://en.wikipedia.org/wiki/SEA-ME-WE_4"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "The cable is about 18,800 kilometres long.",
+    "reason": "The quote says 'About 18,800 kilometres long', not 'exactly'."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The voyages of Christopher Columbus",
+   "error": "hedge",
+   "sentence": "On October 12, the expedition reached land at Watling Island in the Bahamas.",
+   "facts": [
+    {
+     "id": "f28",
+     "text": "Columbus landed in the Americas on October 12, 1492.",
+     "quote": "On October 12, the expedition reached land, probably Watling Island in the Bahamas.",
+     "source": "https://www.history.com/this-day-in-history/october-12/columbus-reaches-the-new-world"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "On October 12, the expedition reached land, probably Watling Island in the Bahamas.",
+    "reason": "The quote uses 'probably', so the sentence must hedge the same way."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The French Revolution",
+   "error": "person",
+   "sentence": "The execution of Louis XVI was performed by Maximilien Robespierre.",
+   "facts": [
+    {
+     "id": "f40",
+     "text": "Charles-Henri Sanson performed the execution of Louis XVI as the High Executioner of the French First Republic.",
+     "quote": "The execution was performed four days later by Charles-Henri Sanson, who was the High Executioner of the French First Republic.",
+     "source": "https://simple.wikipedia.org/wiki/Execution_of_Louis_XVI"
+    }
+   ],
+   "factCheck": {
+    "status": "removed",
+    "revised": null,
+    "reason": "The quote states the execution was performed by Charles-Henri Sanson, not Maximilien Robespierre."
+   },
+   "statusBeforeHedgeClaims": "removed"
+  },
+  {
+   "topic": "The partition of India in 1947",
+   "error": "person",
+   "sentence": "Winston Churchill, the prime minister of the United Kingdom, made an announcement on 20 February 1947.",
+   "facts": [
+    {
+     "id": "f21",
+     "text": "Clement Attlee, the UK Prime Minister, announced on 20 February 1947 that Britain would grant independence to India.",
+     "quote": "Clement Attlee, the prime minister of the United Kingdom, announced on 20 February 1947 that:",
+     "source": "https://en.wikipedia.org/wiki/Indian_Independence_Act,_1947"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Clement Attlee, the prime minister of the United Kingdom, announced on 20 February 1947 that Britain would grant independence to India.",
+    "reason": "The quote identifies the prime minister as Clement Attlee, not Winston Churchill."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How the Panama Canal was built",
+   "error": "person",
+   "sentence": "John Stevens, an engineer of the Great Northern Railroad, was hired by President Taft.",
+   "facts": [
+    {
+     "id": "f9",
+     "text": "John F. Stevens was hired by President Roosevelt after serving as engineer of the Great Northern Railroad.",
+     "quote": "John Stevens, engineer of the Great Northern Railroad, was then hired by President Roosevelt.",
+     "source": "https://archives.rpi.edu/blog/2014/10/24/panama-canal-centennial-american-success"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "John Stevens, an engineer of the Great Northern Railroad, was hired by President Roosevelt.",
+    "reason": "The quote states he was hired by President Roosevelt, not President Taft."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How batteries store energy",
+   "error": "person",
+   "sentence": "In 1836, Alessandro Volta invented the Daniell cell.",
+   "facts": [
+    {
+     "id": "f23",
+     "text": "John Frederic Daniell invented the Daniell cell in 1836 to solve the hydrogen bubble problem in Voltaic Piles.",
+     "quote": "An English professor of chemistry named John Frederic Daniell found a way to solve the hydrogen bubble problem in the Voltaic Pile by using a second electrolyte to consume the hydrogen produced by the first. In 1836, he invented the Daniell cell",
+     "source": "https://en.wikipedia.org/wiki/History_of_the_battery"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "In 1836, John Frederic Daniell invented the Daniell cell.",
+    "reason": "The quote states John Frederic Daniell invented the cell, not Alessandro Volta."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How the human eye sees",
+   "error": "person",
+   "sentence": "In 1801, Isaac Newton proposed that the human lens changes shape to focus.",
+   "facts": [
+    {
+     "id": "f23",
+     "text": "Thomas Young proposed in 1801 that the human lens changes shape to accommodate focus, initially thinking it was a muscle capable of contraction.",
+     "quote": "When Thomas Young proposed the changing of the human lens' shape as the mechanism for focal accommodation in 1801, he thought the lens may be a muscle capable of contraction.",
+     "source": "https://en.wikipedia.org/w/index.php?title=Accommodation_%28vertebrate_eye%29&printable=yes"
+    }
+   ],
+   "factCheck": {
+    "status": "removed",
+    "revised": null,
+    "reason": "every sentence of the group was removed"
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How the Panama Canal was built",
+   "error": "person",
+   "sentence": "Gustave Eiffel led the initial attempt to build a sea-level canal, from 1880 to 1889.",
+   "facts": [
+    {
+     "id": "f1",
+     "text": "Ferdinand de Lesseps led the initial French attempt to build the Panama Canal from 1880 to 1889.",
+     "quote": "French entrepreneur Ferdinand de Lesseps led the initial attempt (1880–1889) to build a sea-level canal, as he had previously achieved in the building of the Suez Canal (1859–1869).",
+     "source": "https://en.wikipedia.org/wiki/History_of_the_Panama_Canal"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Ferdinand de Lesseps led the initial attempt to build a sea-level canal, from 1880 to 1889.",
+    "reason": "The quote states Ferdinand de Lesseps led the attempt, not Gustave Eiffel."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The French Revolution",
+   "error": "place",
+   "sentence": "Louis XVI was executed by guillotine on 21 January 1793 in Versailles.",
+   "facts": [
+    {
+     "id": "f37",
+     "text": "Louis XVI was executed by guillotine on January 21, 1793, in Paris at the Place de la Révolution.",
+     "quote": "The execution of Louis XVI by guillotine is an important event of the French Revolution, it took place publicly on 21 January 1793 at the Place de la Révolution (renamed Place de la Concorde in 1795) in Paris.",
+     "source": "https://simple.wikipedia.org/wiki/Execution_of_Louis_XVI"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Louis XVI was executed by guillotine on 21 January 1793 in Paris at the Place de la Révolution.",
+    "reason": "The quote states the execution took place in Paris at the Place de la Révolution, not in Versailles."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The voyages of Christopher Columbus",
+   "error": "place",
+   "sentence": "Columbus died in Seville in 1506.",
+   "facts": [
+    {
+     "id": "f21",
+     "text": "Columbus died in Valladolid in 1506 after returning from his voyages.",
+     "quote": "Surrounded by family and friends, Columbus died in Valladolid in 1506, rich but dissatisfied.",
+     "source": "http://www.encyclopedia.com/humanities/encyclopedias-almanacs-transcripts-and-maps/columbus-christopher-c-1451-1506"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Columbus died in Valladolid in 1506.",
+    "reason": "The quote states Columbus died in Valladolid, not Seville."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "The voyages of Christopher Columbus",
+   "error": "place",
+   "sentence": "On 3 August 1492, the expedition departed from the port of Cádiz.",
+   "facts": [
+    {
+     "id": "f2",
+     "text": "The expedition departed from the Port of Palos on 3 August 1492.",
+     "quote": "On the morning of 3 August 1492, the expedition departed from the Port of Palos, going down the Rio Tinto.",
+     "source": "https://en.wikipedia.org/wiki/Voyages_of_Christopher_Columbus"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "On 3 August 1492, the expedition departed from the Port of Palos.",
+    "reason": "The quote states the departure was from the Port of Palos, not Cádiz."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How the internet sends data",
+   "error": "place",
+   "sentence": "Segment S1 of the cable runs from Tuas to Karachi.",
+   "facts": [
+    {
+     "id": "f14",
+     "text": "Segment S1 runs from Tuas to Mumbai",
+     "quote": "S1 - Tuas to Mumbai",
+     "source": "https://en.wikipedia.org/wiki/SEA-ME-WE_4"
+    }
+   ],
+   "factCheck": {
+    "status": "removed",
+    "revised": null,
+    "reason": "The quote states Segment S1 runs from Tuas to Mumbai, not Karachi."
+   },
+   "statusBeforeHedgeClaims": "removed"
+  },
+  {
+   "topic": "The voyages of Christopher Columbus",
+   "error": "place",
+   "sentence": "Columbus reached Trinidad and the Paria Peninsula in present-day Colombia.",
+   "facts": [
+    {
+     "id": "f36",
+     "text": "On his third voyage in 1498, Columbus reached Trinidad and the South American mainland at the Paria Peninsula in present-day Venezuela.",
+     "quote": "departing Sanlúcar on 30 May 1498, Columbus reached Trinidad and the Paria Peninsula in present-day Venezuela, making his first landfall on the South American mainland.",
+     "source": "https://www.worldhistory.org/image/14653/map-of-the-four-voyages-of-christopher-columbus-14"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "Columbus reached Trinidad and the Paria Peninsula in present-day Venezuela.",
+    "reason": "The quote states the Paria Peninsula is in present-day Venezuela, not Colombia."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  },
+  {
+   "topic": "How the Panama Canal was built",
+   "error": "place",
+   "sentence": "In May 1879, Ferdinand de Lesseps convened an international congress in London.",
+   "facts": [
+    {
+     "id": "f4",
+     "text": "In 1879, Ferdinand de Lesseps convened the International Congress in Paris to study a Central American ship canal.",
+     "quote": "In May 1879, Ferdinand de Lesseps convened an international congress in Paris to examine the possibilities of a ship canal across Central America, the Congrès International d'Etudes du Canal Interocéanique.",
+     "source": "https://en.wikipedia.org/wiki/History_of_the_Panama_Canal"
+    }
+   ],
+   "factCheck": {
+    "status": "revised",
+    "revised": "In May 1879, Ferdinand de Lesseps convened an international congress in Paris.",
+    "reason": "The quote states the congress was in Paris, not London."
+   },
+   "statusBeforeHedgeClaims": "revised"
+  }
+ ]
+}

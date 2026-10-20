@@ -1,11 +1,11 @@
 // Runs topics through the pipeline and reports how much of each script held up in the fact-check, which kinds
-// of scene it got, what it cost and how long it took. Prints a table and writes docs/eval.md.
+// of scene it got, what it cost and how long it took. Prints a table and writes it to the top of docs/eval.md.
 // Run with `npm run eval -- 2` for the first 2 topics, or `npm run eval` for all 10. A folder after the count,
 // like `npm run eval -- 10 /tmp/runs`, also saves each run there as JSON, to look at the scenes afterwards.
 // The voice-over is skipped to save ElevenLabs credits, so video lengths are estimated from the narration.
 // The app must be running (npm run dev). It makes paid API calls.
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runPipeline } from "./pipeline-client.ts";
 
@@ -132,5 +132,9 @@ const lines = [
 ];
 const markdown = lines.join("\n");
 console.log(`\n${markdown}`);
-writeFileSync(new URL("../docs/eval.md", import.meta.url), markdown);
+// The sections written by hand below the table (later updates, the trust test) are kept.
+const file = new URL("../docs/eval.md", import.meta.url);
+const old = existsSync(file) ? readFileSync(file, "utf8") : "";
+const kept = old.indexOf("\n## ") >= 0 ? old.slice(old.indexOf("\n## ") + 1) : "";
+writeFileSync(file, kept ? `${markdown}\n${kept}` : markdown);
 console.log("Saved docs/eval.md");
