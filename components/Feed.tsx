@@ -81,7 +81,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
   const [sheet, setSheet] = useState<{ slug: string; kind: "comments" | "factcheck"; player: PlayerRef | null } | null>(null);
   // Sound needs a tap first. After the first video is started by hand, the next ones play as they come into view.
   const [started, setStarted] = useState(false);
-  const scroller = useRef<HTMLDivElement>(null);
+  const scroller = useRef<HTMLElement>(null);
   const sections = useRef(new Map<string, HTMLElement>());
   const players = useRef(new Map<string, PlayerRef>());
 
@@ -226,7 +226,8 @@ export function Feed({ items }: { items: FeedItem[] }) {
         </div>
       </header>
 
-      <div ref={scroller} className="flex-1 snap-y snap-mandatory overflow-y-scroll overscroll-contain">
+      <main ref={scroller} className="flex-1 snap-y snap-mandatory overflow-y-scroll overscroll-contain">
+        <h1 className="sr-only">Videos made by Meko</h1>
         {visible.length === 0 ? (
           <p className="mx-auto max-w-md px-6 py-24 text-center text-muted">No video matches “{query}”. Try another word, or make a video about it.</p>
         ) : null}
@@ -284,7 +285,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
             </section>
           );
         })}
-      </div>
+      </main>
 
       {sheet && sheetItem ? (
         <Sheet title={sheet.kind === "comments" ? `Comments on “${sheetItem.title}”` : `Fact-check of “${sheetItem.title}”`} onClose={() => setSheet(null)}>
@@ -376,6 +377,7 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
     <div className="fixed inset-0 z-30 flex items-end justify-end bg-black/40 sm:items-stretch" onClick={onClose}>
       <div
         role="dialog"
+        aria-modal="true"
         aria-label={title}
         onClick={(event) => event.stopPropagation()}
         className="flex h-[75dvh] w-full flex-col rounded-t-2xl border border-rule bg-bg sm:h-full sm:w-[440px] sm:rounded-none sm:border-y-0 sm:border-r-0"
