@@ -13,16 +13,23 @@ export type Health = { models: ServiceState; search: ServiceState; voice: Servic
 const CACHE_MS = 10 * 60_000;
 let last: { at: number; health: Health } | null = null;
 
-// All three models must answer: one that is no longer served stops every new video as surely as empty credit.
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// All three models must answer: one that is no longer served stops every new video as surely as empty credit. A model
+// that fails gets one more try after a short wait, so one slow answer does not send a false alarm.
 async function models(): Promise<ServiceState> {
   const states = await Promise.all(
     (["main", "scene", "fast"] as const).map(async (role): Promise<ServiceState> => {
-      try {
-        await pingModel(role);
-        return "ok";
-      } catch (error) {
-        console.warn(`[health] Token Factory, ${role} model: ${error}`);
-        return /run out of credit/.test(serviceProblem(error) ?? "") ? "out" : "error";
+      for (let attempt = 1; ; attempt++) {
+        try {
+          await pingModel(role);
+          return "ok";
+        } catch (error) {
+          console.warn(`[health] Token Factory, ${role} model, try ${attempt}: ${error}`);
+          if (/run out of credit/.test(serviceProblem(error) ?? "")) return "out";
+          if (attempt === 2) return "error";
+          await wait(2_000);
+        }
       }
     }),
   );
@@ -43,6 +50,7 @@ export async function checkHealth(): Promise<Health> {
   if (last && Date.now() - last.at < CACHE_MS) return last.health;
   const [modelState, search, voice] = await Promise.all([models(), stateOf(searchCredits, "Tavily"), stateOf(voiceCredits, "ElevenLabs")]);
   const health = { models: modelState, search, voice, checkedAt: new Date().toISOString() };
-  last = { at: Date.now(), health };
+  // An error is not kept, so the next check tries again at once.
+  last = [modelState, search, voice].includes("error") ? null : { at: Date.now(), health };
   return health;
 }
