@@ -6,9 +6,9 @@
   "language": "en"
  },
  "madeAt": "2026-10-18T23:24:25.906Z",
- "ms": 56359,
- "costUsd": 0.16515676,
- "tokens": 154121,
+ "ms": 94214,
+ "costUsd": 0.22587717999999998,
+ "tokens": 287078,
  "storyboard": {
   "title": "How Volcanoes Erupt: From Deep Earth to Explosive Power",
   "language": "en",
@@ -34,14 +34,14 @@
    },
    {
     "id": "scene-2",
-    "narration": "Magma rises because it is lighter than solid rock and gathers in chambers near the surface. There, pressure builds as crystals form and gases bubble out of the melt.",
+    "narration": "Magma rises because it is lighter than solid rock and may gather in chambers near the surface. There, pressure builds as crystals form and gases bubble out of the melt.",
     "factIds": [
      "f4",
      "f42",
      "f43",
      "f47"
     ],
-    "durationSec": 11,
+    "durationSec": 11.4,
     "kind": "template",
     "template": "cutaway",
     "params": {
@@ -98,17 +98,22 @@
    },
    {
     "id": "scene-3",
-    "narration": "An eruption starts when that upward pressure beats the weight of rock above the chamber.",
+    "narration": "An eruption may start when upward pressure beats the weight of rock above the chamber.",
     "factIds": [
      "f5",
      "f6"
     ],
-    "durationSec": 5.5,
-    "kind": "template",
-    "template": "big_statement",
-    "params": {
-     "text": "Upward pressure beats the weight of rock above the chamber.",
-     "emphasis": []
+    "durationSec": 5.7,
+    "kind": "text",
+    "lines": [
+     "This may trigger a volcanic eruption."
+    ],
+    "look": {
+     "template": "big_statement",
+     "params": {
+      "text": "This may trigger a volcanic eruption.",
+      "emphasis": []
+     }
     }
    },
    {
@@ -197,22 +202,20 @@
    },
    {
     "id": "scene-5",
-    "narration": "The 1991 Pinatubo eruption shot over 250 megatons of gas into the upper air in one day.",
+    "narration": "The 1991 Pinatubo eruption is thought to have shot over 250 megatons of gas into the upper air in one day.",
     "factIds": [
      "f16"
     ],
-    "durationSec": 8,
-    "kind": "stat",
-    "value": 250,
-    "unit": "megatons",
-    "label": "gas into upper atmosphere",
+    "durationSec": 8.7,
+    "kind": "quote",
+    "text": "The 1991 eruption of Mt. Pinatubo is thought to have injected more than 250 megatons of gas into the upper atmosphere on a single day.",
+    "sourceId": "s3",
     "look": {
-     "template": "big_number",
+     "template": "quote_card",
      "params": {
-      "value": 250,
-      "decimals": 0,
-      "suffix": " megatons",
-      "label": "gas into upper atmosphere"
+      "quote": "The 1991 eruption of Mt. Pinatubo is thought to have injected more than 250 megatons of gas into the upper atmosphere on a single day.",
+      "author": "Volcanic gases can be harmful to health, vegetation and infrastructure | U.S. Geological Survey",
+      "role": ""
      }
     }
    },
@@ -366,224 +369,229 @@
    {
     "text": "Magma",
     "start": 0,
-    "end": 0.441
+    "end": 0.418
    },
    {
     "text": "rises",
-    "start": 0.522,
-    "end": 0.94
+    "start": 0.476,
+    "end": 0.906
    },
    {
     "text": "because",
-    "start": 0.998,
-    "end": 1.254
+    "start": 0.975,
+    "end": 1.231
    },
    {
     "text": "it",
-    "start": 1.277,
-    "end": 1.347
+    "start": 1.254,
+    "end": 1.324
    },
    {
     "text": "is",
-    "start": 1.393,
-    "end": 1.474
+    "start": 1.37,
+    "end": 1.451
    },
    {
     "text": "lighter",
-    "start": 1.544,
-    "end": 1.858
+    "start": 1.509,
+    "end": 1.811
    },
    {
     "text": "than",
-    "start": 1.892,
-    "end": 2.02
+    "start": 1.846,
+    "end": 1.974
    },
    {
     "text": "solid",
-    "start": 2.09,
-    "end": 2.415
+    "start": 2.043,
+    "end": 2.368
    },
    {
     "text": "rock",
-    "start": 2.473,
-    "end": 2.74
+    "start": 2.426,
+    "end": 2.717
    },
    {
     "text": "and",
-    "start": 2.914,
-    "end": 3.111
+    "start": 2.891,
+    "end": 3.158
    },
    {
-    "text": "gathers",
-    "start": 3.17,
-    "end": 3.495
+    "text": "may",
+    "start": 3.216,
+    "end": 3.332
+   },
+   {
+    "text": "gather",
+    "start": 3.39,
+    "end": 3.669
    },
    {
     "text": "in",
-    "start": 3.541,
-    "end": 3.611
+    "start": 3.727,
+    "end": 3.796
    },
    {
     "text": "chambers",
-    "start": 3.68,
-    "end": 4.087
+    "start": 3.855,
+    "end": 4.261
    },
    {
     "text": "near",
-    "start": 4.145,
-    "end": 4.307
+    "start": 4.319,
+    "end": 4.47
    },
    {
     "text": "the",
-    "start": 4.354,
-    "end": 4.423
+    "start": 4.516,
+    "end": 4.586
    },
    {
     "text": "surface.",
-    "start": 4.47,
-    "end": 5.062
+    "start": 4.621,
+    "end": 5.259
    },
    {
     "text": "There,",
-    "start": 5.445,
-    "end": 5.898
+    "start": 5.7,
+    "end": 6.142
    },
    {
     "text": "pressure",
-    "start": 6.014,
-    "end": 6.374
+    "start": 6.258,
+    "end": 6.606
    },
    {
     "text": "builds",
-    "start": 6.42,
-    "end": 6.792
+    "start": 6.653,
+    "end": 7.001
    },
    {
     "text": "as",
-    "start": 6.827,
-    "end": 6.908
+    "start": 7.036,
+    "end": 7.117
    },
    {
     "text": "crystals",
-    "start": 6.978,
-    "end": 7.419
+    "start": 7.198,
+    "end": 7.616
    },
    {
     "text": "form",
-    "start": 7.488,
-    "end": 7.825
+    "start": 7.686,
+    "end": 7.999
    },
    {
     "text": "and",
-    "start": 7.999,
-    "end": 8.173
+    "start": 8.15,
+    "end": 8.359
    },
    {
     "text": "gases",
-    "start": 8.255,
-    "end": 8.638
+    "start": 8.44,
+    "end": 8.835
    },
    {
     "text": "bubble",
-    "start": 8.707,
-    "end": 8.986
+    "start": 8.905,
+    "end": 9.207
    },
    {
     "text": "out",
-    "start": 9.021,
-    "end": 9.16
+    "start": 9.265,
+    "end": 9.451
    },
    {
     "text": "of",
-    "start": 9.207,
-    "end": 9.253
+    "start": 9.497,
+    "end": 9.555
    },
    {
     "text": "the",
-    "start": 9.3,
-    "end": 9.369
+    "start": 9.601,
+    "end": 9.671
    },
    {
     "text": "melt.",
-    "start": 9.416,
-    "end": 10.356
+    "start": 9.729,
+    "end": 10.82
    }
   ],
   "scene-3": [
    {
     "text": "An",
     "start": 0,
-    "end": 0.174
+    "end": 0.151
    },
    {
     "text": "eruption",
-    "start": 0.221,
-    "end": 0.65
+    "start": 0.197,
+    "end": 0.615
    },
    {
-    "text": "starts",
-    "start": 0.72,
-    "end": 1.126
+    "text": "may",
+    "start": 0.685,
+    "end": 0.824
+   },
+   {
+    "text": "start",
+    "start": 0.894,
+    "end": 1.265
    },
    {
     "text": "when",
-    "start": 1.184,
-    "end": 1.347
-   },
-   {
-    "text": "that",
-    "start": 1.382,
-    "end": 1.509
+    "start": 1.312,
+    "end": 1.463
    },
    {
     "text": "upward",
-    "start": 1.579,
-    "end": 1.904
+    "start": 1.544,
+    "end": 1.881
    },
    {
     "text": "pressure",
-    "start": 1.962,
-    "end": 2.322
+    "start": 1.927,
+    "end": 2.276
    },
    {
     "text": "beats",
-    "start": 2.368,
-    "end": 2.647
+    "start": 2.334,
+    "end": 2.612
    },
    {
     "text": "the",
-    "start": 2.705,
-    "end": 2.775
+    "start": 2.67,
+    "end": 2.752
    },
    {
     "text": "weight",
-    "start": 2.821,
-    "end": 3.019
+    "start": 2.798,
+    "end": 3.007
    },
    {
     "text": "of",
-    "start": 3.065,
-    "end": 3.123
+    "start": 3.053,
+    "end": 3.111
    },
    {
     "text": "rock",
     "start": 3.204,
-    "end": 3.425
+    "end": 3.413
    },
    {
     "text": "above",
-    "start": 3.483,
-    "end": 3.727
+    "start": 3.471,
+    "end": 3.75
    },
    {
     "text": "the",
-    "start": 3.762,
-    "end": 3.831
+    "start": 3.785,
+    "end": 3.855
    },
    {
     "text": "chamber.",
-    "start": 3.878,
-    "end": 4.923
+    "start": 3.901,
+    "end": 5.062
    }
   ],
   "scene-4": [
@@ -716,83 +724,103 @@
    },
    {
     "text": "1991",
-    "start": 0.209,
-    "end": 1.022
+    "start": 0.197,
+    "end": 0.998
    },
    {
     "text": "Pinatubo",
-    "start": 1.138,
-    "end": 1.73
+    "start": 1.115,
+    "end": 1.695
    },
    {
     "text": "eruption",
-    "start": 1.811,
-    "end": 2.276
+    "start": 1.753,
+    "end": 2.218
+   },
+   {
+    "text": "is",
+    "start": 2.426,
+    "end": 2.589
+   },
+   {
+    "text": "thought",
+    "start": 2.635,
+    "end": 2.856
+   },
+   {
+    "text": "to",
+    "start": 2.879,
+    "end": 2.926
+   },
+   {
+    "text": "have",
+    "start": 2.984,
+    "end": 3.1
    },
    {
     "text": "shot",
-    "start": 2.485,
-    "end": 2.752
+    "start": 3.123,
+    "end": 3.367
    },
    {
     "text": "over",
-    "start": 2.81,
-    "end": 2.972
+    "start": 3.425,
+    "end": 3.622
    },
    {
     "text": "250",
-    "start": 3.03,
-    "end": 3.75
+    "start": 3.704,
+    "end": 4.412
    },
    {
     "text": "megatons",
-    "start": 3.866,
-    "end": 4.354
+    "start": 4.505,
+    "end": 4.992
    },
    {
     "text": "of",
-    "start": 4.4,
-    "end": 4.458
-   },
-   {
-    "text": "gas",
-    "start": 4.528,
-    "end": 4.853
-   },
-   {
-    "text": "into",
-    "start": 4.911,
+    "start": 5.039,
     "end": 5.097
    },
    {
-    "text": "the",
-    "start": 5.143,
-    "end": 5.224
+    "text": "gas",
+    "start": 5.166,
+    "end": 5.492
    },
    {
-    "text": "upper",
-    "start": 5.294,
-    "end": 5.526
-   },
-   {
-    "text": "air",
-    "start": 5.596,
+    "text": "into",
+    "start": 5.608,
     "end": 5.828
    },
    {
+    "text": "the",
+    "start": 5.886,
+    "end": 5.956
+   },
+   {
+    "text": "upper",
+    "start": 6.037,
+    "end": 6.269
+   },
+   {
+    "text": "air",
+    "start": 6.339,
+    "end": 6.606
+   },
+   {
     "text": "in",
-    "start": 5.898,
-    "end": 5.979
+    "start": 6.676,
+    "end": 6.757
    },
    {
     "text": "one",
-    "start": 6.06,
-    "end": 6.246
+    "start": 6.838,
+    "end": 7.012
    },
    {
     "text": "day.",
-    "start": 6.293,
-    "end": 7.384
+    "start": 7.059,
+    "end": 8.081
    }
   ],
   "scene-6": [
@@ -899,10 +927,10 @@
      "f4",
      "f42"
     ],
-    "status": "supported",
+    "status": "revised",
     "original": "Magma rises because it is lighter than solid rock and gathers in chambers near the surface.",
-    "revised": "",
-    "reason": ""
+    "revised": "Magma rises because it is lighter than solid rock and may gather in chambers near the surface.",
+    "reason": "The source states magma 'may collect in chambers', not that it definitively 'gathers'; the sentence must reflect this uncertainty."
    },
    {
     "sentenceId": "scene-2.2",
@@ -921,10 +949,10 @@
      "f5",
      "f6"
     ],
-    "status": "supported",
+    "status": "revised",
     "original": "An eruption starts when that upward pressure beats the weight of rock above the chamber.",
-    "revised": "",
-    "reason": ""
+    "revised": "An eruption may start when upward pressure beats the weight of rock above the chamber.",
+    "reason": "The source uses 'may' and 'Eventually the upward pressure may', indicating uncertainty the sentence must retain."
    },
    {
     "sentenceId": "scene-4.1",
@@ -958,10 +986,10 @@
     "factIds": [
      "f16"
     ],
-    "status": "supported",
+    "status": "revised",
     "original": "The 1991 Pinatubo eruption shot over 250 megatons of gas into the upper air in one day.",
-    "revised": "",
-    "reason": ""
+    "revised": "The 1991 Pinatubo eruption is thought to have shot over 250 megatons of gas into the upper air in one day.",
+    "reason": "The source states the eruption 'is thought to have injected' the gas, not that it definitively did; the sentence must hedge accordingly."
    },
    {
     "sentenceId": "scene-6.1",
@@ -974,8 +1002,8 @@
     "reason": ""
    }
   ],
-  "supported": 8,
-  "revised": 0,
+  "supported": 5,
+  "revised": 3,
   "removed": 0
  },
  "facts": [

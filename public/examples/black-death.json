@@ -6,9 +6,9 @@
   "language": "en"
  },
  "madeAt": "2026-10-18T23:39:11.638Z",
- "ms": 107756,
- "costUsd": 0.34142402,
- "tokens": 313834,
+ "ms": 139536,
+ "costUsd": 0.4029296,
+ "tokens": 461293,
  "storyboard": {
   "title": "How the Black Death Changed Europe",
   "language": "en",
@@ -34,13 +34,13 @@
    },
    {
     "id": "scene-2",
-    "narration": "It entered Europe in 1347 when Mongols catapulted infected corpses into Caffa during a siege.",
+    "narration": "It reportedly entered Europe in 1347 when Mongols catapulted infected corpses into Caffa during a siege.",
     "factIds": [
      "f40",
      "f44",
      "f47"
     ],
-    "durationSec": 8.2,
+    "durationSec": 8.5,
     "kind": "map",
     "frame": [
      "BLR",
@@ -405,74 +405,79 @@
     "end": 0.163
    },
    {
-    "text": "entered",
+    "text": "reportedly",
     "start": 0.209,
-    "end": 0.464
+    "end": 0.755
+   },
+   {
+    "text": "entered",
+    "start": 0.824,
+    "end": 1.149
    },
    {
     "text": "Europe",
-    "start": 0.522,
-    "end": 0.813
+    "start": 1.207,
+    "end": 1.509
    },
    {
     "text": "in",
-    "start": 0.848,
-    "end": 0.917
+    "start": 1.544,
+    "end": 1.614
    },
    {
     "text": "1347",
-    "start": 0.975,
-    "end": 2.078
+    "start": 1.672,
+    "end": 2.682
    },
    {
     "text": "when",
-    "start": 2.403,
-    "end": 2.601
+    "start": 3.007,
+    "end": 3.193
    },
    {
     "text": "Mongols",
-    "start": 2.659,
-    "end": 3.077
+    "start": 3.251,
+    "end": 3.68
    },
    {
     "text": "catapulted",
-    "start": 3.146,
-    "end": 3.773
+    "start": 3.738,
+    "end": 4.377
    },
    {
     "text": "infected",
-    "start": 3.82,
-    "end": 4.307
+    "start": 4.447,
+    "end": 4.981
    },
    {
     "text": "corpses",
-    "start": 4.377,
-    "end": 4.83
+    "start": 5.05,
+    "end": 5.515
    },
    {
     "text": "into",
-    "start": 4.899,
-    "end": 5.085
+    "start": 5.573,
+    "end": 5.735
    },
    {
     "text": "Caffa",
-    "start": 5.166,
-    "end": 5.608
+    "start": 5.805,
+    "end": 6.223
    },
    {
     "text": "during",
-    "start": 5.677,
-    "end": 5.991
+    "start": 6.281,
+    "end": 6.583
    },
    {
     "text": "a",
-    "start": 6.037,
-    "end": 6.06
+    "start": 6.629,
+    "end": 6.653
    },
    {
     "text": "siege.",
-    "start": 6.118,
-    "end": 7.616
+    "start": 6.722,
+    "end": 7.895
    }
   ],
   "scene-3": [
@@ -972,8 +977,8 @@
     ],
     "status": "revised",
     "original": "It entered Europe in 1347 when Mongol forces besieged Caffa and catapulted infected corpses into the city.",
-    "revised": "It entered Europe in 1347 when Mongols catapulted infected corpses into Caffa during a siege.",
-    "reason": "The quotes give conflicting years for the Mongol siege of Caffa (1345 and 1347), so the claim that it occurred in 1347 is not fully supported."
+    "revised": "It reportedly entered Europe in 1347 when Mongols catapulted infected corpses into Caffa during a siege.",
+    "reason": "The quotes give conflicting years for the Mongol siege of Caffa (1345 and 1347), so the claim that it occurred in 1347 is not fully supported. The source says the introduction was 'reportedly' first introduced; the sentence states it as fact."
    },
    {
     "sentenceId": "scene-3.1",
@@ -1106,7 +1111,7 @@
   {
    "id": "f9",
    "text": "The Black Death occurred between 1347 and 1351",
-   "quote": "none of which were dated to the Black Death era (1347–1351)",
+   "quote": "none of which were dated to the Black Death era (1347\u20131351)",
    "sourceId": "s2"
   },
   {
@@ -1118,7 +1123,7 @@
   {
    "id": "f11",
    "text": "A rat flea-only hypothesis does not fit documented characteristics of Black Death",
-   "quote": "Recent articles note inconsistencies between a rat flea–borne pandemic of Yersinia pestis (the bacterium that causes bubonic plague) and the documented characteristics of Black Death",
+   "quote": "Recent articles note inconsistencies between a rat flea\u2013borne pandemic of Yersinia pestis (the bacterium that causes bubonic plague) and the documented characteristics of Black Death",
    "sourceId": "s2"
   },
   {
@@ -1166,7 +1171,7 @@
   {
    "id": "f19",
    "text": "Labor shortage gave surviving peasants more power.",
-   "quote": "Fewer people meant fewer peasants to work the fields of feudal lords. This gave more power to the workers who didn’t die.",
+   "quote": "Fewer people meant fewer peasants to work the fields of feudal lords. This gave more power to the workers who didn\u2019t die.",
    "sourceId": "s4"
   },
   {
@@ -1220,19 +1225,19 @@
   {
    "id": "f28",
    "text": "Vikings halted exploration due to plague in 1349",
-   "quote": "July, 1349 An English ship brings the Black Death to Norway when it runs aground in Bergen. The ship’s crew is dead by the end of the week and the pestilence travels to Denmark and Sweden, where the king believes fasting on a Friday and foregoing shoes on Sunday will please God and end the plague.",
+   "quote": "July, 1349 An English ship brings the Black Death to Norway when it runs aground in Bergen. The ship\u2019s crew is dead by the end of the week and the pestilence travels to Denmark and Sweden, where the king believes fasting on a Friday and foregoing shoes on Sunday will please God and end the plague.",
    "sourceId": "s6"
   },
   {
    "id": "f29",
    "text": "Plague reached London in 1348 after Princess Joan's death",
-   "quote": "March, 1350 [...] October, 1348 Following the infection and death of King Edward III’s daughter Princess Joan, the plague reaches London, according to King Death: by Colin Platt.",
+   "quote": "March, 1350 [...] October, 1348 Following the infection and death of King Edward III\u2019s daughter Princess Joan, the plague reaches London, according to King Death: by Colin Platt.",
    "sourceId": "s6"
   },
   {
    "id": "f30",
    "text": "Jewish massacres occurred in Strasbourg and Mainz in 1349",
-   "quote": "February, 1349 One of the worst massacres of Jews during the Black Death takes place on Valentine’s Day in Strasbourg, with 2,000 Jewish people burned alive. In the spring, 3,000 Jews defend themselves in Mainz against Christians but are overcome and slaughtered.",
+   "quote": "February, 1349 One of the worst massacres of Jews during the Black Death takes place on Valentine\u2019s Day in Strasbourg, with 2,000 Jewish people burned alive. In the spring, 3,000 Jews defend themselves in Mainz against Christians but are overcome and slaughtered.",
    "sourceId": "s6"
   },
   {
@@ -1256,7 +1261,7 @@
   {
    "id": "f34",
    "text": "The Black Death killed an estimated one-third of Europe's population in the 14th century.",
-   "quote": "killing an estimated one-third of Europe’s population in the 14th century",
+   "quote": "killing an estimated one-third of Europe\u2019s population in the 14th century",
    "sourceId": "s7"
   },
   {
@@ -1286,7 +1291,7 @@
   {
    "id": "f39",
    "text": "In Siena, the plague caused population loss that stopped cathedral enlargement and ended the Sienese school of painting.",
-   "quote": "The economy of Siena received a decisive check. The city’s population was so diminished that the project of enlarging the cathedral was abandoned, and the death of many great painters, such as Ambrogio and Pietro Lorenzetti, brought the development of the first Sienese school to a premature end",
+   "quote": "The economy of Siena received a decisive check. The city\u2019s population was so diminished that the project of enlarging the cathedral was abandoned, and the death of many great painters, such as Ambrogio and Pietro Lorenzetti, brought the development of the first Sienese school to a premature end",
    "sourceId": "s7"
   },
   {
@@ -1309,8 +1314,8 @@
   },
   {
    "id": "f43",
-   "text": "Plague spread from Sicily to Italian cities Genoa and Venice by late 1347–early 1348",
-   "quote": "From there, the plague spread to Genoa and Venice by the turn of 1347–1348, spreading across Italy.",
+   "text": "Plague spread from Sicily to Italian cities Genoa and Venice by late 1347\u2013early 1348",
+   "quote": "From there, the plague spread to Genoa and Venice by the turn of 1347\u20131348, spreading across Italy.",
    "sourceId": "s8"
   },
   {
@@ -1358,7 +1363,7 @@
   {
    "id": "f51",
    "text": "Recurring plague outbreaks occurred in Europe between 1361 and 1400",
-   "quote": "There were recurrences of plague in 1361–63, 1369–71, 1374–75, 1390, and 1400.",
+   "quote": "There were recurrences of plague in 1361\u201363, 1369\u201371, 1374\u201375, 1390, and 1400.",
    "sourceId": "s9"
   }
  ],
@@ -1370,7 +1375,7 @@
   },
   {
    "id": "s2",
-   "title": "Body Lice, Yersinia pestis Orientalis, and Black Death - Volume 16, Number 10—October 2010 - Emerging Infectious Diseases journal - CDC",
+   "title": "Body Lice, Yersinia pestis Orientalis, and Black Death - Volume 16, Number 10\u2014October 2010 - Emerging Infectious Diseases journal - CDC",
    "url": "https://wwwnc.cdc.gov/eid/article/16/10/10-0683_article"
   },
   {
