@@ -27,9 +27,11 @@ an account. Finished videos are saved, so the same request plays again at once, 
 
 - **An agent in five steps.** Next.js API routes for research, script, fact-check, direction and voice; the browser
   calls them in order and shows each step's progress.
-- **NVIDIA Nemotron on Nebius Token Factory.** Nemotron 3 Ultra plans the searches, writes the script, fact-checks it
-  and directs every scene. Nemotron 3.5 Lightning, at about 6 % of Ultra's price, pulls facts with quotes out of each
-  source page, many calls at once. All calls use strict JSON schemas, with thinking off, through the OpenAI SDK.
+- **NVIDIA Nemotron on Nebius Token Factory, three models, each where it does best.** Nemotron 3 Ultra checks the
+  topic, plans the searches, writes the script, fact-checks it, plans the video and checks every place on a map.
+  Nemotron 3 Super, at about a third of Ultra's price, directs each scene. Nemotron 3.5 Lightning, at about 6 % of
+  Ultra's price, pulls facts with quotes out of each source page, many calls at once. All calls use strict JSON
+  schemas, with thinking off, through the OpenAI SDK.
 - **Tavily** runs 3 to 6 searches per video in parallel with advanced depth, preferring encyclopedias, museums and
   public bodies and leaving out homework and essay sites, and a second round fills gaps the model finds.
 - **Checks in code at every step.** A fact counts only if its quote is found word for word in the source. Every number,
@@ -39,7 +41,10 @@ an account. Finished videos are saved, so the same request plays again at once, 
   code: maps from Natural Earth, three visual themes, more than 30 animated diagrams (a volcano, the heart, a neural
   network, a wing), a kit of pictures for any topic, 266 icons and soft sound effects. ElevenLabs reads the narration,
   and its word timings drive the captions and the animation.
-- **Vercel and Vercel Blob** host the app and the library of finished videos.
+- **Safe to share.** Before any search, Ultra turns down requests for harmful instructions, sexual content, attacks on
+  people, private persons and text that is not a topic, with a plain message. On the hosted demo, a demo code and
+  limits on new videos per day and per address keep the API credits safe.
+- **Vercel and Vercel Blob** host the app, the library of finished videos and the feed's likes and comments.
 
 ### Challenges we ran into
 
@@ -57,13 +62,16 @@ an account. Finished videos are saved, so the same request plays again at once, 
 ### Accomplishments that we're proud of
 
 - Everything on screen can be traced to a source: every number, date, label, place and quote.
-- A video takes about a minute and costs cents to make (see `docs/eval.md`), and watching it again costs nothing.
+- A 90-second video takes under a minute and about 6.5 cents of Nemotron calls (see `docs/eval.md`), and watching
+  it again costs nothing.
 - Videos do not look alike: the look, the opening and the kind of picture for each scene follow the topic.
 
 ### What we learned
 
 - Small, strict checks in code do more than long prompts. The model is good at words; the code is good at rules.
-- Two models work better than one: Lightning for many small calls, Ultra where reasoning matters.
+- Three models work better than one: Lightning for many small calls, Super to direct the scenes, Ultra where
+  reasoning matters. Moving the scenes from Ultra to Super cut the cost of a video by more than half, with pictures as
+  good.
 - Showing the fact-check builds more trust than hiding the rewrites: "4 sentences rewritten to match the sources" is a
   feature.
 
@@ -74,8 +82,8 @@ mode where a teacher picks the sources.
 
 ### Built with
 
-Next.js, TypeScript, Tailwind CSS, Remotion, NVIDIA Nemotron 3 Ultra, NVIDIA Nemotron 3.5 Lightning, Nebius Token
-Factory, Tavily, ElevenLabs, Vercel, Vercel Blob, zod, d3-geo, Natural Earth.
+Next.js, TypeScript, Tailwind CSS, Remotion, NVIDIA Nemotron 3 Ultra, NVIDIA Nemotron 3 Super, NVIDIA Nemotron 3.5
+Lightning, Nebius Token Factory, Tavily, ElevenLabs, Vercel, Vercel Blob, zod, d3-geo, Natural Earth.
 
 ## For the Best Use of Tavily prize
 
@@ -93,10 +101,10 @@ round of Tavily searches fills it.
 1. Open https://meko-kappa.vercel.app.
 2. Choose **Watch** to scroll through videos Meko made. Open **Fact-check** under a video to see each sentence with the
    source words behind it, and click a sentence to play the video from there.
-3. To make a video, go back to the start page, type a topic, pick an audience and a length, and choose **Make video**.
-   Enter the demo code when asked: _(put the code here in Devpost's testing instructions, never in the repository)_.
-   It takes about a minute. A topic someone already made, with the same audience and length, plays at once from the
-   library.
+3. To make a video, go back to the start page, type a topic, pick an audience and a length, type the demo code in the
+   **Demo code** field next to **Make video**, and choose **Make video**. The demo code is:
+   _(put the code here in Devpost's testing instructions, never in the repository)_. It takes about a minute. A topic
+   someone already made, with the same audience and length, plays at once from the library.
 
 ## Demo video script (under 3 minutes)
 

@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { checkDemoCode } from "./demo-code.ts";
+import { serviceProblem } from "./service-errors.ts";
 import { TopicRefusedError } from "./topic-check.ts";
+import { VideoLimitError } from "./video-limits.ts";
 
 // Real requests are at most about 20,000 characters (saved runs: script 16k, factcheck 18k, direct 19k, voice 7k).
 // A 180-second video with every fact as long as the longest seen stays under 50,000. A bigger body would only make
@@ -79,7 +81,11 @@ export async function runStep<I, O extends object>(
   } catch (error) {
     // A topic Meko will not explain is an answer, not a failure: 422, so the page says why and offers no retry.
     if (error instanceof TopicRefusedError) return Response.json({ error: error.message, refused: true }, { status: 422 });
+    if (error instanceof VideoLimitError) return Response.json({ error: error.message, limit: true }, { status: 429 });
     console.error(error);
+    // A service out of credit, refusing its key or busy gets a sentence people can act on instead of its raw error.
+    const problem = serviceProblem(error);
+    if (problem) return Response.json({ error: problem }, { status: 503 });
     const message = error instanceof Error ? error.message : "Something went wrong.";
     return Response.json({ error: message }, { status: 500 });
   }

@@ -123,7 +123,7 @@ You need Node.js 22.18 or newer and npm.
 Meko runs on [Vercel](https://vercel.com) with no extra configuration:
 
 1. In Vercel, choose Add New, then Project, and import the GitHub repository.
-2. Add the environment variables from the table above, including `DEMO_CODE`. The feed plays for everyone; making a new video asks for the code. A long random code is what stops people from guessing it, and a rate-limit rule on `/api/*` in the Vercel Firewall adds more protection. If you add or change a variable later, deploy again, since Vercel only applies it to new deployments.
+2. Add the environment variables from the table above, including `DEMO_CODE`. The feed plays for everyone; making a new video asks for the code. A long random code is what stops people from guessing it. The app also limits new videos to 150 a day in all and 10 from one address in ten minutes (`lib/video-limits.ts`; videos already made play without limit), and a rate-limit rule on `/api/*` in the Vercel Firewall adds more protection. If you add or change a variable later, deploy again, since Vercel only applies it to new deployments.
 3. For the library, open the project's Storage tab, create a Blob store with public access and connect it to the project. Vercel then sets `BLOB_STORE_ID`, and the app signs in to the store with OIDC on its own.
 4. Deploy. Every push to `main` deploys again.
 

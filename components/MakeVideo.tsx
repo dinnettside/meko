@@ -146,6 +146,8 @@ async function postJson<T>(url: string, body: unknown, timeoutMs: number, demoCo
   if (response.status === 422 && json?.refused && message) throw new RefusedError(message);
   // The site has no demo code set up, so no code can work. Its message says so, rather than blaming the code typed.
   if (response.status === 503 && message) throw new Error(message);
+  // A limit on new videos says which one and when to come back.
+  if (response.status === 429 && json?.limit && message) throw new Error(message);
   if (response.status === 429 || /\b429\b/.test(message)) {
     throw new Error("Too many requests right now. Wait a minute, then try again.");
   }
