@@ -66,16 +66,17 @@ function getModel(role: ModelRole = "main"): string {
   return process.env.NEBIUS_MODEL || DEFAULT_MAIN_MODEL;
 }
 
-// One token from the fast model, for the daily health check (app/api/health): it fails when Token Factory turns the
-// key away or the account is out of credit. Logged like every call; it costs about $0.000002.
-export async function pingModel(): Promise<Usage> {
+// One token from a model, for the daily health check (app/api/health): it fails when Token Factory turns the key away,
+// the account is out of credit or the model is no longer served. Logged like every call; one token from each of the
+// three models costs about $0.00003.
+export async function pingModel(role: ModelRole): Promise<Usage> {
   const { usage } = await callModel(
     "health",
     { messages: [{ role: "user", content: "Answer with the word OK." }], max_tokens: 1 },
     { timeoutMs: 15_000, retryUntil: Date.now() },
     true,
     false,
-    "fast",
+    role,
   );
   return usage;
 }

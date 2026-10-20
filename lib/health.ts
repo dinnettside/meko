@@ -13,14 +13,20 @@ export type Health = { models: ServiceState; search: ServiceState; voice: Servic
 const CACHE_MS = 10 * 60_000;
 let last: { at: number; health: Health } | null = null;
 
+// All three models must answer: one that is no longer served stops every new video as surely as empty credit.
 async function models(): Promise<ServiceState> {
-  try {
-    await pingModel();
-    return "ok";
-  } catch (error) {
-    console.warn(`[health] Token Factory: ${error}`);
-    return /run out of credit/.test(serviceProblem(error) ?? "") ? "out" : "error";
-  }
+  const states = await Promise.all(
+    (["main", "scene", "fast"] as const).map(async (role): Promise<ServiceState> => {
+      try {
+        await pingModel(role);
+        return "ok";
+      } catch (error) {
+        console.warn(`[health] Token Factory, ${role} model: ${error}`);
+        return /run out of credit/.test(serviceProblem(error) ?? "") ? "out" : "error";
+      }
+    }),
+  );
+  return states.includes("out") ? "out" : states.includes("error") ? "error" : "ok";
 }
 
 // A service that fails to answer counts as an error, which the daily check reports.

@@ -1,7 +1,8 @@
 # Checks the live demo once a day through the judging period, and fails (GitHub then emails the repository's owner)
 # when the start page, the feed, a saved video or the API is down, when the API no longer asks for the demo code, or
 # when the language model, the web search or the voice is out of credit or running low. The API check sends no demo
-# code, so it is refused before any model call; the credit check (/api/health) spends one token of the fast model.
+# code, so it is refused before any model call; the credit check (/api/health) spends one token of each model. From
+# Oct 30, 2026, the deadline, it also checks that the repository is public with its MIT license detected.
 name: Health check
 
 on:
@@ -15,6 +16,7 @@ jobs:
     timeout-minutes: 5
     env:
       SITE: https://meko-kappa.vercel.app
+      REPO: dinnettside/meko
     steps:
       - name: Start page
         run: curl -fsS --max-time 30 "$SITE/" | grep -q "Explainer videos you can check"
@@ -42,3 +44,9 @@ jobs:
             esac
           done
           test -z "$failed"
+      - name: The repository is public, with its MIT license detected (from the deadline on)
+        run: |
+          if [ "$(date -u +%Y%m%d)" -lt 20261030 ]; then echo "Before the deadline: skipped."; exit 0; fi
+          curl -fsS --max-time 30 "https://api.github.com/repos/$REPO" -o repo.json || { echo "::error::The repository is not public"; exit 1; }
+          jq -r '"private: \(.private), license: \(.license.spdx_id)"' repo.json
+          test "$(jq -r '.private' repo.json)" = "false" && test "$(jq -r '.license.spdx_id' repo.json)" = "MIT"
