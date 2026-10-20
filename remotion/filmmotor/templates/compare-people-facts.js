@@ -154,8 +154,22 @@ register('document_closeup', {
   params: 'heading, subheading, date, lines (number of text lines drawn), stamp, tone, at', example: { heading: 'The Constitution', subheading: 'Kingdom of Norway', date: '17 May 1814', lines: 8, stamp: 'Adopted', tone: 'true' },
   build(p, c) {
     const { U, th } = c, col = { true: th.good, partly: th.warn, false: th.bad }[p.tone] || th.bad, n = p.lines ?? 8;
-    return U.bg() + `<g${U.A('up', 0.02, 0.1)} transform="rotate(1.2 960 540)">${U.card(600, 160, 720, 760, { f: th.paper })}${U.T(960, 280, p.heading || '', { fam: 'd', s: 64, w: 700, f: th.paperInk })}${p.subheading ? U.T(960, 330, p.subheading, { fam: 'd', s: 34, f: th.paperInk }) : ''}` +
-      `<path d="M820 360H1100" stroke="${th.muted}" stroke-width="2"/>${p.date ? U.T(960, 400, '— ' + p.date + ' —', { s: 26, f: th.muted }) : ''}` + Array.from({ length: n }, (_, k) => `<rect x="${700 + (k % 2) * 20}" y="${450 + k * 46}" width="${520 - (k % 3) * 60}" height="10" rx="5" fill="${th.muted}" opacity=".45"/>`).join('') + '</g>' +
+    // The heading fits the page: smaller when long, and on two lines when it must be; the rest moves down under it
+    // (added for Meko: "Civil Constitution of the Clergy" ran off both edges of the page).
+    const room = 640, wide = (t, s) => U.tw(t, s, { fam: 'd', w: 700 });
+    const heading = (() => {
+      const text = p.heading || '', words = text.split(/\s+/).filter(Boolean);
+      for (let s = 64; s >= 44; s -= 4) if (wide(text, s) <= room) return { lines: [text], s };
+      const splits = words.slice(1).map((_, i) => [words.slice(0, i + 1).join(' '), words.slice(i + 1).join(' ')]);
+      const pair = splits.sort((a, b) => Math.max(wide(a[0], 44), wide(a[1], 44)) - Math.max(wide(b[0], 44), wide(b[1], 44)))[0] || [text];
+      let s = 52;
+      while (s > 30 && Math.max(...pair.map((l) => wide(l, s))) > room) s -= 2;
+      return { lines: pair, s };
+    })();
+    const lh = Math.round(heading.s * 1.12), dy = (heading.lines.length - 1) * lh, top = 280 - (heading.lines.length > 1 ? 16 : 0);
+    const subSize = p.subheading ? Math.max(24, Math.min(34, Math.floor((34 * room) / Math.max(1, U.tw(p.subheading, 34, { fam: 'd' }))))) : 34;
+    return U.bg() + `<g${U.A('up', 0.02, 0.1)} transform="rotate(1.2 960 540)">${U.card(600, 160, 720, 760, { f: th.paper })}${heading.lines.map((line, k) => U.T(960, top + k * lh, line, { fam: 'd', s: heading.s, w: 700, f: th.paperInk })).join('')}${p.subheading ? U.T(960, 330 + dy, p.subheading, { fam: 'd', s: subSize, f: th.paperInk }) : ''}` +
+      `<path d="M820 ${360 + dy}H1100" stroke="${th.muted}" stroke-width="2"/>${p.date ? U.T(960, 400 + dy, '— ' + p.date + ' —', { s: 26, f: th.muted }) : ''}` + Array.from({ length: Math.min(n, Math.floor((880 - 450 - dy) / 46)) }, (_, k) => `<rect x="${700 + (k % 2) * 20}" y="${450 + dy + k * 46}" width="${520 - (k % 3) * 60}" height="10" rx="5" fill="${th.muted}" opacity=".45"/>`).join('') + '</g>' +
       (p.stamp ? `<g${U.A('stamp', p.at ?? 0.5, 0.05, { cx: 1180, cy: 760 })}><g transform="rotate(-9 1180 760)"><rect x="${1180 - (p.stamp.length * 30 + 80) / 2}" y="700" width="${p.stamp.length * 30 + 80}" height="120" rx="10" fill="none" stroke="${col}" stroke-width="10"/>${U.T(1180, 782, U.lab(p.stamp), { fam: 'd', s: 66, w: 800, f: col })}</g></g>` : '');
   },
 });

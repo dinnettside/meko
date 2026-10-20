@@ -24,3 +24,13 @@ Run on 2026-10-19 00:15 UTC: 10 topics, high school audience, 90 seconds each.
 
 Steps are research / script / fact-check / direct, measured on the server. The voice-over was skipped, so video lengths are estimated from the narration.
 Supported means the fact-check found every claim of the sentence in the quotes of its cited facts.
+
+## Update, 2026-10-20: Nemotron 3 Super directs the scenes
+
+The director's calls for each scene now use `nvidia/nemotron-3-super-120b-a12b` instead of Ultra; the plan, the critique and the check of places stay on Ultra. We ran only the director again with Super on the ten saved runs above (same facts and narration, no new searches):
+
+- Director cost per video: $0.037 with Super, against $0.120 with Ultra in the run above (the director was 82 % of the cost there).
+- Time of the director step: 19.9 s on average, against 17.8 s.
+- Scenes shown as plain text: 9 of 84 (11 %), as before.
+- The other steps cost $0.026 per video in the run above, and the new topic check adds $0.0004, so a video now costs about $0.065 in Token Factory calls.
+

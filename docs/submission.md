@@ -77,6 +77,17 @@ mode where a teacher picks the sources.
 Next.js, TypeScript, Tailwind CSS, Remotion, NVIDIA Nemotron 3 Ultra, NVIDIA Nemotron 3.5 Lightning, Nebius Token
 Factory, Tavily, ElevenLabs, Vercel, Vercel Blob, zod, d3-geo, Natural Earth.
 
+## For the Best Use of Tavily prize
+
+Tavily is the ground truth of every Meko video. Nemotron plans 3 to 6 searches, and Meko runs them in parallel with
+`search_depth: "advanced"` and `chunks_per_source: 3`, so each page comes back as the three passages that best match the
+query. `include_domains` in "prefer" mode steers the searches toward 30 encyclopedias, museums and public bodies, and
+`exclude_domains` leaves out 40 homework, essay and social sites. Meko ranks the results by trust and score and reads the
+best new page from each search. Nemotron 3.5 Lightning pulls facts out of those passages, each with its exact words, and
+the server keeps a fact only if Tavily's text really contains those words. The fact-check then holds every sentence of
+the narration to those quotes, and the viewer can read them next to the video. When the model finds a gap, a second
+round of Tavily searches fills it.
+
 ## Testing instructions
 
 1. Open https://meko-kappa.vercel.app.

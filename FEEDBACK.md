@@ -2,6 +2,18 @@
 
 Things that were confusing, slow or broken while building Meko, written down as they happened.
 
+## Summary
+
+What would help builders most, in order:
+
+1. **Prompt caching for shared prompt starts.** Most of a Meko video's cost (78 % in one measured run) is the director's per-scene calls, which all begin with the same long text: the menu of picture kinds and the JSON schema. Caching that start would cut both cost and latency a lot. We found no way to use prompt caching on Token Factory.
+2. **Complete docs for structured output.** The examples on the structured output page do not run, the page disagrees with itself about the shape of `json_schema`, and it does not list which JSON Schema features work. Strict `json_schema` even enforces `minItems` and `maxItems`, which is very useful and not documented.
+3. **Accurate model features in `/v1/models`.** `supported_features` lists only `tools` and `reasoning` for the Nemotron 3 models, yet strict `json_schema` works on all of them, and `verbose` has no description.
+4. **Docs for the thinking switch.** Say that `chat_template_kwargs: { enable_thinking: false }` is passed through, and warn that with thinking on, JSON tasks can run to `max_tokens` (Lightning hit our 6,000-token cap three times in a row).
+5. **For the Nemotron team.** Ultra with thinking off treats a hedge as wording ("might have ended" became "helped end"), misses false links between true facts, repeats confident place errors (the port of Caffa put in Georgia), writes fewer words than asked, and invents names outside a list it was given. Each was fixable with a check in code or a second call; the details and examples are below.
+
+What worked well: strict `json_schema` made replies parse reliably (only answers cut off at `max_tokens` did not); with thinking off, Ultra was fast enough for a pipeline that makes a video in under a minute; the OpenAI-compatible API worked with the `openai` SDK unchanged; and Lightning, at about 6 % of Ultra's price, is a very good fit for many small extraction calls.
+
 ## Token Factory docs
 
 - The code examples on the [structured output page](https://docs.tokenfactory.nebius.com/ai-models-inference/json) do not run as written. The Python example is missing commas in `response_format` and after it. The cURL example sends `"response format"` (with a space) instead of `response_format`, and is also missing a comma.
@@ -58,3 +70,6 @@ From making the videos for the feed (Oct 19):
 - In the director, Ultra put the medieval port of Caffa in Georgia in several calls of the same video, and colored Georgia under a label "Caffa". A separate call that only asks where each place is, with the sentence it appears in, answered Crimea, Ukraine. The second opinion is cheap (about $0.001 a video) and catches errors the first call repeats with confidence.
 - Ultra labeled maps with places the narration does not name, like Chang'an, Lisbon and the Cape of Good Hope, even when the prompt says to name only places the narration or facts name. They are often true, but the viewer cannot check them, so the code drops them, and a map left with nothing the scene names gets another kind of picture.
 - Nemotron 3.5 Lightning shortened the title "How Volcanoes Erupt: From Deep Earth to Explosive Power" to the heading "Volcanoes Deep Earth". Short, fluent rewrites are where Lightning is weakest in our use; the code now takes the heading from the title itself.
+- Lightning was not reliable as a topic check. Asked to sort requests into "fits" or a reason to refuse, it let a private person and two attempts to read out its prompt through, and called a request to cook drugs "weapons". Ultra sorted 24 of our 25 test requests right, in about 0.5 s and for $0.0004 a check, so Ultra does the check, next to the search plan, where it adds no time.
+- Nemotron 3 Super is a good fit for directing scenes. Re-directing ten saved videos with Super for the per-scene calls (Ultra kept the plan and the checks) cost $0.037 a video against $0.120 with Ultra, took about as long, broke our rules a little less often, and left the same 11 % of scenes as plain text. It also chose more varied pictures (a document, a calendar page, a pyramid), while Ultra drew more precise maps.
+

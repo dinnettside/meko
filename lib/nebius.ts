@@ -48,8 +48,17 @@ function getClient(): OpenAI {
 // overrides it, for example with Ultra itself to compare.
 const DEFAULT_FAST_MODEL = "nvidia/Nemotron-3_5-Lightning";
 
-function getModel(fast = false): string {
-  if (fast) return process.env.NEBIUS_FAST_MODEL || DEFAULT_FAST_MODEL;
+// The model that directs each scene: Nemotron 3 Super. Re-directing four saved videos with it cost a third of Ultra
+// (about $0.04 against $0.12 a video), was a little faster, and broke the rules a little less often, with pictures as
+// good (Oct 20, 2026). The plan, the critique and the check of places stay on Ultra. NEBIUS_SCENE_MODEL overrides it.
+const DEFAULT_SCENE_MODEL = "nvidia/nemotron-3-super-120b-a12b";
+
+// Which model a call uses: "main" is NEBIUS_MODEL, "fast" the fast model, and "scene" the scene model.
+export type ModelRole = "main" | "fast" | "scene";
+
+function getModel(role: ModelRole = "main"): string {
+  if (role === "fast") return process.env.NEBIUS_FAST_MODEL || DEFAULT_FAST_MODEL;
+  if (role === "scene") return process.env.NEBIUS_SCENE_MODEL || DEFAULT_SCENE_MODEL;
   const model = process.env.NEBIUS_MODEL;
   if (!model) throw new Error("NEBIUS_MODEL is not set.");
   return model;
@@ -113,9 +122,9 @@ async function callModel(
   timing: Timing,
   firstTry: boolean, // the first request of a chatJson call, which the retry window does not hold back
   thinking = false,
-  fast = false,
+  role: ModelRole = "main",
 ): Promise<{ content: string; cutOff: boolean; usage: Usage }> {
-  const model = getModel(fast);
+  const model = getModel(role);
   // NVIDIA recommends temperature 1 and top_p 0.95 for Nemotron 3 in every mode.
   const body: ChatCompletionCreateParamsNonStreaming = { temperature: 1, top_p: 0.95, ...params, model };
   // Thinking is off unless a step asks for it: off is 2 to 10 times faster, and it did not improve the results
@@ -157,7 +166,7 @@ async function callModel(
   const completionTokens = completion.usage?.completion_tokens ?? 0;
   const price = PRICES[model];
   const costUsd = price ? (promptTokens * price.input + completionTokens * price.output) / 1e6 : 0;
-  console.log(`[${step}]${fast ? ` (${model.split("/").pop()})` : ""} ${ms} ms, ${promptTokens} in / ${completionTokens} out, $${costUsd.toFixed(4)}`);
+  console.log(`[${step}]${model !== process.env.NEBIUS_MODEL ? ` (${model.split("/").pop()})` : ""} ${ms} ms, ${promptTokens} in / ${completionTokens} out, $${costUsd.toFixed(4)}`);
 
   const choice = completion.choices[0];
   return {
@@ -216,6 +225,7 @@ type JsonRequest<T> = {
   timeoutMs?: number; // per model call, 45 s unless set
   thinking?: boolean; // lets the model reason before it answers: slower, but better at careful checks
   fast?: boolean; // a simple call, for the fast model (see DEFAULT_FAST_MODEL)
+  scene?: boolean; // the direction of one scene, for the scene model (see ModelRole)
   // A Date.now() time for steps that must end in time. No request starts after it, and none runs past it; the retry
   // window still holds. A call stopped by it ends as if its tries had run out.
   deadline?: number;
@@ -270,7 +280,7 @@ export async function chatJson<T>(request: JsonRequest<T>): Promise<{ data: T; u
         timing,
         attempt === 0,
         request.thinking,
-        request.fast,
+        request.fast ? "fast" : request.scene ? "scene" : "main",
       );
     } catch (error) {
       // A request that times out may be the model repeating itself, like an answer cut off at max_tokens, so the next

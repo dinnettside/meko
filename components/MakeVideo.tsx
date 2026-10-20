@@ -119,6 +119,8 @@ async function findInLibrary(request: VideoRequest): Promise<LibraryVideo | null
 
 // A step the server refused for its demo code, so the form can ask for one.
 class CodeError extends Error {}
+// A topic Meko will not make a video about. Trying again would not help, so the page asks for another topic instead.
+class RefusedError extends Error {}
 
 // Turns network and server errors into a sentence people can act on.
 async function postJson<T>(url: string, body: unknown, timeoutMs: number, demoCode: string): Promise<Timed<T>> {
@@ -141,6 +143,7 @@ async function postJson<T>(url: string, body: unknown, timeoutMs: number, demoCo
   if (response.status === 401) {
     throw new CodeError(demoCode ? "That demo code is not right. Check it and try again." : "Making a video needs the demo code. Enter it next to the button.");
   }
+  if (response.status === 422 && json?.refused && message) throw new RefusedError(message);
   // The site has no demo code set up, so no code can work. Its message says so, rather than blaming the code typed.
   if (response.status === 503 && message) throw new Error(message);
   if (response.status === 429 || /\b429\b/.test(message)) {
@@ -172,7 +175,7 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
   const [steps, setSteps] = useState(waitingSteps);
   const [started, setStarted] = useState(false);
   const [running, setRunning] = useState(false);
-  const [failed, setFailed] = useState<{ step: StepId; message: string } | null>(null);
+  const [failed, setFailed] = useState<{ step: StepId; message: string; refused?: boolean } | null>(null);
   const [finished, setFinished] = useState<Finished | null>(null);
   const [activeSentence, setActiveSentence] = useState<string | null>(null);
   const [tab, setTab] = useState<"factcheck" | "sources">("factcheck");
@@ -235,8 +238,9 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (error instanceof CodeError) setNeedsCode(true);
-      setStep(id, { status: "failed", detail: message });
-      setFailed({ step: id, message });
+      // A refused topic is explained once, under the steps.
+      setStep(id, { status: "failed", detail: error instanceof RefusedError ? "Stopped before any search" : message });
+      setFailed({ step: id, message, refused: error instanceof RefusedError });
       throw error;
     }
   }
@@ -470,7 +474,11 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
                 <StepRow key={id} label={label} state={steps[id]} now={now} last={index === STEPS.length - 1} />
               ))}
             </ol>
-            {failed && !running ? (
+            {failed?.refused && !running ? (
+              <p className="mt-6 rounded-xl border border-rule px-4 py-3" role="alert">
+                {failed.message}
+              </p>
+            ) : failed && !running ? (
               <div className="mt-6 flex flex-wrap items-center gap-4 rounded-xl border border-bad/40 px-4 py-3" role="alert">
                 <span>
                   {failed.step === "voice"

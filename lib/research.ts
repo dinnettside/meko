@@ -7,6 +7,7 @@ import { findGapsPrompt } from "./prompts/find-gaps.ts";
 import { planQueriesPrompt } from "./prompts/plan-queries.ts";
 import { PREFERRED_DOMAINS, searchWeb } from "./tavily.ts";
 import type { SearchResult } from "./tavily.ts";
+import { checkTopic } from "./topic-check.ts";
 
 const MAX_ROUNDS = 2;
 const SOURCES_PER_ROUND = [6, 3]; // new sources to read in round 1 and round 2
@@ -139,17 +140,22 @@ export async function research(request: VideoRequest): Promise<ResearchResult> {
   const started = performance.now();
   const deadline = Date.now() + DEADLINE_MS;
   let usage = emptyUsage();
-  const plan = await chatJson({
-    step: "research/plan",
-    schemaName: "queries",
-    schema: QueriesSchema,
-    messages: planQueriesPrompt(request),
-    maxTokens: 500,
-    check: ({ queries }) =>
-      queries.length >= 3 && queries.length <= 6 ? [] : [`Write 3 to 6 queries, not ${queries.length}.`],
-    deadline,
-  });
-  usage = addUsage(usage, plan.usage);
+  // The topic check runs next to the search plan, so it costs no time. A topic Meko will not explain stops research
+  // before any search.
+  const [topicUsage, plan] = await Promise.all([
+    checkTopic(request, deadline),
+    chatJson({
+      step: "research/plan",
+      schemaName: "queries",
+      schema: QueriesSchema,
+      messages: planQueriesPrompt(request),
+      maxTokens: 500,
+      check: ({ queries }) =>
+        queries.length >= 3 && queries.length <= 6 ? [] : [`Write 3 to 6 queries, not ${queries.length}.`],
+      deadline,
+    }),
+  ]);
+  usage = addUsage(addUsage(usage, topicUsage), plan.usage);
 
   const read: ReadSource[] = [];
   const allQueries: string[] = [];

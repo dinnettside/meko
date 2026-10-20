@@ -2013,6 +2013,7 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
         maxTokens: 1000,
         timeoutMs: SCENE_CALL_TIMEOUT_MS,
         deadline: deadline - MARKER_CHECK_MS,
+        scene: true,
         check: (reply) => [
           ...(reply.visual.kind === "text" && kind && kind !== "text" ? [`Show a ${kind} or another picture, not text.`] : []),
           ...sceneProblems(reply, allowedFor(scene), videoFacts, sourceFor(scene), scene.narration, avoidFor(index, kind), blockedFor(index, kind), offered, quotableOf(scene)),
