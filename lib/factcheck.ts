@@ -5,7 +5,7 @@ import { CheckStatusSchema, ResearchFactListSchema, ScriptSchema } from "./pipel
 import type { CheckStatus, FactCheckReport, Script, SentenceCheck, Usage } from "./pipeline.ts";
 import { factCheckPrompt } from "./prompts/factcheck.ts";
 import { questionProblems } from "./script.ts";
-import { contentWords } from "./words.ts";
+import { contentWords, wordKey } from "./words.ts";
 import type { SentenceToCheck } from "./prompts/factcheck.ts";
 
 export const FactCheckInputSchema = z.object({
@@ -50,6 +50,30 @@ function linkClaims(text: string): string[] {
   return parts.length < 2 ? [] : parts.map((part) => `${part} ${link.toLowerCase()} ${lead.trim()}`);
 }
 
+// Hedges a quote can put on a claim, and the words that keep a claim uncertain in a sentence. A sentence that shares a
+// hedged clause's words without any of them says more than its source: "is thought to have injected more than 250
+// megatons" became "shot over 250 megatons", and "It was reportedly first introduced" lost its "reportedly". The model
+// let both through until the hedge was spelled out as a claim of its own.
+const QUOTE_HEDGE = /\b(may|might|possibly|probably|perhaps|likely|reportedly|allegedly|(?:is|are|was|were) (?:thought|believed|said) to|suggests?|suggested|some historians)\b/i;
+const SENTENCE_HEDGE = /\b(may|might|could|possibly|probably|perhaps|likely|reportedly|allegedly|thought|believed|said to|suggests?|suggested|some historians|estimated|about|around|approximately|roughly|up to)\b/i;
+
+function certaintyClaims(text: string, facts: { quote: string }[]): string[] {
+  if (SENTENCE_HEDGE.test(text)) return [];
+  const sentenceKeys = new Set(contentWords(text).map(wordKey));
+  const claims = facts.flatMap((fact) =>
+    fact.quote
+      .split(/(?<=[.;!?])\s+|,\s+(?:and|but)\s+/)
+      .flatMap((clause) => {
+        const hedge = clause.match(QUOTE_HEDGE)?.[0];
+        if (!hedge) return [];
+        const keys = [...new Set(contentWords(clause.replace(QUOTE_HEDGE, " ")).map(wordKey))];
+        const shared = keys.filter((key) => sentenceKeys.has(key)).length;
+        return shared >= Math.max(2, Math.ceil(keys.length / 2)) ? [`The source says this ${hedge.toLowerCase()} be so, and the sentence must say so too`] : [];
+      }),
+  );
+  return [...new Set(claims)];
+}
+
 // Words in a reason that say something about the sentence is not backed.
 const DOUBT = /\b(not|no|unsupported|missing|incorrect|wrong|contradict\w*|unclear|cannot|doesn't|don't|isn't|aren't)\b/i;
 
@@ -80,6 +104,17 @@ function checkProblems({ checks }: Checks, sentences: SentenceToCheck[]): string
   const unknown = [...seen.keys()].filter((id) => !sentenceIds.includes(id));
   if (unknown.length > 0) problems.push(`Unknown sentence IDs: ${unknown.join(", ")}.`);
   return problems;
+}
+
+// A sentence whose quotes hedge what it states for certain may not be called supported, as long as it still has no
+// hedge of its own.
+function certaintyProblems({ checks }: Checks, sentences: SentenceToCheck[]): string[] {
+  return sentences.flatMap((sentence) => {
+    const check = checks.find((candidate) => candidate.sentenceId === sentence.id);
+    return (sentence.certaintyClaims ?? []).length > 0 && check?.status === "supported"
+      ? [`Sentence ${sentence.id} states for certain what its quotes only say may be so. Revise it to keep the hedge, like "is thought to" or "reportedly", or remove it.`]
+      : [];
+  });
 }
 
 // Two true facts joined by a false "after" make a false sentence, and the model only catches that when it judges
@@ -140,6 +175,10 @@ export async function factCheck({ script, facts }: z.infer<typeof FactCheckInput
       ...(linkClaims(sentence.text).length > 0 ? { linkClaims: linkClaims(sentence.text) } : {}),
     })),
   );
+  for (const sentence of sentences) {
+    const claims = certaintyClaims(sentence.text, sentence.facts);
+    if (claims.length > 0) sentence.certaintyClaims = claims;
+  }
 
   // Two checks run side by side, and for each sentence the stricter one counts. One check alone sometimes lets a
   // false link through that the other catches, and running both at once costs no extra time.
@@ -152,7 +191,7 @@ export async function factCheck({ script, facts }: z.infer<typeof FactCheckInput
         schema: checksSchema(sentences.length),
         messages: factCheckPrompt(sentences),
         maxTokens: 10000,
-        check: (result) => [...checkProblems(result, sentences), ...linkProblems(result, sentences)],
+        check: (result) => [...checkProblems(result, sentences), ...linkProblems(result, sentences), ...certaintyProblems(result, sentences)],
         // When no check passes, a check that only misses a link claim is still usable; a broken one is not. So the
         // check to repair is one without broken parts, if there is one.
         repair: (result) => {

@@ -5,6 +5,7 @@ export type SentenceToCheck = {
   text: string;
   facts: { id: string; text: string; quote: string }[];
   linkClaims?: string[]; // links the sentence makes, spelled out by the code
+  certaintyClaims?: string[]; // hedges its quotes make that the sentence leaves out, spelled out by the code
 };
 
 export function factCheckPrompt(sentences: SentenceToCheck[]): ChatCompletionMessageParam[] {
@@ -21,6 +22,7 @@ export function factCheckPrompt(sentences: SentenceToCheck[]): ChatCompletionMes
         'A link at the start of a sentence covers every part after it: "After X, A happened and B happened" claims that A came after X and that B came after X. Some sentences come with these links spelled out in "linkClaims": put each of them in claims word for word, and judge it.',
         'An order is a claim too. When the sentence puts steps in an order with words like "then", "next", "first", "finally" or "followed by", list that order as a claim, like "the cornea comes after the pupil". The quotes must give the same order: "Light passes the pupil, then the cornea" is not supported by a quote that says light passes the cornea and then the pupil.',
         'Certainty is a claim too. When the quotes hedge, with words like "might", "may", "possibly", "probably", "is thought to" or "some historians", the sentence must hedge as much: "The plague helped end feudalism" is not supported by a quote that says it "might have brought an end to feudalism". Revise it to say what the quote says, like "may have helped end".',
+        'Some sentences come with "certaintyClaims": the quotes behind them hedge a claim the sentence states for certain. Put each of them in claims word for word and judge it: it is supported only when the sentence keeps the same uncertainty. When it does not, revise the sentence to keep the hedge.',
         "Every number and date must belong to the same thing, time and place as in the quotes.",
         "For each claim, set supported to true only if the quotes state it. Small changes in wording are fine. A date worked out from two quotes is fine.",
         'Then set the status. "supported": every claim is supported. "revised": some claims are not supported, so put a new version in "revised" that leaves them out and still sounds natural when spoken. "removed": the main claim is not supported.',

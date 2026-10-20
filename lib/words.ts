@@ -33,7 +33,7 @@ function singular(word: string): string {
 
 // What two forms of a word share: the singular, cut to 5 letters, so "summons" matches "summoned" and "kings"
 // matches "king". "XV" does not match "XVI".
-const wordKey = (word: string) => singular(word).slice(0, 5);
+export const wordKey = (word: string) => singular(word).slice(0, 5);
 
 // How much of a text is backed by a source: how many of its claim words also appear there. With `strict`, small
 // words like "more" or "only" must be backed too, so "Only army" does not pass where the narration says "army".
