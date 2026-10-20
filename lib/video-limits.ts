@@ -6,7 +6,8 @@ import { overLimit } from "./rate-limit.ts";
 // at most VIDEOS_PER_ADDRESS new videos from one address in ten minutes (counted per server instance), and
 // VIDEOS_PER_DAY new videos a day in all (counted in the Blob store). Videos already made play from the library
 // without either. Without a Blob store, as on a laptop, only the first limit holds.
-const VIDEOS_PER_ADDRESS = 10;
+// Judges may share one office address, and the rules ask that they can test freely, so this only stops a flood.
+const VIDEOS_PER_ADDRESS = 30;
 export const VIDEOS_PER_DAY = 150;
 const WRITE_TRIES = 4;
 

@@ -42,11 +42,15 @@ function getClient(): OpenAI {
   return client;
 }
 
-// The fast model for simple, everyday calls, like planning searches or naming the video: Nemotron 3.5 Lightning,
-// about 6 % of Ultra's price and the fastest in docs/model-check.md. Everything that needs careful reasoning (the
-// script, the fact-check, the direction of each scene) stays on NEBIUS_MODEL, Nemotron 3 Ultra. NEBIUS_FAST_MODEL
-// overrides it, for example with Ultra itself to compare.
+// The fast model for simple, everyday calls, like pulling facts out of each page or naming the video: Nemotron 3.5
+// Lightning, about 6 % of Ultra's price and the fastest in docs/model-check.md. Everything that needs careful reasoning
+// (the script, the fact-check, the plan of the video) stays on the main model, Nemotron 3 Ultra, and each scene is
+// directed by the scene model below. NEBIUS_FAST_MODEL overrides it, for example with Ultra itself to compare.
 const DEFAULT_FAST_MODEL = "nvidia/Nemotron-3_5-Lightning";
+
+// The model for everything that needs careful reasoning, picked in docs/model-check.md. NEBIUS_MODEL overrides it, so
+// a fresh copy runs with only NEBIUS_API_KEY set.
+const DEFAULT_MAIN_MODEL = "nvidia/Nemotron-3-Ultra-550b-a55b";
 
 // The model that directs each scene: Nemotron 3 Super. Re-directing four saved videos with it cost a third of Ultra
 // (about $0.04 against $0.12 a video), was a little faster, and broke the rules a little less often, with pictures as
@@ -59,9 +63,7 @@ export type ModelRole = "main" | "fast" | "scene";
 function getModel(role: ModelRole = "main"): string {
   if (role === "fast") return process.env.NEBIUS_FAST_MODEL || DEFAULT_FAST_MODEL;
   if (role === "scene") return process.env.NEBIUS_SCENE_MODEL || DEFAULT_SCENE_MODEL;
-  const model = process.env.NEBIUS_MODEL;
-  if (!model) throw new Error("NEBIUS_MODEL is not set.");
-  return model;
+  return process.env.NEBIUS_MODEL || DEFAULT_MAIN_MODEL;
 }
 
 export function emptyUsage(): Usage {
@@ -166,7 +168,7 @@ async function callModel(
   const completionTokens = completion.usage?.completion_tokens ?? 0;
   const price = PRICES[model];
   const costUsd = price ? (promptTokens * price.input + completionTokens * price.output) / 1e6 : 0;
-  console.log(`[${step}]${model !== process.env.NEBIUS_MODEL ? ` (${model.split("/").pop()})` : ""} ${ms} ms, ${promptTokens} in / ${completionTokens} out, $${costUsd.toFixed(4)}`);
+  console.log(`[${step}]${model !== getModel("main") ? ` (${model.split("/").pop()})` : ""} ${ms} ms, ${promptTokens} in / ${completionTokens} out, $${costUsd.toFixed(4)}`);
 
   const choice = completion.choices[0];
   return {

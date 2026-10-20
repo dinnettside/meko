@@ -43,7 +43,7 @@ an account. Finished videos are saved, so the same request plays again at once, 
   and its word timings drive the captions and the animation.
 - **Safe to share.** Before any search, Ultra turns down requests for harmful instructions, sexual content, attacks on
   people, private persons and text that is not a topic, with a plain message. On the hosted demo, a demo code and
-  limits on new videos per day and per address keep the API credits safe.
+  limits on new videos per day keep the API credits safe.
 - **Vercel and Vercel Blob** host the app, the library of finished videos and the feed's likes and comments.
 
 ### Challenges we ran into

@@ -26,6 +26,9 @@ export function serviceProblem(error: unknown): string | null {
       }
       if (status === 429) return "The language model service is busy. Wait a minute, then try again.";
     }
+    if (/^NEBIUS_API_KEY is not set/.test(message)) {
+      return `This copy of Meko has no Nebius Token Factory key (NEBIUS_API_KEY in .env.local, see the README), so it cannot make new videos. ${STILL_PLAY}`;
+    }
     const search = /^Tavily search failed with HTTP (\d+)/.exec(message);
     if (search) {
       if (search[1] === "432" || search[1] === "433") {

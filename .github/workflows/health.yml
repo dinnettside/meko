@@ -1,0 +1,30 @@
+# Checks the live demo once a day through the judging period, and fails (GitHub then emails the repository's owner)
+# when the start page, the feed, a saved video or the API is down, or when the API no longer asks for the demo code.
+# Nothing here spends API credits: the API check sends no demo code, so it is refused before any model call.
+name: Health check
+
+on:
+  schedule:
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITE: https://meko-kappa.vercel.app
+    steps:
+      - name: Start page
+        run: curl -fsS --max-time 30 "$SITE/" | grep -q "Explainer videos you can check"
+      - name: Feed
+        run: curl -fsS --max-time 30 "$SITE/watch" | grep -q "sentences checked"
+      - name: A saved video and its voice
+        run: |
+          curl -fsS --max-time 30 -o /dev/null "$SITE/examples/earthquakes.json"
+          curl -fsS --max-time 30 -o /dev/null "$SITE/examples/earthquakes/scene-1.mp3"
+      - name: The API is up and asks for the demo code
+        run: |
+          status=$(curl -s -o body.json -w "%{http_code}" --max-time 30 -X POST "$SITE/api/research" -H "Content-Type: application/json" -d '{}')
+          cat body.json; echo
+          test "$status" = "401" || { echo "Expected 401 without a demo code, got $status"; exit 1; }
