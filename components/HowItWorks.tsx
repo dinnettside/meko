@@ -28,8 +28,8 @@ export function HowItWorks() {
         ))}
       </ol>
       <p className="mt-10 max-w-3xl text-sm leading-relaxed text-muted">
-        Made with NVIDIA Nemotron 3 Ultra and Nemotron 3.5 Lightning on Nebius Token Factory, which research, write, check and direct each video,
-        Tavily for web search and ElevenLabs for the voice. Maps, diagrams and icons are drawn in code, with no stock footage
+        Made with NVIDIA Nemotron 3 Ultra, Nemotron 3 Super and Nemotron 3.5 Lightning on Nebius Token Factory, which research, write,
+        check and direct each video, Tavily for web search and ElevenLabs for the voice. Maps, diagrams and icons are drawn in code, with no stock footage
         or music.
       </p>
     </section>
