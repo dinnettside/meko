@@ -219,6 +219,19 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
     return () => player.removeEventListener("frameupdate", onFrame);
   }, [player, spans]);
 
+  // The space bar plays or pauses the video, unless the viewer is typing. A button or a link keeps it for itself.
+  useEffect(() => {
+    if (!player) return;
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (event.key !== " " || target?.closest?.("input, textarea, select, button, a, summary, [role=button]")) return;
+      event.preventDefault();
+      player.toggle();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [player]);
+
   function playFrom(sentenceId: string) {
     const span = spans.find((candidate) => candidate.sentenceId === sentenceId);
     if (!span || !player) return;

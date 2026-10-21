@@ -22,6 +22,9 @@ export function StoryboardPlayer({
   checks: CheckCounts;
   playerRef?: Ref<PlayerRef>;
 }) {
+  // Remotion's space key works by moving the focus to its play button whenever a player loads, plays or pauses. That
+  // pulled the focus out of the feed's search box while someone typed, so it is off, and the pages handle the space
+  // bar themselves (Feed, MakeVideo).
   return (
     <Player
       ref={playerRef}
@@ -32,6 +35,7 @@ export function StoryboardPlayer({
       compositionWidth={storyboard.width}
       compositionHeight={storyboard.height}
       controls
+      spaceKeyToPlayOrPause={false}
       acknowledgeRemotionLicense
       style={{ width: "100%" }}
       renderPoster={() => <Poster title={storyboard.title} />}

@@ -147,7 +147,8 @@ export function Feed({ items }: { items: FeedItem[] }) {
     [visible],
   );
 
-  // Arrow keys and j/k move between videos, unless the viewer is typing.
+  // Arrow keys and j/k move between videos, and the space bar plays or pauses the one on screen, unless the viewer is
+  // typing. A button, a link or the fact-check keeps the space bar for itself.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -158,11 +159,14 @@ export function Feed({ items }: { items: FeedItem[] }) {
       } else if (event.key === "ArrowUp" || event.key === "k") {
         event.preventDefault();
         scrollToIndex(active - 1);
+      } else if (event.key === " " && activeSlug && !target?.closest?.("button, a, summary, select, [role=button], [role=dialog]")) {
+        event.preventDefault();
+        players.current.get(activeSlug)?.toggle();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [active, scrollToIndex]);
+  }, [active, activeSlug, scrollToIndex]);
 
   // A video's player is handed up once it has loaded, and handed back (null) when it goes. Its listeners come off with
   // it, and when the list of videos shown changes, since they read that list.
