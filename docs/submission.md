@@ -144,6 +144,20 @@ round of Tavily searches fills it.
    _(put the code here in Devpost's testing instructions, never in the repository)_. It takes about a minute. A topic
    someone already made, with the same audience and length, plays at once from the library.
 
+## Gallery
+
+Five screenshots of the live site, taken with headless Chrome on Oct 21, 2026, 1800 x 1200 PNG. Upload them in this
+order with these captions.
+
+1. `docs/images/gallery-1.png`: The start page. Type a topic, pick an audience and a length, and choose Make video.
+2. `docs/images/gallery-2.png`: The feed in dark mode. In the Black Death video, a map marks Strasbourg and Mainz as
+   the voice names them, with the year and the sources on screen.
+3. `docs/images/gallery-3.png`: The fact-check of the Black Death video. The source says the plague "might have"
+   ended feudalism, so the sentence was revised to "may have helped end feudalism". The source words are under it.
+4. `docs/images/gallery-4.png`: A drawn scene from the volcano video. Every picture in a Meko video is drawn in code.
+5. `docs/images/gallery-5.png`: The feed on a phone. One video per screen, with likes, comments, the fact-check and a
+   link to share.
+
 ## YouTube
 
 Upload as **Public**. The repository link works once the repository is public on Oct 29.
