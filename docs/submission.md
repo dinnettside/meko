@@ -214,3 +214,45 @@ recording: once it is made, the same request plays at once from the library. Tha
 | 2:00 | Like, comment, search | "Anyone can watch, like and comment, without an account." |
 | 2:15 | Ask for the rocket video again | "Ask for the same video again and it plays at once from the library, for free. Making it took about 5 cents of Nemotron calls: Ultra for the reasoning, Super for directing the scenes, Lightning for the many small calls." |
 | 2:40 | The start page | "Meko. Explainer videos you can check. The code is open source under the MIT license." |
+
+## Recording checklist
+
+**Browser**
+
+- Chrome in a new private window (Cmd+Shift+N), with one tab and no extensions in the toolbar.
+- The window at 1920 x 1080, zoom at 100 % (Cmd+0). If the screen is smaller than that, use 1440 x 810, the same
+  shape. On a Retina screen the recording is still sharp at 1080p.
+- Bookmarks bar hidden (Cmd+Shift+B). Notifications off: turn on Do Not Disturb, and quit Messages, Mail and chat apps.
+- Pick light or dark mode before you start, and keep it for the whole video. The switch is in the header.
+- The demo code shows in plain text in the **Demo code** field. Blur it in the edit, so it does not end up in a public
+  video.
+- Keep the video's own voice-over low or muted while you speak.
+
+**Address for each clip**
+
+| Time | Address | What to do |
+| --- | --- | --- |
+| 0:00 | https://meko-kappa.vercel.app | The start page, nothing typed |
+| 0:10 | The same page | Type "How do rockets reach space?", pick high school students and 60 seconds, type the demo code, choose **Make video** |
+| 0:20 | The same page | The progress steps |
+| 0:45 | The same page | The video plays |
+| 1:15 | The same page | The fact-check next to the video; click a sentence |
+| 1:35 | https://meko-kappa.vercel.app/watch | Type "black death" in the search, then open **Fact-check** and click a sentence |
+| 2:00 | The same page | Clear the search, like a video, post a comment, search for "heart". The comment stays on the site |
+| 2:15 | https://meko-kappa.vercel.app | The same topic, audience and length again: it plays at once from the library |
+| 2:40 | https://meko-kappa.vercel.app | The start page |
+
+The direct link to the Black Death would be https://meko-kappa.vercel.app/watch#black-death, but on the live site
+(Oct 21) it opens at the first video. And after a fresh load of the feed, a click on a sentence in the fact-check does
+nothing in the first two videos (Earthquakes and the Black Death). A search first works around both. Use the direct
+link once both are fixed.
+
+**Rules**
+
+- Do not make "How do rockets reach space?" on the site before recording. Once it is made, it plays at once from the
+  library, and the shots from 0:10 to 1:15 are lost. A retake needs a new topic for the same reason. Each new video
+  uses 6 to 24 Tavily credits.
+- At most 2:50. The rules say under 3 minutes.
+- No music. The app's own sounds are made in code.
+- Upload to YouTube as **Public**, not Unlisted or Private, with the title and description from the YouTube section.
+  Then paste the link there and in Devpost's video field.
