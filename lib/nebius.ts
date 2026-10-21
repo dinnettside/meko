@@ -48,6 +48,15 @@ function getClient(): OpenAI {
 // directed by the scene model below. NEBIUS_FAST_MODEL overrides it, for example with Ultra itself to compare.
 const DEFAULT_FAST_MODEL = "nvidia/Nemotron-3_5-Lightning";
 
+// When the fast model does not answer, its calls go to the scene model instead (see chatJson): Super costs more, but a
+// video that waits for a model that never answers fails. On Oct 21, 2026 Lightning stopped answering while Ultra and
+// Super answered at once. It normally returns facts in about a second (docs/model-check.md), so a call still waiting
+// after FAST_TIMEOUT_MS has stalled. After one that fails, the fast calls on this server instance skip it for
+// FAST_DOWN_MS, so they do not wait for it too.
+const FAST_TIMEOUT_MS = 20_000;
+const FAST_DOWN_MS = 5 * 60_000;
+let fastDownUntil = 0;
+
 // The model for everything that needs careful reasoning, picked in docs/model-check.md. NEBIUS_MODEL overrides it, so
 // a fresh copy runs with only NEBIUS_API_KEY set.
 const DEFAULT_MAIN_MODEL = "nvidia/Nemotron-3-Ultra-550b-a55b";
@@ -68,12 +77,13 @@ function getModel(role: ModelRole = "main"): string {
 
 // One token from a model, for the daily health check (app/api/health): it fails when Token Factory turns the key away,
 // the account is out of credit or the model is no longer served. Logged like every call; one token from each of the
-// three models costs about $0.00003.
+// three models costs about $0.00003. A model answers in about a second, so 10 s is plenty, and two tries fit in the
+// 30 s the route has. It never falls back to another model, since it checks this one.
 export async function pingModel(role: ModelRole): Promise<Usage> {
   const { usage } = await callModel(
     "health",
     { messages: [{ role: "user", content: "Answer with the word OK." }], max_tokens: 1 },
-    { timeoutMs: 15_000, retryUntil: Date.now() },
+    { timeoutMs: 10_000, retryUntil: Date.now() },
     true,
     false,
     role,
@@ -129,6 +139,11 @@ const isTimeout = (error: unknown) =>
 // Dropped connections and server errors are worth one more try. Bad requests are not, and chatJson handles timeouts.
 const isTransient = (error: unknown) =>
   (error instanceof OpenAI.APIConnectionError && !isTimeout(error)) || error instanceof OpenAI.InternalServerError;
+
+// The fast model failed in a way another model may not: it ran out of time, the connection or the server failed, it is
+// rate limited, or Token Factory no longer serves it. A bad request or an empty account fails on every model.
+const fastModelFailed = (error: unknown) =>
+  isTimeout(error) || isTransient(error) || error instanceof OpenAI.RateLimitError || error instanceof OpenAI.NotFoundError;
 
 // One model call. A transient error gets one more try, and a 429 gets one more try after waiting for Retry-After,
 // while the timing allows. Each happens at most once, so a call makes at most three requests. Logs tokens, latency
@@ -276,6 +291,8 @@ export async function chatJson<T>(request: JsonRequest<T>): Promise<{ data: T; u
   // The best answer that parsed but broke a rule, kept for `repair`. On a tie the later answer wins, since it had
   // the most feedback.
   let best: { data: T; distance: number } | null = null;
+  // A fast call goes to the scene model while the fast model is down (see FAST_TIMEOUT_MS).
+  let role: ModelRole = request.fast ? (Date.now() < fastDownUntil ? "scene" : "fast") : request.scene ? "scene" : "main";
 
   for (let attempt = 0; attempt <= MAX_FIX_ATTEMPTS; attempt++) {
     if (requestTimeout(timing, attempt > 0) === 0) {
@@ -294,12 +311,23 @@ export async function chatJson<T>(request: JsonRequest<T>): Promise<{ data: T; u
             json_schema: { name: request.schemaName, schema: jsonSchema, strict: true },
           },
         },
-        timing,
+        role === "fast" ? { ...timing, timeoutMs: Math.min(timing.timeoutMs, FAST_TIMEOUT_MS) } : timing,
         attempt === 0,
         request.thinking,
-        request.fast ? "fast" : request.scene ? "scene" : "main",
+        role,
       );
     } catch (error) {
+      // When the fast model fails, the scene model takes the call from the start, and the next fast calls too.
+      if (role === "fast" && fastModelFailed(error)) {
+        fastDownUntil = Date.now() + FAST_DOWN_MS;
+        problems = ["The fast model did not answer."];
+        console.warn(
+          `[${request.step}] The fast model did not answer (${error instanceof Error ? error.message : error}). The scene model takes this call and the fast calls of the next ${FAST_DOWN_MS / 60_000} minutes.`,
+        );
+        role = "scene";
+        messages = baseMessages;
+        continue;
+      }
       // A request that times out may be the model repeating itself, like an answer cut off at max_tokens, so the next
       // try starts over instead of sending the same conversation again.
       if (isTimeout(error)) {

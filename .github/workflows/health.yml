@@ -43,6 +43,9 @@ jobs:
               *) echo "::error::$service is $state (low: little credit left; out: none left; error: the service did not answer)"; failed=1 ;;
             esac
           done
+          # The fast model only warns: when it does not answer, its calls go to the scene model, and videos still work.
+          fast=$(jq -r '.fastModel // "ok"' health.json)
+          test "$fast" = "ok" || echo "::warning::The fast model is $fast, so its calls go to the scene model."
           test -z "$failed"
       - name: The repository is public, with its MIT license detected (from the deadline on)
         run: |
