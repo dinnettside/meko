@@ -133,13 +133,13 @@ round of Tavily searches fills it.
 ## Gallery
 
 Five screenshots of the live site, taken with headless Chrome on Oct 21, 2026, 1800 x 1200 PNG. Upload them in this
-order with these captions.
+order with these captions; Devpost allows 140 characters per caption. The project's thumbnail is `gallery-2.png`.
 
 1. `docs/images/gallery-1.png`: The start page. Type a topic, pick an audience and a length, and choose Make video.
-2. `docs/images/gallery-2.png`: The feed in dark mode. In the Black Death video, a map marks Strasbourg and Mainz as
-   the voice names them, with the year and the sources on screen.
-3. `docs/images/gallery-3.png`: The fact-check of the Black Death video. The source says the plague "might have"
-   ended feudalism, so the sentence was revised to "may have helped end feudalism". The source words are under it.
+2. `docs/images/gallery-2.png`: The feed. In the Black Death video, a map marks Strasbourg and Mainz as the voice names
+   them, with the year and sources on screen.
+3. `docs/images/gallery-3.png`: Fact-check: the source says the plague "might have" ended feudalism, so Meko revised the
+   sentence to "may have helped end feudalism".
 4. `docs/images/gallery-4.png`: A drawn scene from the volcano video. Every picture in a Meko video is drawn in code.
 5. `docs/images/gallery-5.png`: The feed on a phone. One video per screen, with likes, comments, the fact-check and a
    link to share.
