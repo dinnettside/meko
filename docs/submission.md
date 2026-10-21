@@ -1,7 +1,14 @@
 # Submission notes
 
-Drafts for the Devpost submission: the project story, the testing instructions and the script for the demo video.
-Numbers come from `docs/eval.md`.
+Drafts for the Devpost submission: the elevator pitch, the project story, the testing instructions, the gallery, the
+YouTube text and the script for the demo video. Numbers come from `docs/eval.md`.
+
+## Elevator pitch
+
+Meko turns a topic into a short animated explainer video in under a minute. It fact-checks every sentence against the
+exact words of its sources and shows them, so you can check it too.
+
+_(185 characters; Devpost allows 200.)_
 
 ## Project story
 
@@ -27,7 +34,7 @@ an account. Finished videos are saved, so the same request plays again at once, 
 
 - **An agent in five steps.** Next.js API routes for research, script, fact-check, direction and voice; the browser
   calls them in order and shows each step's progress.
-- **NVIDIA Nemotron on Nebius Token Factory, three models, each where it does best.** Nemotron 3 Ultra checks the
+- **NVIDIA Nemotron on Nebius Token Factory, three models, each with its own job.** Nemotron 3 Ultra checks the
   topic, plans the searches, writes the script, fact-checks it, plans the video and checks every place on a map.
   Nemotron 3 Super, at about a third of Ultra's price, directs each scene. Nemotron 3.5 Lightning, at about 6 % of
   Ultra's price, pulls facts with quotes out of each source page, many calls at once. All calls use strict JSON
@@ -53,7 +60,8 @@ an account. Finished videos are saved, so the same request plays again at once, 
 - **Fact-checks miss links and hedges.** "After the city fell, its population crashed" passed, although the source only
   gives the population "by" that year. "The plague helped end feudalism" passed against a source that says it "might
   have". The code now spells out every link as its own claim, runs two checks side by side and keeps the stricter one,
-  and the prompt treats certainty as a claim.
+  and the prompt treats certainty as a claim. Before the last of these changes, the planted-error test below caught 43
+  of 44 errors. The miss was a hedge. Now it catches all 44.
 - **Language models are bad at geometry.** Asked to draw diagrams, the model stacked labels in one column. Now it only
   says what is in a picture, and the code lays it out.
 - **Confident place errors.** The director put the medieval port of Caffa in Georgia, more than once in the same video.
@@ -62,6 +70,13 @@ an account. Finished videos are saved, so the same request plays again at once, 
 ### Accomplishments that we're proud of
 
 - Everything on screen can be traced to a source: every number, date, label, place and quote.
+- The fact-check passes a test with answers known in advance. We planted one error in each of 44 sentences: a wrong
+  number, date, order, cause, hedge, person or place. The fact-check caught all 44. It left all 14 correct control
+  sentences as they were.
+- The feed holds up against its sources. We read 30 claims from the feed against the source pages themselves. 25 are
+  supported, 5 go a step beyond their source (2 of them are fixed since), and none is false. 74 of the 82 quotes behind
+  them were found word for word on the pages. The other 8 could not be checked, because the pages block automated
+  access or load their text with JavaScript.
 - A 90-second video takes under a minute and about 6.5 cents of Nemotron calls (see `docs/eval.md`), and watching
   it again costs nothing.
 - Videos do not look alike: the look, the opening and the kind of picture for each scene follow the topic.
@@ -74,6 +89,8 @@ an account. Finished videos are saved, so the same request plays again at once, 
   good.
 - Showing the fact-check builds more trust than hiding the rewrites: "4 sentences rewritten to match the sources" is a
   feature.
+- Clear errors get caught. What gets through is overstatement: a word like "first" that goes a step beyond the source.
+  Because every sentence is shown next to its source words, a viewer can see that step.
 
 ### What's next for Meko
 
@@ -84,6 +101,26 @@ mode where a teacher picks the sources.
 
 Next.js, TypeScript, Tailwind CSS, Remotion, NVIDIA Nemotron 3 Ultra, NVIDIA Nemotron 3 Super, NVIDIA Nemotron 3.5
 Lightning, Nebius Token Factory, Tavily, ElevenLabs, Vercel, Vercel Blob, zod, d3-geo, Natural Earth.
+
+### The template library (pick A or B)
+
+The rules ask for a written explanation of what is new if any part of a project existed before the submission period.
+Pick the paragraph that is true, add it to the end of "How we built it", and delete the other one. A matches the README
+as it is. B needs the README's credit line for `remotion/filmmotor` changed too.
+
+**A. Written for Meko during the submission period.** The animated templates in `remotion/filmmotor` were written
+during the submission period, as a small film engine for this project, and adapted for Meko. The engine draws each
+template as an animated picture in code. The director picks a template for a scene and fills it with words and numbers
+from the narration, and `lib/templates.ts` checks them against the sources.
+
+**B. Taken from my own film engine and adapted for Meko.** Part of `remotion/filmmotor` comes from my own film engine,
+which I wrote before the hackathon: the engine core and about 100 general templates, like a cycle, a pyramid, a timeline or
+a donut chart (about 1,700 lines). During the submission period I brought them into Meko and adapted them: English
+text and number formats, Meko's three video looks instead of the engine's themes, text measured on Meko's fonts, and
+without the engine's player, camera, subtitles, audio and maps, since Meko has its own. New in the period: 34 animated
+drawings of how things work (the heart, a volcano, a neural network, a wing), the kit of four pictures for any topic
+(about 6,300 lines together), and the checks in `lib/templates.ts` (about 1,800 lines) that hold every word and number
+in a template to the narration and its sources. Everything else in Meko was written during the period.
 
 ## For the Best Use of Tavily prize
 
@@ -100,11 +137,50 @@ round of Tavily searches fills it.
 
 1. Open https://meko-kappa.vercel.app.
 2. Choose **Watch** to scroll through videos Meko made. Open **Fact-check** under a video to see each sentence with the
-   source words behind it, and click a sentence to play the video from there.
+   source words behind it, and click a sentence to play the video from there. The feed and the fact-checks need no
+   code.
 3. To make a video, go back to the start page, type a topic, pick an audience and a length, type the demo code in the
    **Demo code** field next to **Make video**, and choose **Make video**. The demo code is:
    _(put the code here in Devpost's testing instructions, never in the repository)_. It takes about a minute. A topic
    someone already made, with the same audience and length, plays at once from the library.
+
+## YouTube
+
+Upload as **Public**. The repository link works once the repository is public on Oct 29.
+
+Video link: _(paste the YouTube link here after the upload, and in Devpost's video field)_
+
+**Title** (91 characters; YouTube allows 100):
+
+Meko: fact-checked explainer videos in under a minute | Nebius x NVIDIA Global AI Hackathon
+
+**Description:**
+
+```text
+Meko turns a topic into a short animated explainer video in under a minute, and shows the source words behind every sentence.
+
+You type a topic, an audience and a length. An agent researches the topic on the web, writes a narration where every sentence cites its sources, and fact-checks every claim against the exact words of those sources. Then it directs each scene as a map, chart, timeline or diagram. The video plays in the browser with a voice-over, and the fact-check sits next to it.
+
+Try it: https://meko-kappa.vercel.app
+Code (MIT license): https://github.com/dinnettside/meko
+
+What it uses:
+- NVIDIA Nemotron 3 Ultra, Nemotron 3 Super and Nemotron 3.5 Lightning, served by Nebius Token Factory
+- Tavily for web search
+- ElevenLabs for the voice-over
+- Remotion, Next.js and Vercel
+
+Made for the Nebius x NVIDIA Global AI Hackathon, track Best Apps and Agents. There is no music. Every picture and sound in the videos is made in code.
+
+0:00 The question
+0:10 Making a video
+0:45 The video plays
+1:15 The fact-check
+1:35 The feed
+2:15 The library
+```
+
+Check the chapter times against the final cut. YouTube needs the first at 0:00 and each at least 10 seconds long.
 
 ## Demo video script (under 3 minutes)
 
