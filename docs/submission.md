@@ -52,6 +52,12 @@ an account. Finished videos are saved, so the same request plays again at once, 
   people, private persons and text that is not a topic, with a plain message. On the hosted demo, a demo code and
   limits on new videos per day keep the API credits safe.
 - **Vercel and Vercel Blob** host the app, the library of finished videos and the feed's likes and comments.
+- **The template library.** The animated templates in `remotion/filmmotor` come from my own film engine, which I made
+  during the submission period. I started it on September 29, 2026, for a history film in Norwegian, and on October 14
+  I added general templates for Meko. On October 18 I brought it into Meko and adapted it: English text and number
+  formats, Meko's three looks and text measured on Meko's fonts, without the engine's player, camera, subtitles, audio
+  and maps. The engine draws each template as an animated picture in code. The director picks a template for a scene
+  and fills it with words and numbers from the narration, and `lib/templates.ts` checks them against the sources.
 
 ### Challenges we ran into
 
@@ -101,26 +107,6 @@ mode where a teacher picks the sources.
 
 Next.js, TypeScript, Tailwind CSS, Remotion, NVIDIA Nemotron 3 Ultra, NVIDIA Nemotron 3 Super, NVIDIA Nemotron 3.5
 Lightning, Nebius Token Factory, Tavily, ElevenLabs, Vercel, Vercel Blob, zod, d3-geo, Natural Earth.
-
-### The template library (pick A or B)
-
-The rules ask for a written explanation of what is new if any part of a project existed before the submission period.
-Pick the paragraph that is true, add it to the end of "How we built it", and delete the other one. A matches the README
-as it is. B needs the README's credit line for `remotion/filmmotor` changed too.
-
-**A. Written for Meko during the submission period.** The animated templates in `remotion/filmmotor` were written
-during the submission period, as a small film engine for this project, and adapted for Meko. The engine draws each
-template as an animated picture in code. The director picks a template for a scene and fills it with words and numbers
-from the narration, and `lib/templates.ts` checks them against the sources.
-
-**B. Taken from my own film engine and adapted for Meko.** Part of `remotion/filmmotor` comes from my own film engine,
-which I wrote before the hackathon: the engine core and about 100 general templates, like a cycle, a pyramid, a timeline or
-a donut chart (about 1,700 lines). During the submission period I brought them into Meko and adapted them: English
-text and number formats, Meko's three video looks instead of the engine's themes, text measured on Meko's fonts, and
-without the engine's player, camera, subtitles, audio and maps, since Meko has its own. New in the period: 34 animated
-drawings of how things work (the heart, a volcano, a neural network, a wing), the kit of four pictures for any topic
-(about 6,300 lines together), and the checks in `lib/templates.ts` (about 1,800 lines) that hold every word and number
-in a template to the narration and its sources. Everything else in Meko was written during the period.
 
 ## For the Best Use of Tavily prize
 
