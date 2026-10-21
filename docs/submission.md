@@ -224,8 +224,7 @@ recording: once it is made, the same request plays at once from the library. Tha
   shape. On a Retina screen the recording is still sharp at 1080p.
 - Bookmarks bar hidden (Cmd+Shift+B). Notifications off: turn on Do Not Disturb, and quit Messages, Mail and chat apps.
 - Pick light or dark mode before you start, and keep it for the whole video. The switch is in the header.
-- The demo code shows in plain text in the **Demo code** field. Blur it in the edit, so it does not end up in a public
-  video.
+- The **Demo code** field shows the code as dots, so it can be typed on camera. Do not show it anywhere else.
 - Keep the video's own voice-over low or muted while you speak.
 
 **Address for each clip**
@@ -237,15 +236,10 @@ recording: once it is made, the same request plays at once from the library. Tha
 | 0:20 | The same page | The progress steps |
 | 0:45 | The same page | The video plays |
 | 1:15 | The same page | The fact-check next to the video; click a sentence |
-| 1:35 | https://meko-kappa.vercel.app/watch | Type "black death" in the search, then open **Fact-check** and click a sentence |
-| 2:00 | The same page | Clear the search, like a video, post a comment, search for "heart". The comment stays on the site |
+| 1:35 | https://meko-kappa.vercel.app/watch#black-death | Open **Fact-check** and click a sentence |
+| 2:00 | The same page | Like the video, post a comment, search for "heart". The comment stays on the site |
 | 2:15 | https://meko-kappa.vercel.app | The same topic, audience and length again: it plays at once from the library |
 | 2:40 | https://meko-kappa.vercel.app | The start page |
-
-The direct link to the Black Death would be https://meko-kappa.vercel.app/watch#black-death, but on the live site
-(Oct 21) it opens at the first video. And after a fresh load of the feed, a click on a sentence in the fact-check does
-nothing in the first two videos (Earthquakes and the Black Death). A search first works around both. Use the direct
-link once both are fixed.
 
 **Rules**
 
