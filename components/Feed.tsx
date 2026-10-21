@@ -84,6 +84,8 @@ export function Feed({ items }: { items: FeedItem[] }) {
   const scroller = useRef<HTMLElement>(null);
   const sections = useRef(new Map<string, HTMLElement>());
   const players = useRef(new Map<string, PlayerRef>());
+  // How to take each player's listeners off again, by slug.
+  const unlisten = useRef(new Map<string, () => void>());
 
   // Likes and comments for every video, once the viewer is known.
   useEffect(() => {
@@ -120,7 +122,15 @@ export function Feed({ items }: { items: FeedItem[] }) {
     }
   }, [nearby, videos]);
 
-  // Only the active video plays; the others pause. A link with #slug opens at that video, and the address follows.
+  // A link with #slug opens at that video, which then becomes the active one as it comes into view. This effect must
+  // stay above the next one, which writes the active video into the address: effects run in order, so the link is read
+  // before it is replaced.
+  useEffect(() => {
+    const wanted = decodeURIComponent(window.location.hash.slice(1));
+    if (wanted && sections.current.has(wanted)) sections.current.get(wanted)?.scrollIntoView();
+  }, []);
+
+  // Only the active video plays; the others pause. The address follows the active video.
   useEffect(() => {
     players.current.forEach((player, slug) => {
       if (slug !== activeSlug) player.pause();
@@ -128,11 +138,6 @@ export function Feed({ items }: { items: FeedItem[] }) {
     });
     if (activeSlug && window.location.hash !== `#${activeSlug}`) window.history.replaceState(null, "", `#${activeSlug}`);
   }, [activeSlug, started, videos]);
-
-  useEffect(() => {
-    const wanted = decodeURIComponent(window.location.hash.slice(1));
-    if (wanted && sections.current.has(wanted)) sections.current.get(wanted)?.scrollIntoView();
-  }, []);
 
   const scrollToIndex = useCallback(
     (index: number) => {
@@ -159,19 +164,26 @@ export function Feed({ items }: { items: FeedItem[] }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [active, scrollToIndex]);
 
+  // A video's player is handed up once it has loaded, and handed back (null) when it goes. Its listeners come off with
+  // it, and when the list of videos shown changes, since they read that list.
   const registerPlayer = useCallback(
     (slug: string, player: PlayerRef | null) => {
-      if (!player) {
-        players.current.delete(slug);
-        return;
-      }
-      if (players.current.get(slug) === player) return;
+      unlisten.current.get(slug)?.();
+      unlisten.current.delete(slug);
+      players.current.delete(slug);
+      if (!player) return;
       players.current.set(slug, player);
-      player.addEventListener("play", () => setStarted(true));
+      const onPlay = () => setStarted(true);
       // At the end, the next video comes up, like turning a page.
-      player.addEventListener("ended", () => {
+      const onEnded = () => {
         const index = visible.findIndex((item) => item.slug === slug);
         if (index >= 0 && index < visible.length - 1) scrollToIndex(index + 1);
+      };
+      player.addEventListener("play", onPlay);
+      player.addEventListener("ended", onEnded);
+      unlisten.current.set(slug, () => {
+        player.removeEventListener("play", onPlay);
+        player.removeEventListener("ended", onEnded);
       });
     },
     [visible, scrollToIndex],
@@ -305,14 +317,12 @@ export function Feed({ items }: { items: FeedItem[] }) {
   );
 }
 
-// One video in the feed. It hands its player up, so the feed can play the one on screen and pause the rest.
+// One video in the feed. It hands its player up, so the feed can play the one on screen and pause the rest, and the
+// fact-check can play it from a sentence. The player loads after this mounts (see StoryboardPlayer above), so a callback
+// ref hands it up when it arrives; an effect here would run too early and hand up nothing.
 function FeedPlayer({ slug, video, onPlayer }: { slug: string; video: SavedVideo; onPlayer: (slug: string, player: PlayerRef | null) => void }) {
-  const playerRef = useRef<PlayerRef>(null);
+  const playerRef = useCallback((player: PlayerRef | null) => onPlayer(slug, player), [slug, onPlayer]);
   const sites = useMemo(() => sceneSites(video.storyboard, video.facts), [video]);
-  useEffect(() => {
-    onPlayer(slug, playerRef.current);
-    return () => onPlayer(slug, null);
-  }, [slug, onPlayer]);
   return <StoryboardPlayer storyboard={video.storyboard} voice={video.voice} sites={sites} checks={video.report} playerRef={playerRef} />;
 }
 

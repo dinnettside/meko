@@ -193,7 +193,9 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
   const [asked, setAsked] = useState<VideoRequest | null>(null); // what the video being made is about
   const [now, setNow] = useState(() => Date.now());
   const progress = useRef<Progress | null>(null);
-  const playerRef = useRef<PlayerRef>(null);
+  // The player loads after the video is shown (see StoryboardPlayer above), so it arrives through a callback ref, and
+  // the effect that follows it runs again once it is there.
+  const [player, setPlayer] = useState<PlayerRef | null>(null);
 
   // Ticks while the pipeline runs, so the time of the current step counts up.
   useEffect(() => {
@@ -209,20 +211,19 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
   );
   const sites = useMemo(() => (finished ? sceneSites(finished.storyboard, finished.facts) : {}), [finished]);
   useEffect(() => {
-    const player = playerRef.current;
     if (!player || spans.length === 0) return;
     const onFrame = ({ detail }: { detail: { frame: number } }) => {
       setActiveSentence(spans.findLast((span) => span.startFrame <= detail.frame)?.sentenceId ?? null);
     };
     player.addEventListener("frameupdate", onFrame);
     return () => player.removeEventListener("frameupdate", onFrame);
-  }, [spans]);
+  }, [player, spans]);
 
   function playFrom(sentenceId: string) {
     const span = spans.find((candidate) => candidate.sentenceId === sentenceId);
-    if (!span || !playerRef.current) return;
-    playerRef.current.seekTo(span.startFrame);
-    playerRef.current.play();
+    if (!span || !player) return;
+    player.seekTo(span.startFrame);
+    player.play();
   }
 
   const setStep = (id: StepId, state: StepState) => setSteps((current) => ({ ...current, [id]: state }));
@@ -443,6 +444,8 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
               {needsCode ? (
                 <label className="flex items-center gap-2 text-sm text-muted">
                   Demo code
+                  {/* Shown as dots, so the code is not read off a screen or a recording. Masked with CSS rather than
+                      type="password", so the browser does not offer to save it as a password in the middle of a demo. */}
                   <input
                     value={demoCode}
                     onChange={(event) => setDemoCode(event.target.value)}
@@ -451,7 +454,7 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
                     spellCheck={false}
                     placeholder="From the submission"
                     suppressHydrationWarning
-                    className="w-44 rounded-full border border-rule bg-bg px-4 py-2.5 font-mono text-sm text-fg outline-none placeholder:font-sans placeholder:text-muted/70 focus:border-fg"
+                    className="w-44 rounded-full border border-rule bg-bg px-4 py-2.5 font-mono text-sm text-fg outline-none [-webkit-text-security:disc] placeholder:font-sans placeholder:text-muted/70 focus:border-fg"
                   />
                 </label>
               ) : null}
@@ -538,7 +541,7 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
                     voice={finished.voice}
                     sites={sites}
                     checks={finished.report}
-                    playerRef={playerRef}
+                    playerRef={setPlayer}
                   />
                 </div>
               </div>
