@@ -121,14 +121,22 @@ round of Tavily searches fills it.
 
 ## Testing instructions
 
+Devpost has no field for testing instructions, so they go in a text file uploaded under **Upload a File** in
+Additional info, which only judges and organizers see. The file says what is below, with the demo code typed in by
+hand. Never put the code in the repository.
+
 1. Open https://meko-kappa.vercel.app.
 2. Choose **Watch** to scroll through videos Meko made. Open **Fact-check** under a video to see each sentence with the
    source words behind it, and click a sentence to play the video from there. The feed and the fact-checks need no
    code.
 3. To make a video, go back to the start page, type a topic, pick an audience and a length, type the demo code in the
-   **Demo code** field next to **Make video**, and choose **Make video**. The demo code is:
-   _(put the code here in Devpost's testing instructions, never in the repository)_. It takes about a minute. A topic
-   someone already made, with the same audience and length, plays at once from the library.
+   **Demo code** field next to **Make video**, and choose **Make video**. It takes about a minute. A topic someone
+   already made, with the same audience and length, plays at once from the library, so a topic that is not in the feed
+   shows the agent at work.
+4. Meko turns down requests for harmful instructions, sexual content, attacks on people, private persons and text that
+   is not a topic. It makes at most 30 new videos from one address in ten minutes and 150 a day in all, and videos
+   already made always play. If a service has run out of credits, the app says so in plain words, and the feed and the
+   fact-checks keep working.
 
 ## Gallery
 
