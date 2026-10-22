@@ -2,7 +2,7 @@
 
 Meko turns a topic into a short, fact-checked, animated explainer video in under a minute.
 
-**Live demo: [meko-kappa.vercel.app](https://meko-kappa.vercel.app)**
+**Live demo: [meko-kappa.vercel.app](https://meko-kappa.vercel.app)** · **Demo video (1:41): [youtu.be/LNudZHtkS2A](https://youtu.be/LNudZHtkS2A)**
 
 You type a topic, an audience and a length, for example "The French Revolution, high school, 90 seconds". An agent researches the topic on the web, writes a narration where every sentence cites its sources, fact-checks that narration against the exact words of those sources, and directs each scene as an animated map, timeline, chart, quote, list or chain of causes. The video plays right away in the browser, with a voice-over, the sources and a sentence-by-sentence fact-check report next to it.
 
