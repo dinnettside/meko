@@ -173,19 +173,20 @@ What it uses:
 Made for the Nebius x NVIDIA Global AI Hackathon, track Best Apps and Agents. There is no music. Every picture and sound in the videos is made in code. The narrator's voice is made with ElevenLabs too. The rocket video was made on a copy of Meko running on a laptop, with the same code and models, and the wait is shown at 2x speed.
 
 0:00 Making a video
-0:17 The agent at work (2x speed)
-0:35 The video plays
-1:06 The fact-check and the feed
-1:41 What it cost
+0:16 The agent at work (2x speed)
+0:34 The video plays
+1:05 The fact-check and the feed
+1:40 What it cost
 ```
 
-The chapter times match the finished demo (2:07). YouTube needs the first at 0:00 and each at least 10 seconds long.
+The chapter times match the finished demo (2:05). YouTube needs the first at 0:00 and each at least 10 seconds long.
 
 ## Demo video script (under 3 minutes)
 
-The finished demo is 2:07 at 1920 x 1080, with an ElevenLabs voice (Matilda) reading a version of this script. It was
+The finished demo is 2:05 at 1920 x 1080, with an ElevenLabs voice (Matilda) reading a version of this script. It was
 cut from screen recordings of the live site and, for making the rocket video, of a copy of Meko running on a laptop with
 the same code and models. That video took 37 s and $0.043, all 7 sentences supported, and its wait is shown at 2x speed.
+In the finished demo, the demo code field and the note under the form are covered, and the typing of the code is cut out.
 The script and checklist below are for a new recording.
 
 Make the video live with the topic "How do rockets reach space?", for high school, in about 60 seconds. Tested on
