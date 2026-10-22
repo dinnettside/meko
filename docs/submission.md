@@ -158,9 +158,13 @@ Upload as **Public**. The repository link works once the repository is public on
 
 Video link: https://youtu.be/LNudZHtkS2A (Public on the channel meko since Oct 22, 2026, and in Devpost's video field)
 
-**Title** (91 characters; YouTube allows 100):
+**Title** (85 characters; YouTube allows 100). The channel is named meko, so the title leaves the name out:
 
-Meko: fact-checked explainer videos in under a minute | Nebius x NVIDIA Global AI Hackathon
+Fact-checked explainer videos in under a minute | Nebius x NVIDIA Global AI Hackathon
+
+**Thumbnail:** `docs/images/youtube-thumbnail.png`, 1280 x 720. YouTube takes a custom thumbnail only after the channel
+turns on its intermediate features with a phone check (Settings, Channel, Feature access), which also makes the links in
+the description clickable.
 
 **Description:**
 
