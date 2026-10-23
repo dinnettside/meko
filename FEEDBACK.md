@@ -10,7 +10,8 @@ What would help builders most, in order:
 2. **Complete docs for structured output.** The examples on the structured output page do not run, the page disagrees with itself about the shape of `json_schema`, and it does not list which JSON Schema features work. Strict `json_schema` even enforces `minItems` and `maxItems`, which is very useful and not documented.
 3. **Accurate model features in `/v1/models`.** `supported_features` lists only `tools` and `reasoning` for the Nemotron 3 models, yet strict `json_schema` works on all of them, and `verbose` has no description.
 4. **Docs for the thinking switch.** Say that `chat_template_kwargs: { enable_thinking: false }` is passed through, and warn that with thinking on, JSON tasks can run to `max_tokens` (Lightning hit our 6,000-token cap three times in a row).
-5. **For the Nemotron team.** Ultra with thinking off treats a hedge as wording ("might have ended" became "helped end"), misses false links between true facts, repeats confident place errors (the port of Caffa put in Georgia), writes fewer words than asked, and invents names outside a list it was given. Each was fixable with a check in code or a second call; the details and examples are below.
+5. **A status for each model.** On Oct 21, 2026, Nemotron 3.5 Lightning stopped answering for at least ten minutes while Ultra and Super answered at once. A status per model would have told us at once; Meko now hands Lightning's calls to Super when it does not answer within 20 seconds.
+6. **For the Nemotron team.** Ultra with thinking off treats a hedge as wording ("might have brought an end to feudalism" became "helped end feudalism"), misses false links between true facts, repeats confident place errors (the port of Caffa put in Georgia), writes fewer words than asked, and invents names outside a list it was given. Each was fixable with a check in code or a second call; the details and examples are below.
 
 What worked well: strict `json_schema` made replies parse reliably (only answers cut off at `max_tokens` did not); with thinking off, Ultra was fast enough for a pipeline that makes a video in under a minute; the OpenAI-compatible API worked with the `openai` SDK unchanged; and Lightning, at about 6 % of Ultra's price, is a very good fit for many small extraction calls.
 
@@ -29,7 +30,7 @@ Token Factory's OpenAI-compatible chat completions API and its models list, call
 Yes, for an app like Meko, for three reasons:
 
 - Strict JSON schemas hold, list lengths included, so a video can take more than 20 model calls with a check in code after each one.
-- Three sizes of one model family behind one API let each call go where it fits. Moving the scene calls from Ultra to Super and the extraction to Lightning cut the cost of a video from about $0.15 to about $0.065, with the same checks passed.
+- Three sizes of one model family behind one API let each call go where it fits. Lightning pulls facts out of source pages for a fraction of Ultra's price, and moving the scene calls from Ultra to Super cut the cost of a video from about $0.15 to about $0.065 (extraction was already on Lightning in both runs), with the same checks passed.
 - With thinking off, Ultra answers in a few seconds, fast enough to make a video while the viewer waits.
 
 What would make it an easy yes: prompt caching for shared prompt starts (most of our cost), complete docs for structured output, and a models list that names the features each model really has.
@@ -51,7 +52,7 @@ What would make it an easy yes: prompt caching for shared prompt starts (most of
 From our model check on Oct 13, 2026 (see `docs/model-check.md`):
 
 - With thinking on, Nemotron 3.5 Lightning hit our 6000-token cap on all 3 storyboard tries (about 27 s each) and never finished the JSON. With thinking off, it answered in about 3 s.
-- Nemotron 3 Nano 30B put years, fact IDs and coordinates into the country code fields of the map scene in all 6 storyboard tries.
+- Nemotron 3 Nano 30B failed all 6 storyboard tries: it put things that are not country codes into the country code fields of the map scene, such as years ("1789"), number pairs ("1920,1080"), fact IDs ("f4"), layer names ("overlay") and place names ("Paris", "France").
 - In the app (Oct 13), Nemotron 3 Ultra with thinking off once filled a short list until it hit max_tokens (500 tokens in 2 s), even with strict `json_schema`. Adding `maxItems` to the schema fixed it.
 - Ultra did not always keep a fixed list of scene IDs. Asked to return one entry per given scene, it added an extra title scene in front, and two retries with the error message did not fix it. A schema with one required key per scene fixed it for good.
 - Ultra with thinking off tends to write fewer words than asked. Asked for about 195 words, it often wrote 120 to 160, so our word-count check sends it back for another try. A video can come out much shorter than requested without that check.

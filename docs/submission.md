@@ -84,12 +84,15 @@ like or comment without an account. Finished videos are saved, so the same reque
   supported, 5 go a step beyond their source (2 of them are fixed since), and none is false. 74 of the 82 quotes behind
   them were found word for word on the pages. The other 8 could not be checked, because the pages block automated
   access or load their text with JavaScript.
-- A 90-second video takes under a minute and about 6.5 cents of Nemotron calls (see `docs/eval.md`), and watching
-  it again costs nothing.
+- A video asked for 90 seconds takes under a minute and about 6.5 cents of Nemotron calls (see `docs/eval.md`), and
+  watching it again costs nothing. The feed shows higher numbers, up to 140 s and $0.40, because its videos were made
+  on Oct 18, before Nemotron 3 Super directed the scenes, and for some the director ran twice so we could keep the
+  better picture for each scene.
 - Videos do not look alike: the look, the opening and the kind of picture for each scene follow the topic. Scrolling
-  the feed, the 10 videos open in 8 different ways (before: 4, with 6 of 10 on the same title card), often with the
-  video's own first sentence, like a number counting up as the voice says it, and no two videos in a row share a look
-  or an opening. That pass only changes how a scene is drawn, never what it says.
+  the feed, the 10 videos open in 8 different ways (before: 4, with 6 of 10 on the same title card), and no two videos
+  in a row share a look or an opening. An opening can come from the video's own first sentence: the Silk Road opens
+  with "over 1,500 years" counting up as the voice says it. That pass only changes how a scene is drawn, never what it
+  says.
 
 ### What we learned
 
@@ -117,8 +120,8 @@ Lightning, Nebius Token Factory, Tavily, ElevenLabs, Vercel, Vercel Blob, zod, d
 Tavily is the ground truth of every Meko video. Nemotron plans 3 to 6 searches, and Meko runs them in parallel with
 `search_depth: "advanced"` and `chunks_per_source: 3`, so each page comes back as the three passages that best match the
 query. `include_domains` in "prefer" mode steers the searches toward 30 encyclopedias, museums and public bodies, and
-`exclude_domains` leaves out 40 homework, essay and social sites. Meko ranks the results by trust and score and reads the
-best new page from each search. Nemotron 3.5 Lightning pulls facts out of those passages, each with its exact words, and
+`exclude_domains` leaves out 41 homework, essay and social sites. Meko ranks the results by trust and score and reads up
+to six pages, taking the best new page from each search in turn. Nemotron 3.5 Lightning pulls facts out of those passages, each with its exact words, and
 the server keeps a fact only if Tavily's text really contains those words. The fact-check then holds every sentence of
 the narration to those quotes, and the viewer can read them next to the video. When the model finds a gap, a second
 round of Tavily searches fills it.
@@ -132,12 +135,13 @@ hand. Never put the code in the repository.
 1. Open https://meko-kappa.vercel.app.
 2. Choose **Watch** to scroll through videos Meko made. The video on screen plays by itself; tap it for sound. Type a
    topic in the search box to find a video, or to start one when there is none. Open **Fact-check** under a video to see
-   each sentence with the source words behind it, and click a sentence to play the video from there. The feed and the
+   each sentence with the source words behind it (on a phone it is the check mark), and click a sentence to play the
+   video from there. The feed and the
    fact-checks need no code.
 3. To make a video, go back to the start page, type a topic, pick an audience and a length, type the demo code in the
-   **Demo code** field next to **Make video**, and choose **Make video**. It takes about a minute. A topic someone
-   already made, with the same audience and length, plays at once from the library, so a topic that is not in the feed
-   shows the agent at work.
+   **Demo code** field next to **Make video**, and choose **Make video**. It takes about a minute. If the video plays at
+   once marked "From the library", someone made the same request before; choose **Make a new one** to watch the agent
+   make it again.
 4. Meko turns down requests for harmful instructions, sexual content, attacks on people, private persons and text that
    is not a topic. It makes at most 30 new videos from one address in ten minutes and 150 a day in all, and videos
    already made always play. If a service has run out of credits, the app says so in plain words, and the feed and the
@@ -159,7 +163,7 @@ order with these captions; Devpost allows 140 characters per caption. The projec
 
 ## YouTube
 
-Upload as **Public**. The repository link works once the repository is public on Oct 29.
+Uploaded as **Public**.
 
 Video link: https://youtu.be/LNudZHtkS2A (Public on the channel meko since Oct 22, 2026, and in Devpost's video field)
 
@@ -221,7 +225,7 @@ recording: once it is made, the same request plays at once from the library. Tha
 | 0:20 | The progress steps | "An agent built on NVIDIA Nemotron, on Nebius Token Factory, checks the topic and plans searches, and Tavily runs them. Nemotron pulls out facts, each with the exact words from its source, writes the script and fact-checks every claim." |
 | 0:45 | The video plays | "About a minute later the video plays. Every picture is drawn in code: the forces on the rocket, the stages burning out, the path into orbit, and captions that follow the voice." |
 | 1:15 | The fact-check report, click a sentence | "Next to it, every sentence with the source words behind it. Click one and the video jumps there." |
-| 1:35 | The feed, open the Black Death fact-check | "In the feed, here is the Black Death. Four sentences were rewritten, because the sources only say the plague might have ended feudalism. Meko says what its sources say, no more." |
+| 1:35 | The feed, open the Black Death fact-check | "In the feed, here is the Black Death. Four sentences were rewritten to match their sources. Two said the plague ended feudalism, but the source only says it might have. Meko says what its sources say, no more." |
 | 2:00 | Like, comment, search | "Anyone can watch, like and comment, without an account." |
 | 2:15 | Ask for the rocket video again | "Ask for the same video again and it plays at once from the library, for free. Making it took about 5 cents of Nemotron calls: Ultra for the reasoning, Super for directing the scenes, Lightning for the many small calls." |
 | 2:40 | The start page | "Meko. Explainer videos you can check. The code is open source under the MIT license." |
@@ -256,7 +260,7 @@ recording: once it is made, the same request plays at once from the library. Tha
 
 - Do not make "How do rockets reach space?" on the site before recording. Once it is made, it plays at once from the
   library, and the shots from 0:10 to 1:15 are lost. A retake needs a new topic for the same reason. Each new video
-  uses 6 to 24 Tavily credits.
+  uses 6 to 18 Tavily credits.
 - At most 2:50. The rules say under 3 minutes.
 - No music. The app's own sounds are made in code.
 - Upload to YouTube as **Public**, not Unlisted or Private, with the title and description from the YouTube section.
