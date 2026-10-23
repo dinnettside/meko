@@ -12,7 +12,7 @@
  "storyboard": {
   "title": "Apollo 11: First Steps on the Moon",
   "language": "en",
-  "theme": "blueprint",
+  "theme": "night",
   "fps": 30,
   "width": 1920,
   "height": 1080,
@@ -27,10 +27,11 @@
     ],
     "durationSec": 9.2,
     "look": {
-     "template": "question_card",
+     "template": "icon_hero",
      "params": {
-      "label": "",
-      "question": "How did Apollo 11 land humans on the Moon?"
+      "icon": "rocket",
+      "title": "Apollo 11",
+      "subtitle": "How did Apollo 11 land humans on the Moon?"
      }
     },
     "kind": "title",
@@ -140,14 +141,6 @@
      "f22"
     ],
     "durationSec": 5.3,
-    "look": {
-     "template": "source_highlight",
-     "params": {
-      "source": "1969 Apollo 11 Moon Landing: Timeline, Facts, Video  | HISTORY",
-      "excerpt": "As he took his first step, Armstrong famously said, \"That's one small step for man, one giant leap for mankind.\"",
-      "highlight": "That's one small step for man, one giant leap for mankind."
-     }
-    },
     "kind": "quote",
     "text": "That's one small step for man, one giant leap for mankind.",
     "sourceId": "s2"
@@ -164,7 +157,17 @@
     "kind": "stat",
     "value": 650,
     "unit": "million",
-    "label": "people watched live on television"
+    "label": "people watched live on television",
+    "look": {
+     "template": "odometer",
+     "params": {
+      "value": 650,
+      "decimals": 0,
+      "suffix": " million",
+      "label": "people watched live on television",
+      "at": "650"
+     }
+    }
    },
    {
     "id": "scene-7",

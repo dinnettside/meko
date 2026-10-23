@@ -131,7 +131,15 @@
     "durationSec": 8.1,
     "kind": "quote",
     "text": "Yersinia causes three types of plague in humans: bubonic, pneumonic, and septicemic.",
-    "sourceId": "s5"
+    "sourceId": "s5",
+    "look": {
+     "template": "source_highlight",
+     "params": {
+      "source": "What were the symptoms of the Black Death?  | Britannica",
+      "excerpt": "Yersinia causes three types of plague in humans: bubonic, pneumonic, and septicemic.",
+      "highlight": "Yersinia causes three types of plague in humans: bubonic, pneumonic, and septicemic."
+     }
+    }
    },
    {
     "id": "scene-5",
@@ -250,12 +258,12 @@
     "items": [
      {
       "title": "Up to 50% dead",
-      "detail": "50 million dead in Europe",
+      "detail": "Up to 50 million in Europe",
       "icon": "people"
      },
      {
-      "title": "First quarantine laws",
-      "detail": "Early quarantine measures",
+      "title": "Early quarantine",
+      "detail": "First public health responses",
       "icon": "mask"
      },
      {
@@ -265,14 +273,22 @@
      }
     ],
     "look": {
-     "template": "key_takeaways",
+     "template": "numbered_rows",
      "params": {
       "items": [
-       "Up to 50% dead: 50 million dead in Europe",
-       "First quarantine laws: Early quarantine measures",
-       "Anti-Jewish violence: Massacres across Europe"
-      ],
-      "style": "number"
+       {
+        "title": "Up to 50% dead",
+        "detail": "Up to 50 million in Europe"
+       },
+       {
+        "title": "Early quarantine",
+        "detail": "First public health responses"
+       },
+       {
+        "title": "Anti-Jewish violence",
+        "detail": "Massacres across Europe"
+       }
+      ]
      }
     }
    }

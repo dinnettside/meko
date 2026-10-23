@@ -28,7 +28,15 @@
     "kind": "title",
     "heading": "How Airplanes Fly",
     "subheading": "How do airplanes fly?",
-    "icon": "plane"
+    "icon": "plane",
+    "look": {
+     "template": "split_title",
+     "params": {
+      "icon": "plane",
+      "title": "How Airplanes Fly",
+      "subtitle": ""
+     }
+    }
    },
    {
     "id": "scene-2",

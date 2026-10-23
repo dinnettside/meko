@@ -31,10 +31,11 @@
     "subheading": "How did the Berlin Wall fall in 1989?",
     "icon": "wall",
     "look": {
-     "template": "question_card",
+     "template": "split_title",
      "params": {
-      "label": "",
-      "question": "How did the Berlin Wall fall in 1989?"
+      "icon": "wall",
+      "title": "The Fall of the Berlin Wall",
+      "subtitle": "How did the Berlin Wall fall in 1989?"
      }
     }
    },
@@ -178,11 +179,10 @@
     "text": "That's how it happened with the fall of the Berlin Wall, the point-of-no-return moment in the collapse of the Cold War order.",
     "sourceId": "s3",
     "look": {
-     "template": "quote_card",
+     "template": "quote_marks_big",
      "params": {
       "quote": "That's how it happened with the fall of the Berlin Wall, the point-of-no-return moment in the collapse of the Cold War order.",
-      "author": "The Surprising Human Factors Behind the Fall of the Berlin Wall | HISTORY",
-      "role": ""
+      "source": "The Surprising Human Factors Behind the Fall of the Berlin Wall | HISTORY"
      }
     }
    }

@@ -30,7 +30,7 @@
     "subheading": "How do vaccines work to protect us?",
     "icon": "syringe",
     "look": {
-     "template": "title_card",
+     "template": "headline_words",
      "params": {
       "title": "How Vaccines Train Your Immune System",
       "subtitle": "How do vaccines work to protect us?"
@@ -75,24 +75,24 @@
      "arrowup"
     ],
     "look": {
-     "template": "icon_chain",
+     "template": "road_path",
      "params": {
       "nodes": [
        {
-        "icon": "virus",
-        "label": "Body meets new germ"
+        "text": "Body meets new germ",
+        "icon": "virus"
        },
        {
-        "icon": "hourglass",
-        "label": "Slow antibody making"
+        "text": "Slow antibody making",
+        "icon": "hourglass"
        },
        {
-        "icon": "cell",
-        "label": "Memory cells stay"
+        "text": "Memory cells stay",
+        "icon": "cell"
        },
        {
-        "icon": "arrowup",
-        "label": "Next response is fast"
+        "text": "Next response is fast",
+        "icon": "arrowup"
        }
       ]
      }
@@ -111,9 +111,6 @@
     "kind": "list",
     "items": [
      {
-      "title": "Different methods"
-     },
-     {
       "title": "Weakened live germs",
       "icon": "virus"
      },
@@ -124,16 +121,32 @@
      {
       "title": "Protein pieces",
       "icon": "molecule"
+     },
+     {
+      "title": "Genetic instructions",
+      "icon": "dna"
      }
     ],
     "look": {
-     "template": "kinetic_words",
+     "template": "tile_grid",
      "params": {
-      "words": [
-       "Different methods",
-       "Weakened live germs",
-       "Killed germs",
-       "Protein pieces"
+      "items": [
+       {
+        "title": "Weakened live germs",
+        "icon": "virus"
+       },
+       {
+        "title": "Killed germs",
+        "icon": "virus"
+       },
+       {
+        "title": "Protein pieces",
+        "icon": "molecule"
+       },
+       {
+        "title": "Genetic instructions",
+        "icon": "dna"
+       }
       ]
      }
     }
@@ -151,11 +164,10 @@
     "text": "Either way, active immunity takes longer to develop but lasts longer than passive immunity.",
     "sourceId": "s1",
     "look": {
-     "template": "quote_card",
+     "template": "pull_quote",
      "params": {
       "quote": "Either way, active immunity takes longer to develop but lasts longer than passive immunity.",
-      "author": "Explaining How Vaccines Work | Vaccines & Immunizations | CDC",
-      "role": ""
+      "source": "Explaining How Vaccines Work | Vaccines & Immunizations | CDC"
      }
     }
    },
@@ -176,13 +188,24 @@
      },
      {
       "title": "Phase II",
-      "detail": "100-300 patients"
+      "detail": "About 100-300 patients"
      },
      {
       "title": "Phase III",
       "detail": "Prove efficacy for approval"
      }
-    ]
+    ],
+    "look": {
+     "template": "bullet_list",
+     "params": {
+      "items": [
+       "Phase I: 20-80 healthy volunteers",
+       "Phase II: About 100-300 patients",
+       "Phase III: Prove efficacy for approval"
+      ],
+      "style": "dot"
+     }
+    }
    },
    {
     "id": "scene-7",

@@ -109,10 +109,9 @@
      "This may trigger a volcanic eruption."
     ],
     "look": {
-     "template": "big_statement",
+     "template": "typewriter_statement",
      "params": {
-      "text": "This may trigger a volcanic eruption.",
-      "emphasis": []
+      "text": "This may trigger a volcanic eruption."
      }
     }
    },

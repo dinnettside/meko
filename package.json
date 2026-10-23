@@ -10,7 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "check-models": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/check-models.ts",
     "eval": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/eval.ts",
-    "make-example": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/make-example.ts"
+    "make-example": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/make-example.ts",
+    "vary-examples": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/vary-examples.ts"
   },
   "dependencies": {
     "@remotion/player": "4.0.535",

@@ -3,16 +3,18 @@ import type { FactCheckReport, ResearchFact, VideoRequest } from "./pipeline.ts"
 import type { Source, Storyboard } from "./storyboard.ts";
 import { storyboardFrames } from "../remotion/timing.ts";
 
-// The videos in the feed, in order. Each is made by `npm run make-example -- <slug>`, as a one-minute video.
+// The videos in the feed, in order. Each is made by `npm run make-example -- <slug>`, as a one-minute video. The order
+// keeps neighbours apart: no two videos in a row have the same look, and history and science take turns where they can.
+// `npm run vary-examples` then picks their openings and looks for this order.
 export const EXAMPLES = [
-  { slug: "earthquakes", topic: "Why earthquakes happen" },
   { slug: "black-death", topic: "The Black Death" },
+  { slug: "earthquakes", topic: "Why earthquakes happen" },
   { slug: "vaccines", topic: "How vaccines work" },
-  { slug: "neural-networks", topic: "How neural networks learn" },
   { slug: "silk-road", topic: "The Silk Road" },
-  { slug: "volcanoes", topic: "How volcanoes erupt" },
-  { slug: "berlin-wall", topic: "The fall of the Berlin Wall" },
+  { slug: "neural-networks", topic: "How neural networks learn" },
   { slug: "heart", topic: "How the heart pumps blood" },
+  { slug: "berlin-wall", topic: "The fall of the Berlin Wall" },
+  { slug: "volcanoes", topic: "How volcanoes erupt" },
   { slug: "apollo-11", topic: "The Apollo 11 Moon landing" },
   { slug: "airplanes", topic: "How do airplanes fly?" },
 ];

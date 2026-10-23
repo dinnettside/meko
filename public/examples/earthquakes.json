@@ -27,7 +27,14 @@
     "kind": "title",
     "heading": "Why Earthquakes Happen",
     "subheading": "Why do earthquakes happen?",
-    "icon": "rock"
+    "icon": "rock",
+    "look": {
+     "template": "title_card",
+     "params": {
+      "title": "Why Earthquakes Happen",
+      "subtitle": ""
+     }
+    }
    },
    {
     "id": "scene-2",
@@ -203,7 +210,17 @@
       "detail": "Changes underground pressure",
       "icon": "dam"
      }
-    ]
+    ],
+    "look": {
+     "template": "key_takeaways",
+     "params": {
+      "items": [
+       "Wastewater disposal: Changes underground pressure",
+       "Large reservoirs: Changes underground pressure"
+      ],
+      "style": "number"
+     }
+    }
    }
   ],
   "sources": [

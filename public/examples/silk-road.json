@@ -28,7 +28,21 @@
     "durationSec": 8.6,
     "kind": "title",
     "heading": "The Silk Road",
-    "icon": "silk"
+    "icon": "silk",
+    "look": {
+     "template": "number_hook",
+     "params": {
+      "value": 1500,
+      "decimals": 0,
+      "sign": "",
+      "prefix": "over",
+      "suffix": " years",
+      "lead": "",
+      "label": "a vast network of routes linked China to Europe",
+      "at": "1,500",
+      "title": "The Silk Road"
+     }
+    }
    },
    {
     "id": "scene-2",
@@ -223,14 +237,6 @@
      "f22"
     ],
     "durationSec": 7.9,
-    "look": {
-     "template": "quote_card",
-     "params": {
-      "quote": "In the late Middle Ages, transcontinental trade over the land routes of the Silk Road declined as sea trade increased.",
-      "author": "History of silk - Wikipedia",
-      "role": ""
-     }
-    },
     "kind": "quote",
     "text": "In the late Middle Ages, transcontinental trade over the land routes of the Silk Road declined as sea trade increased.",
     "sourceId": "s8"

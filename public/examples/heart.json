@@ -12,7 +12,7 @@
  "storyboard": {
   "title": "How the Heart Pumps Blood",
   "language": "en",
-  "theme": "blueprint",
+  "theme": "field",
   "fps": 30,
   "width": 1920,
   "height": 1080,
@@ -29,7 +29,15 @@
     "kind": "title",
     "heading": "How the Heart Pumps Blood",
     "subheading": "How does the heart pump blood through the body?",
-    "icon": "heart"
+    "icon": "heart",
+    "look": {
+     "template": "icon_hero",
+     "params": {
+      "icon": "heart",
+      "title": "How the Heart Pumps Blood",
+      "subtitle": "How does the heart pump blood through the body?"
+     }
+    }
    },
    {
     "id": "scene-2",
@@ -163,27 +171,7 @@
      "arrowup",
      "arrowup",
      "heart"
-    ],
-    "look": {
-     "template": "cause_chain",
-     "params": {
-      "nodes": [
-       {
-        "text": "Signal crosses AV node"
-       },
-       {
-        "text": "Travels His bundle"
-       },
-       {
-        "text": "Races Purkinje fibers"
-       },
-       {
-        "text": "Squeezes ventricles"
-       }
-      ],
-      "direction": "v"
-     }
-    }
+    ]
    },
    {
     "id": "scene-7",
