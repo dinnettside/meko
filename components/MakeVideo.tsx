@@ -1,7 +1,7 @@
 "use client";
 
 import type { PlayerRef } from "@remotion/player";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { FormEvent } from "react";
 import type { DirectResult } from "@/lib/direct";
 import { EXAMPLES, checkedLine } from "@/lib/example";
@@ -16,6 +16,7 @@ import type { SceneVoice, VoiceResult } from "@/lib/voice";
 import { FactCheckReport } from "./FactCheckReport";
 import { loadSavedVideo } from "./saved-video";
 import dynamic from "next/dynamic";
+import Form from "next/form";
 import Image from "next/image";
 import Link from "next/link";
 import { HowItWorks } from "./HowItWorks";
@@ -166,9 +167,18 @@ async function postJson<T>(url: string, body: unknown, timeoutMs: number, demoCo
 
 const DEMO_CODE_KEY = "meko-demo-code";
 
+// A topic from a link, as /?topic=insulin from the feed's "Make a video about" button. It fills the form; making the
+// video still takes a press of the button. Read in the browser only, since the page itself is the same for every topic.
+const readLinkedTopic = () => (new URLSearchParams(window.location.search).get("topic") ?? "").trim().slice(0, 200);
+const noSubscribe = () => () => {};
+
 // `codeRequired` is true on the hosted demo, where making a video needs a demo code.
 export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; featured: FeedItem[] }) {
-  const [topic, setTopic] = useState("");
+  const linkedTopic = useSyncExternalStore(noSubscribe, readLinkedTopic, () => "");
+  // What the viewer typed or picked; null until then, while the topic comes from the link.
+  const [typedTopic, setTopic] = useState<string | null>(null);
+  const topic = typedTopic ?? linkedTopic;
+  const topicField = useRef<HTMLInputElement>(null);
   // Remembered from the last code the server accepted in this browser. The page is prerendered without it, so the
   // field fills in on the client; storage can be blocked, and then it starts empty.
   const [demoCode, setDemoCode] = useState(() => {
@@ -235,6 +245,9 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
   function playFrom(sentenceId: string) {
     const span = spans.find((candidate) => candidate.sentenceId === sentenceId);
     if (!span || !player) return;
+    // Paused first: Remotion's seekTo on a playing video pauses it to resume by itself, and with play() right after,
+    // that resume stays pending and undoes the viewer's next pause.
+    player.pause();
     player.seekTo(span.startFrame);
     player.play();
   }
@@ -389,6 +402,14 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
     void runFrom(failed.step, progress.current);
   }
 
+  // A topic from a link is ready to make: the field is focused with the cursor after the topic.
+  useEffect(() => {
+    const field = topicField.current;
+    if (!linkedTopic || !field) return;
+    field.focus();
+    field.setSelectionRange(field.value.length, field.value.length);
+  }, [linkedTopic]);
+
   // A link to /?example opens the first example straight away, and /?example=black-death that one.
   useEffect(() => {
     const wanted = new URLSearchParams(window.location.search).get("example");
@@ -421,6 +442,7 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
           <div className="font-serif text-2xl leading-[1.7] sm:text-3xl">
             <span>Explain </span>
             <input
+              ref={topicField}
               value={topic}
               onChange={(event) => setTopic(event.target.value)}
               required
@@ -626,6 +648,24 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
               Open the feed
             </Link>
           </div>
+          {/* Opens the feed with the search done, as /watch?q=volcano. */}
+          <Form action="/watch" role="search" className="mt-6 flex max-w-xl gap-2">
+            <label className="min-w-0 flex-1">
+              <span className="sr-only">Search the videos</span>
+              <input
+                type="search"
+                name="q"
+                required
+                maxLength={100}
+                enterKeyHint="search"
+                placeholder="Search, like “volcano”"
+                className="w-full rounded-full border border-rule bg-surface px-4 py-2.5 text-base text-fg outline-none placeholder:text-muted focus:border-fg sm:text-sm"
+              />
+            </label>
+            <button type="submit" className="shrink-0 rounded-full border border-fg px-5 py-2.5 text-sm font-medium hover:bg-fg hover:text-bg">
+              Search
+            </button>
+          </Form>
           {featured.length > 0 ? (
             <ul className="mt-8 grid gap-6 sm:grid-cols-3">
               {featured.map((item) => (

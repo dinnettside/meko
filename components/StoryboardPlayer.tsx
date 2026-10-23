@@ -15,12 +15,24 @@ export function StoryboardPlayer({
   sites,
   checks,
   playerRef,
+  poster = true,
+  initiallyMuted = false,
+  volumeControls = true,
+  clickToPlay = true,
 }: {
   storyboard: Storyboard;
   voice: Record<string, SceneVoice>;
   sites: Record<string, string[]>;
   checks: CheckCounts;
   playerRef?: Ref<PlayerRef>;
+  // For the feed, whose videos play by themselves as they come into view: no poster (only viewers who asked for less
+  // motion wait for a tap), muted until the viewer turns sound on, and no Remotion sound button, since the feed draws
+  // its own beside the video. The feed also plays and pauses on taps itself: Remotion's click-to-play reacts as soon as
+  // a finger lands, so a swipe through the feed paused the video it started on.
+  poster?: boolean;
+  initiallyMuted?: boolean;
+  volumeControls?: boolean;
+  clickToPlay?: boolean;
 }) {
   // Remotion's space key works by moving the focus to its play button whenever a player loads, plays or pauses. That
   // pulled the focus out of the feed's search box while someone typed, so it is off, and the pages handle the space
@@ -35,11 +47,14 @@ export function StoryboardPlayer({
       compositionWidth={storyboard.width}
       compositionHeight={storyboard.height}
       controls
+      clickToPlay={clickToPlay}
+      initiallyMuted={initiallyMuted}
+      showVolumeControls={volumeControls}
       spaceKeyToPlayOrPause={false}
       acknowledgeRemotionLicense
       style={{ width: "100%" }}
-      renderPoster={() => <Poster title={storyboard.title} />}
-      showPosterWhenUnplayed
+      renderPoster={poster ? () => <Poster title={storyboard.title} /> : undefined}
+      showPosterWhenUnplayed={poster}
     />
   );
 }
