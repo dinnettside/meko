@@ -145,7 +145,7 @@ hand. Never put the code in the repository.
 
 ## Gallery
 
-Five screenshots of the live site, taken with headless Chrome on Oct 21, 2026, 1800 x 1200 PNG. Upload them in this
+Five screenshots of the live site, taken with headless Chrome on Oct 21, 2026 (gallery-5 again on Oct 23, after the feed began to play by itself), 1800 x 1200 PNG. Upload them in this
 order with these captions; Devpost allows 140 characters per caption. The project's thumbnail is `gallery-2.png`.
 
 1. `docs/images/gallery-1.png`: The start page. Type a topic, pick an audience and a length, and choose Make video.
