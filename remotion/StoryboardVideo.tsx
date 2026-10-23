@@ -38,6 +38,8 @@ export { creditsFrames, sceneFrames, sceneStarts, storyboardFrames } from "./tim
 const NO_VOICE: Record<string, SceneVoice> = {};
 // The sound effects are quiet, under the voice.
 const CHIME_VOLUME = 0.18;
+// An opening's animations play out within this many seconds (see SceneView).
+const OPENING_SEC = 4;
 const NO_SITES: Record<string, string[]> = {};
 
 // `voice` holds the recorded narration by scene ID. Without it, the video plays silently with captions.
@@ -188,8 +190,13 @@ function SceneView({
   region: string[];
 }) {
   const timing = { words, durationSec: scene.durationSec };
-  // A scene with a look is drawn by that template instead of its own scene; what it shows is the same.
-  if (scene.look) return <TemplateScene template={scene.look.template} params={scene.look.params} {...timing} />;
+  // A scene with a look is drawn by that template instead of its own scene; what it shows is the same. An opening
+  // plays out within its first seconds however long the title's narration runs, since that is when a viewer
+  // scrolling the feed decides whether to stay.
+  if (scene.look) {
+    const motionSec = scene.kind === "title" ? OPENING_SEC : undefined;
+    return <TemplateScene template={scene.look.template} params={scene.look.params} motionSec={motionSec} {...timing} />;
+  }
   switch (scene.kind) {
     case "title":
       return <TitleScene heading={scene.heading} subheading={scene.subheading} icon={scene.icon} region={region} seed={storyboard.title} />;

@@ -1,11 +1,12 @@
-import { useId, useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AbsoluteFill, useCurrentFrame, useDelayRender, useVideoConfig } from "remotion";
 import type { TimedWord } from "@/lib/elevenlabs";
 import { VIDEO } from "@/lib/theme";
 import { TPL, makeU, prepAnims, runAnims } from "../filmmotor/engine";
 import type { Anim, FilmTheme, Template, TemplateContext, TemplateParams } from "../filmmotor/engine";
 import "../filmmotor/templates";
-import { filmFontCss, filmTheme } from "../filmmotor/theme";
+import { filmFontsLoaded, filmFontsReady, textMeasurer } from "../filmmotor/measure";
+import { filmClass, filmFontCss, filmTheme } from "../filmmotor/theme";
 import { useTheme } from "../theme";
 import { revealTimes, spokenAt } from "../spoken";
 
@@ -38,6 +39,10 @@ const ITEM_LISTS: Record<string, { list: string; text?: string }> = {
   journey: { list: "stations", text: "label" },
   forces: { list: "forces", text: "label" },
   food_chain: { list: "chain", text: "label" },
+  tile_grid: { list: "items", text: "title" },
+  numbered_rows: { list: "items", text: "title" },
+  stair_steps: { list: "nodes", text: "text" },
+  road_path: { list: "nodes", text: "text" },
 };
 // The free part of the frame: below the notes in the top corners, above the captions, a little in from the sides.
 const FREE = { left: 40, top: VIDEO.topSpace, right: VIDEO.width - 40, bottom: VIDEO.height - VIDEO.captionSpace };
@@ -53,29 +58,42 @@ type Live = { anims: Anim[]; state: unknown; broken: boolean };
 
 // One of the film engine's animated templates (remotion/filmmotor), drawn in the Night atlas style. The template is
 // placed so it stays clear of the captions and the corner notes, scaled down if it does not fit. Its animations run
-// over the scene up to its last 0.8 seconds, so everything has settled before the next scene dissolves in.
+// over the scene up to its last 0.8 seconds, so everything has settled before the next scene dissolves in, or over
+// its first `motionSec` seconds when that is shorter.
 export function TemplateScene({
   template,
   params,
   words,
   durationSec,
+  motionSec = Infinity,
 }: {
   template: string;
   params: TemplateParams;
   words: TimedWord[];
   durationSec: number;
+  motionSec?: number;
 }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { delayRender, continueRender } = useDelayRender();
   // Element IDs must be unique on the page, also while two template scenes overlap in a dissolve.
   const id = `fm${useId().replace(/[^A-Za-z0-9]/g, "")}_`;
-  const activeSec = Math.max(0.1, durationSec - SETTLE_SEC);
+  const activeSec = Math.max(0.1, Math.min(durationSec - SETTLE_SEC, motionSec));
   const time = frame / fps;
   const progress = Math.min(1, Math.max(0, time / activeSec));
-  // The template is drawn in the video's look.
+  // The template is drawn in the video's look, and laid out from its text measured on the look's fonts once they
+  // have loaded. Until then it is laid out from the engine's estimates, and laid out again when they are in.
   const theme = useTheme();
-  const film = useMemo(() => filmTheme(theme), [theme]);
+  const [loadedLook, setLoadedLook] = useState(() => (filmFontsLoaded(theme) ? theme.name : null));
+  useEffect(() => {
+    let gone = false;
+    void filmFontsReady(theme).then(() => !gone && setLoadedLook(theme.name));
+    return () => {
+      gone = true;
+    };
+  }, [theme]);
+  const fontsIn = loadedLook === theme.name;
+  const film = useMemo(() => ({ ...filmTheme(theme), measure: fontsIn ? textMeasurer(theme) : undefined }), [theme, fontsIn]);
   const built = useMemo(() => buildTemplate(template, params, words, activeSec, id, film), [template, params, words, activeSec, id, film]);
   const placeRef = useRef<SVGGElement>(null);
   const rootRef = useRef<SVGGElement>(null);
@@ -138,7 +156,7 @@ export function TemplateScene({
 
   return (
     <AbsoluteFill>
-      <svg className="film-template" viewBox={`0 0 ${VIDEO.width} ${VIDEO.height}`} width="100%" height="100%">
+      <svg className={filmClass(theme)} viewBox={`0 0 ${VIDEO.width} ${VIDEO.height}`} width="100%" height="100%">
         <style>{filmFontCss(theme)}</style>
         <g ref={placeRef}>
           <g ref={rootRef} />
@@ -158,7 +176,7 @@ function buildTemplate(name: string, params: TemplateParams, words: TimedWord[],
   const merged = timedParams({ ...template.defaults, ...params }, words, activeSec) as TemplateParams;
   const times = itemTimes(name, merged, words, activeSec);
   if (times) merged.times = times;
-  const ctx: TemplateContext = { id, th: film, U: makeU(film), data: {} };
+  const ctx: TemplateContext = { id, th: film, U: makeU(film), data: {}, dur: activeSec };
   try {
     return { template, params: merged, ctx, markup: template.build(merged, ctx) };
   } catch (error) {

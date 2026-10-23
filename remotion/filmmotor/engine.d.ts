@@ -25,6 +25,8 @@ export type FilmTheme = {
   card?: { fill: string; stroke: string; width: number };
   // The markup of an icon on its 100 x 100 grid, drawn the video's way, or undefined to use the engine's own icon.
   iconMarkup?: (name: string, fill: string, size: number) => string | undefined;
+  // How wide a text is on the look's real fonts, in pixels, or undefined where it cannot be measured (no browser yet).
+  measure?: (text: string, size: number, options: { fam?: "d"; w?: number; it?: boolean; ls?: number }) => number | undefined;
 };
 
 export type TemplateParams = Record<string, unknown>;
@@ -72,7 +74,8 @@ export type Helpers = {
 };
 
 // What build, init and render get: a prefix that makes element IDs unique, the theme and the helpers.
-export type TemplateContext = { id: string; th: FilmTheme; U: Helpers; data: Record<string, unknown> };
+// dur: how many seconds the template's animations run over, for a template that times something in seconds.
+export type TemplateContext = { id: string; th: FilmTheme; U: Helpers; data: Record<string, unknown>; dur?: number };
 
 // The moment a render hook draws: t seconds since the scene started and p the progress from 0 to 1 over the `dur`
 // seconds from `start` to `end`.

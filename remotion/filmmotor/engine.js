@@ -148,8 +148,11 @@ export function makeU(th) {
   const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-family="${fam(o.fam)}" font-size="${o.s || 32}" font-weight="${o.w || 400}" fill="${o.f || th.ink}"` +
     `${o.ls ? ` letter-spacing="${o.ls}"` : ''}${o.it ? ' font-style="italic"' : ''}${o.halo ? ` paint-order="stroke" stroke="${th.bg}" stroke-width="${o.halo}" stroke-linejoin="round"` : ''}${o.id ? ` id="${o.id}"` : ''}${o.an || ''}${o.op != null ? ` opacity="${o.op}"` : ''}${o.ex || ''}>${esc(s)}</text>`;
   // About how wide a text is in pixels at size `size`, with the same font options as T: fam 'd' for the display font,
-  // w for the weight and it for italic. Added for Meko (see GLYPH).
+  // w for the weight and it for italic. Added for Meko (see GLYPH). In the browser the look measures the text on its
+  // real fonts (th.measure), since an estimate that runs wide puts highlights and strike lines beside their words.
   const tw = (s, size, o = {}) => {
+    const measured = th.measure?.(String(s == null ? '' : s), size, o);
+    if (measured != null) return measured;
     const widths = GLYPH[o.fam === 'd' ? 'd' : 't'], w = o.w || 400;
     let em = 0;
     for (const ch of String(s == null ? '' : s)) { const i = GLYPH_CHARS.indexOf(ch); em += i < 0 ? 0.6 : widths[i]; }

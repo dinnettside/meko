@@ -578,7 +578,8 @@ register('carbon_cycle', {
     }));
     // Smoke rises from the chimney once the factory is there.
     st.smoke.forEach((el, j) => {
-      const s = loopAt(l, CC.T.factory + 0.04, 0.4, j / 4), u = s % 1;
+      // Before the factory s is negative, and so would be the remainder and the radius drawn from it.
+      const s = loopAt(l, CC.T.factory + 0.04, 0.4, j / 4), u = s < 0 ? 0 : s % 1;
       el.setAttribute('opacity', s < 0 ? '0' : (0.85 * ends(u, 0.1, 0.4)).toFixed(2));
       el.setAttribute('cx', f1(cx + 10 * u + 4 * Math.sin(t * 2 + j)));
       el.setAttribute('cy', f1(cy - 8 - u * 90));

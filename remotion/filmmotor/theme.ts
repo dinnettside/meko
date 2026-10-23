@@ -52,11 +52,15 @@ export function filmTheme(theme: Theme): FilmTheme {
 
 // An SVG font-family attribute cannot use the CSS variables next/font sets, but a CSS rule can, and a rule beats the
 // attribute. A font without a real bold or italic, like Young Serif, is never faked, since a faked bold smears. Used
-// inside an <svg class="film-template">.
+// inside an <svg class={filmClass(theme)}>. A <style> applies to the whole page, so each look's rules only reach its
+// own templates: the feed has videos of different looks on the page at once.
 export function filmFontCss(theme: Theme): string {
+  const scope = `.film-template.film-${theme.name}`;
   return (
-    `.film-template [font-family^="MekoDisplay"]{font-family:${theme.fonts.display};font-synthesis:none}` +
-    `.film-template [font-family^="MekoText"]{font-family:${theme.fonts.body}}` +
-    `.film-template [font-family^="MekoMono"]{font-family:${theme.fonts.label}}`
+    `${scope} [font-family^="MekoDisplay"]{font-family:${theme.fonts.display};font-synthesis:none}` +
+    `${scope} [font-family^="MekoText"]{font-family:${theme.fonts.body}}` +
+    `${scope} [font-family^="MekoMono"]{font-family:${theme.fonts.label}}`
   );
 }
+
+export const filmClass = (theme: Theme) => `film-template film-${theme.name}`;
