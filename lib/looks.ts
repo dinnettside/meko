@@ -1,4 +1,4 @@
-import { moreIntroLooks } from "./looks-intro.ts";
+import { moreIntroLooks, subtitleFor } from "./looks-intro.ts";
 import type { IntroContext } from "./looks-intro.ts";
 import { moreLooksFor } from "./looks-more.ts";
 import type { Scene } from "./storyboard.ts";
@@ -162,15 +162,27 @@ export function introOptions(scene: Extract<Scene, { kind: "title" }>, context: 
   const looks: Look[] = [];
   if (context.question) looks.push({ template: "question_card", params: { label: "", question: context.question } });
   if (context.years) looks.push({ template: "year_roll", params: { from: context.years[0], to: context.years[1], label: scene.heading } });
-  looks.push({ template: "title_card", params: { title: scene.heading, subtitle: scene.subheading ?? "" } });
+  // Without a subheading that only asks the heading again, like the other openings and the video's own title card.
+  looks.push({ template: "title_card", params: { title: scene.heading, subtitle: subtitleFor(scene.heading, scene.subheading) } });
   looks.push(...moreIntroLooks(scene, context));
   return { own: context.places || scene.icon !== undefined, looks };
 }
 
+// Openings that show the same picture as a template a scene can have: a date opening and a calendar page both show a
+// date big, and a number opening, a big number and a stat scene in its own drawing ("stat", which lib/direct.ts counts
+// as used) all show one number counting up.
+const SAME_PICTURE: Record<string, string[]> = { date_hook: ["calendar_date"], number_hook: ["big_number", "odometer", "stat"] };
+
+// Whether an opening would show a picture the video already shows: the same template or one in SAME_PICTURE.
+export const showsAgain = (opening: string, used: Iterable<string>) => {
+  const alike = [opening, ...(SAME_PICTURE[opening] ?? [])];
+  return [...used].some((name) => alike.includes(name));
+};
+
 // Picks how a video opens, from its title, like pickLooks: a look, or none for the video's own title card. A template
-// the video already shows elsewhere is not used again.
+// the video already shows elsewhere, or one that shows the same picture, is not used again.
 export function pickIntro(options: { own: boolean; looks: Look[] }, seed: string, used: string[]): Look | undefined {
-  const looks = options.looks.filter((look) => !used.includes(look.template));
+  const looks = options.looks.filter((look) => !showsAgain(look.template, used));
   const count = looks.length + (options.own ? 1 : 0);
   if (count === 0) return undefined;
   const choice = hash(`${seed}#intro`) % count;

@@ -2176,7 +2176,8 @@ export async function direct({ request, script, facts, sources }: z.infer<typeof
         places: storyboard.scenes.some((scene) => scene.kind === "map"),
       }),
       script.title,
-      [...templatesShown, ...looks.flatMap((look) => (look ? [look.template] : []))],
+      // A stat scene that keeps its own drawing shows its number counting up big, as a number opening would.
+      [...templatesShown, ...looks.flatMap((look, index) => (look ? [look.template] : storyboard.scenes[index].kind === "stat" ? ["stat"] : []))],
     );
     if (intro) titleScene.look = intro;
   }
