@@ -145,13 +145,21 @@ const LEAD_IN = /^(?:a|an|the|for|in|at|on|during|across|of|from)$/i;
 // "After 28 years".
 const BOUND = /^(?:within|after|before|since|until|till|by)$/i;
 // The only part of the narration the opening may leave out after its label: nothing, or one last clause of the same
-// sentence that starts with an -ing word and an amount, as in ", spanning 6,400 kilometers." Anything else may change
-// what the number means, like ", the paper reported", ", at least", ", give or take", ", a figure since debunked" or a
+// sentence that gives another measure of the same thing, as in ", spanning 6,400 kilometers." Anything else may change
+// what the number means, like ", the paper reported", ", at least", ", climbing to 3,000", ", using 2020 dollars" or a
 // second sentence that corrects it, and no list of such words is ever complete.
+const SPANNING = "spanning|covering|stretching|measuring|weighing|lasting";
 const LEFT_OUT = new RegExp(
-  String.raw`^\s*(?:,\s*\p{Ll}+ing\s+(?:(?:${QUALIFIERS})\s+)?[$£€¥]?\d(?:[^,.!?;:—–]|[,.](?=\d))*)?[.!]?\s*$`,
+  String.raw`^\s*(?:,\s*(?:${SPANNING})\s+(?:(?:${QUALIFIERS})\s+)?[$£€¥]?\d(?:[^,.!?;:—–]|[,.](?=\d))*)?[.!]?\s*$`,
   "u",
 );
+// The figures of a text, with their separators: "1,500", "4.5", and "25 148" as two.
+const FIGURES = /\d+(?:[.,]\d+)*/g;
+// That last clause, whose figure is the only second figure an opening allows.
+const SPAN_CLAUSE = new RegExp(String.raw`,\s*(?:${SPANNING})\b[^.!?;]*[.!]?\s*$`, "u");
+// Words that take some away from a number, so the number alone says the opposite: "All but 3 of the 12 crew survived",
+// "Everyone except 2 passengers survived".
+const EXCLUDES = /\b(?:all but|except|excepting|excluding|apart from|aside from|other than|besides|save for|unntatt|bortsett fra|utenom)\b/i;
 // Words in that one clause that still deny, doubt, attribute or limit what the sentence says, in English and
 // Norwegian: ", spanning 6,400 kilometers by some estimates", ", assuming 2% growth".
 const DOUBTS = new Set(
@@ -201,6 +209,11 @@ function numberHook(narration: string): NumberHook | undefined {
   // A question mark anywhere may doubt the number, as in "You use only 10% of your brain?", and quotation marks make
   // it someone's words. The opening would show it as a plain fact, so it is not offered.
   if (/[?"“”«»]/.test(narration)) return undefined;
+  // One figure only. A second number may bound, split, correct or replace the first ("25 million–50 million", "2 hours
+  // 40 minutes", "25 of Europe's 75 million", "1,200 people, climbing to 3,000"), and no list of rules catches every
+  // way, so the opening is only offered when the number stands alone, or with another measure of it in a last clause.
+  const second = (narration.match(SPAN_CLAUSE)?.[0].match(FIGURES) ?? []).length;
+  if ((narration.match(FIGURES) ?? []).length - second > 1 || EXCLUDES.test(narration)) return undefined;
   const ranges = rangesIn(narration);
   for (const match of narration.matchAll(NUMBER_PHRASE)) {
     const [phrase, qualifier, sign, digits, fraction, scale, percent, joiner, word] = match;
@@ -208,8 +221,11 @@ function numberHook(narration: string): NumberHook | undefined {
     const before = narration.slice(0, start);
     const value = Number(`${digits.replace(/,/g, "")}${fraction ?? ""}`);
     let end = start + phrase.length;
-    // "minus 40 degrees" is not 40 degrees.
-    if (/\b(?:minus|negative)\s+$/i.test(before)) continue;
+    // "minus 40 degrees" is not 40 degrees, and neither is "− 40" or "‑40" with any dash.
+    if (/(?:\b(?:minus|negative)|[-−‑‐‒–—﹣－])\s*$/iu.test(before)) continue;
+    // A four-digit number without a separator may be a year, as in "By 1900 miles of track had been laid", and the
+    // opening would add a comma the narration never wrote, which in Norwegian reads as a decimal point ("2,469 meter").
+    if (/^\d{4,}$/.test(digits) && value >= 1000) continue;
     // "45 percent" and "45 per cent" are shown as "45%", like the stat scenes do.
     const cent = /^per$/i.test(word ?? "") ? narration.slice(end).match(/^\s+cent\b/i) : null;
     if (cent) end += cent[0].length;
@@ -221,7 +237,6 @@ function numberHook(narration: string): NumberHook | undefined {
     // name like "iPhone", the amount needs a scale word.
     const amount = Boolean(scale || digits.includes(",") || (qualifier && !NOT_AMOUNT.test(qualifier) && COUNTED.has(word ?? "")));
     let unitWord: string | undefined;
-    let measured = false;
     if (word && !isPercent) {
       if (/^(?:square|cubic)$/.test(word)) {
         // "Square" and "cubic" are half a unit and take the measure after them: "24 million square kilometers".
@@ -229,8 +244,7 @@ function numberHook(narration: string): NumberHook | undefined {
         if (!measure || !measures(measure[1])) continue;
         unitWord = `${word} ${measure[1]}`;
         end += measure[0].length;
-        measured = true;
-      } else if (measures(word)) [unitWord, measured] = [word, true];
+      } else if (measures(word)) unitWord = word;
       else if (amount && (scale || !mayBeName(before)) && isPlural(word, joiner)) unitWord = word;
       // A word that is not the unit stays in the text after the number: "25 million in Europe alone".
       else end -= joiner.length + word.length;
@@ -239,9 +253,6 @@ function numberHook(narration: string): NumberHook | undefined {
     // part of a name, as in "Apollo 13 days" or "Route 66 miles", unless a separator or scale word shows it is an amount.
     const named = wordBefore(before);
     if (/\p{Lu}/u.test(named) && !LEAD_IN.test(named) && !BOUND.test(named) && !isPercent && !scale && !digits.includes(",")) continue;
-    // A bare four-digit number from 1000 to 2100 is often a year, as in "Before 1900 people rarely lived past 50" or "By
-    // 1900 miles of track had been laid", so it counts only a measure ("1500 years"), and never after a bounding word.
-    if (/^\d{4}$/.test(digits) && !fraction && value >= 1000 && value <= 2100 && (!(measured || isPercent) || BOUND.test(named))) continue;
     // Degrees take their scale: "50 degrees Celsius".
     const scaleOf = unitWord && /^degrees?$/i.test(unitWord) ? narration.slice(end).match(TEMPERATURE) : null;
     if (scaleOf) {
