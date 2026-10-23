@@ -23,12 +23,26 @@ type Layout = { points: Point[]; measured: Measured[] };
 type GapOf = (a: number, b: number) => number;
 type Move = { axis: 0 | 1; direction: 1 | -1; distance: number };
 type Curve = [Point, Point, Point]; // a curve from the first point to the last, bent toward the middle one
-type ArrowPath = { curve: Curve; side: Point; cost: number };
+// `cost` is how much is in its way, and `blocked` the part of it that is items, the edges of the free area and the
+// heads of other arrows, leaving out where it only runs close to another arrow.
+type ArrowPath = { curve: Curve; side: Point; cost: number; blocked: number };
+// An arrow as it is drawn: its way, how much thicker than usual it is, its label if it found room, and how much is in
+// its way (see ArrowPath).
+type Route = { link: Link; curve: Curve; weight: number; label: (Label & { at: Point }) | null; cost: number; blocked: number };
+type RouteOf = (layout: Layout & { zoom: number }) => Route[];
+// A layout as it is drawn: how much bigger than first laid out a sparse picture got, where a height on the 0 to 100
+// grid lands on screen, for the backdrop, and its arrows.
+type Fitted = Layout & { zoom: number; gridY: (share: number) => number; routes: Route[] };
+// A layout drawn bigger, before its arrows are found: the box around it, and where a height on the grid lands.
+type Placed = Layout & { box: Box; gridY: (share: number) => number };
 
 // The picture of an item and its label in pixels, before the frame gets crowded.
 const SIZES: Record<ItemSize, number> = { small: 110, medium: 170, large: 240 };
 const LABEL_SIZES: Record<ItemSize, number> = { small: 34, medium: 40, large: 44 };
 const MIN_LABEL_SIZE = 30;
+// Labels of a picture drawn bigger grow up to this share of the title's size, so the title stays the biggest text in
+// every look (Field guide sets its title smaller).
+const LABEL_SHARE = 0.8;
 const LABEL_GAP = 14; // between a picture and its label
 const LINE_HEIGHT = 1.15;
 const SPACING = 32; // the least room between two items
@@ -38,6 +52,20 @@ const TITLE_GAP = 44; // between the title and the items
 const LINK_LABEL_SIZE = 32;
 // Smaller and smaller sizes are tried until the items fit without touching.
 const SCALES = [1, 0.88, 0.77, 0.68, 0.6];
+// A sparse picture is drawn up to this much bigger, the biggest that fits, so a few items do not sit small in an
+// empty frame. Its biggest picture stays under MAX_PICTURE, so nothing gets cartoonishly big.
+const ZOOMS = [1.7, 1.6, 1.5, 1.4, 1.3, 1.2, 1.1];
+const MAX_PICTURE = 400;
+const MAX_SPREAD = 1.7; // and its items spread out from its middle at most this much
+// Its arrows may run a few steps closer to one another than before (2 for each step, see arrowPath), but never more
+// through an item or out of the free area.
+const ROUTE_SLACK = 8;
+// At most this many bigger layouts get their arrows found, which is the slow part, so a busy picture whose arrows keep
+// running into things is planned about as fast as before and stays as it was.
+const MAX_ROUTED = 12;
+// A backdrop's lines across the frame stay this far inside the free area, since the scene's camera pushes in slowly
+// and would bring a line at its edge up against the notes in the top corners or the captions.
+const LINE_MARGIN = 40;
 // An arrow bends slightly to one side, or more, or to the other side, to go around what is in its way.
 const BENDS = [0.14, -0.14, 0.25, -0.25, 0.4, -0.4, 0.55, -0.55];
 // Motion, in seconds.
@@ -74,7 +102,10 @@ export function IllustrationScene({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const time = frame / fps;
-  const plan = useMemo(() => planIllustration(title, items, links ?? [], words, durationSec), [title, items, links, words, durationSec]);
+  const plan = useMemo(
+    () => planIllustration(title, items, links ?? [], words, durationSec, backdrop, fonts.displayScale),
+    [title, items, links, words, durationSec, backdrop, fonts.displayScale],
+  );
   const titleIn = ease(frame, fps, 0.1, 0.6);
 
   return (
@@ -144,11 +175,12 @@ export function IllustrationScene({
               )}
             </div>
             {label ? (
+              // The box is wider than the label, so a line never runs past it and loses its centering.
               <div
                 style={{
                   position: "absolute",
-                  left: x - 450,
-                  width: 900,
+                  left: x - label.width / 2 - 150,
+                  width: label.width + 300,
                   top: y + size / 2 + LABEL_GAP,
                   textAlign: "center",
                   whiteSpace: "nowrap",
@@ -177,6 +209,7 @@ type PlannedArrow = {
   d: string;
   end: Point;
   angle: number;
+  weight: number; // how much thicker than usual, in a picture drawn bigger
   label: (Label & { at: Point }) | null;
   startSec: number;
   drawSec: number;
@@ -186,18 +219,18 @@ type PlannedArrow = {
 // An arrow that draws itself from one item toward the edge of the other. The head appears as the line arrives, and
 // the label beside its middle as the line passes it. Arrows and their labels are dim, so the items stand out. In
 // Blueprint the head is an open chevron, as on a drawing.
-function LinkArrow({ d, end, angle, label, progress, labelIn }: PlannedArrow & { progress: number; labelIn: number }) {
+function LinkArrow({ d, end, angle, weight, label, progress, labelIn }: PlannedArrow & { progress: number; labelIn: number }) {
   const { colors, fonts, drawing } = useTheme();
   const lineHeight = (label?.fontSize ?? 0) * LINE_HEIGHT;
   const headIn = progress > 0.9 ? (progress - 0.9) * 10 : 0;
-  const headAt = `translate(${end[0]} ${end[1]}) rotate(${angle})`;
+  const headAt = `translate(${end[0]} ${end[1]}) rotate(${angle}) scale(${weight})`;
   return (
     <g opacity={progress > 0 ? 1 : 0}>
       <path
         d={d}
         fill="none"
         stroke={colors.dim}
-        strokeWidth={7}
+        strokeWidth={7 * weight}
         strokeLinecap="round"
         pathLength={1}
         strokeDasharray={1}
@@ -218,7 +251,7 @@ function LinkArrow({ d, end, angle, label, progress, labelIn }: PlannedArrow & {
           fontWeight={600}
           fill={colors.dim}
           stroke={colors.ink}
-          strokeWidth={8}
+          strokeWidth={8 * weight}
           strokeLinejoin="round"
           paintOrder="stroke"
           opacity={labelIn}
@@ -234,11 +267,23 @@ function LinkArrow({ d, end, angle, label, progress, labelIn }: PlannedArrow & {
   );
 }
 
-// Where everything goes and when it comes in. None of it changes from frame to frame.
-function planIllustration(title: string | undefined, items: Item[], links: Link[], words: TimedWord[], durationSec: number) {
+// Where everything goes and when it comes in. None of it changes from frame to frame. `titleScale` is how big the
+// look sets its title, compared with TITLE_SIZE.
+function planIllustration(
+  title: string | undefined,
+  items: Item[],
+  links: Link[],
+  words: TimedWord[],
+  durationSec: number,
+  backdrop: Backdrop | undefined,
+  titleScale: number,
+) {
   const heading = title?.trim() ?? "";
   const titleLines = Math.min(2, wrap(heading, TITLE_SIZE, RIGHT - LEFT).length);
   const top = heading ? VIDEO.topSpace + titleLines * TITLE_SIZE * LINE_HEIGHT + TITLE_GAP : VIDEO.topSpace;
+  // The biggest an item's label grows. It is never below a large picture's usual label, so a picture drawn at its
+  // usual size keeps its labels as they are.
+  const maxLabel = Math.max(LABEL_SIZES.large, Math.round(TITLE_SIZE * titleScale * LABEL_SHARE));
 
   // Links to an item that does not exist or from an item to itself are left out, and so are repeats.
   const isItem = (index: number) => Number.isInteger(index) && index >= 0 && index < items.length;
@@ -251,7 +296,9 @@ function planIllustration(title: string | undefined, items: Item[], links: Link[
     return keep;
   });
   const linked = new Set(valid.map((link) => pairOf(link.from, link.to)));
-  const { points, measured } = layOut(items, top, (a, b) => (linked.has(pairOf(a, b)) ? LINK_SPACING : SPACING));
+  const gapOf: GapOf = (a, b) => (linked.has(pairOf(a, b)) ? LINK_SPACING : SPACING);
+  const routeOf: RouteOf = (layout) => routeArrows(valid, layout, top);
+  const { points, measured, gridY, routes } = layOut(items, top, gapOf, routeOf, backdrop, maxLabel);
 
   // Items come in as the narration names their labels, in their order. Items without a label come in with the first.
   const doneBy = Math.max(POP_SEC, durationSec - SETTLE_SEC);
@@ -273,36 +320,17 @@ function planIllustration(title: string | undefined, items: Item[], links: Link[
     return order + 1 < named.length ? starts[named[order + 1]] : durationSec + 1;
   });
 
-  // Each arrow finds its way around the items and the arrows before it, then once more around all the others, so an
-  // early arrow can make way for a later one. Then the labels go where no item or arrow is.
-  const paths: (ArrowPath | null)[] = valid.map(() => null);
-  for (let pass = 0; pass < 2; pass++) {
-    valid.forEach((link, index) => {
-      const others = paths.flatMap((path, other) => (path && other !== index ? [path.curve] : []));
-      paths[index] = arrowPath(link.from, link.to, points, measured, top, others);
-    });
-  }
-  const drawn = paths.flatMap((path) => (path ? [path.curve] : []));
-  const taken: Box[] = [];
-  const arrows = valid.flatMap((link, index) => {
-    const path = paths[index];
-    if (!path) return [];
-    const { curve, side } = path;
-    const [start, control, end] = curve;
-    const others = drawn.filter((other) => other !== curve);
-    return [
-      {
-        d: `M ${start[0]} ${start[1]} Q ${control[0]} ${control[1]} ${end[0]} ${end[1]}`,
-        end,
-        angle: (Math.atan2(end[1] - control[1], end[0] - control[0]) * 180) / Math.PI,
-        label: link.label?.trim() ? placeLinkLabel(link.label.trim(), curve, side, points, measured, others, taken, top) : null,
-        ready: Math.max(starts[link.from], starts[link.to]) + POP_SEC * 0.6,
-        startSec: 0,
-        drawSec: LINK_SEC,
-        labelSec: 0,
-      },
-    ];
-  });
+  const arrows = routes.map(({ link, curve: [start, control, end], weight, label }) => ({
+    d: `M ${start[0]} ${start[1]} Q ${control[0]} ${control[1]} ${end[0]} ${end[1]}`,
+    end,
+    angle: (Math.atan2(end[1] - control[1], end[0] - control[0]) * 180) / Math.PI,
+    weight,
+    label,
+    ready: Math.max(starts[link.from], starts[link.to]) + POP_SEC * 0.6,
+    startSec: 0,
+    drawSec: LINK_SEC,
+    labelSec: 0,
+  }));
   // An arrow draws once both of its ends are in, never at the same moment as another, and faster when it is late.
   const order = arrows.map((_, index) => index).sort((a, b) => arrows[a].ready - arrows[b].ready);
   let previous = -Infinity;
@@ -314,12 +342,6 @@ function planIllustration(title: string | undefined, items: Item[], links: Link[
     arrow.startSec = Math.max(0, Math.min(wanted, doneBy - arrow.drawSec));
     arrow.labelSec = Math.min(arrow.startSec + 0.4 * arrow.drawSec, doneBy - 0.3);
   }
-
-  // Where a height on the 0 to 100 grid lands on screen, as place() puts items, so a backdrop's ground or water line
-  // sits where the director put it.
-  const above = Math.max(...measured.map((item) => item.above));
-  const below = Math.max(...measured.map((item) => item.below));
-  const gridY = (share: number) => top + above + share * Math.max(0, BOTTOM - top - above - below);
 
   return {
     title: heading,
@@ -333,6 +355,31 @@ function planIllustration(title: string | undefined, items: Item[], links: Link[
     })),
     arrows,
   };
+}
+
+// The arrows of a layout. Each arrow finds its way around the items and the arrows before it, then once more around
+// all the others, so an early arrow can make way for a later one. Then the labels go where no item or arrow is. In a
+// picture drawn bigger, arrows and their labels grow more slowly than the pictures, so they stay quieter than what
+// they join.
+function routeArrows(links: Link[], { points, measured, zoom }: Layout & { zoom: number }, top: number): Route[] {
+  const weight = Math.sqrt(zoom);
+  const paths: (ArrowPath | null)[] = links.map(() => null);
+  for (let pass = 0; pass < 2; pass++) {
+    links.forEach((link, index) => {
+      const others = paths.flatMap((path, other) => (path && other !== index ? [path.curve] : []));
+      paths[index] = arrowPath(link.from, link.to, points, measured, top, others, zoom);
+    });
+  }
+  const drawn = paths.flatMap((path) => (path ? [path.curve] : []));
+  const taken: Box[] = [];
+  return links.flatMap((link, index) => {
+    const path = paths[index];
+    if (!path) return [];
+    const { curve, side, cost, blocked } = path;
+    const others = drawn.filter((other) => other !== curve);
+    const label = link.label?.trim() ? placeLinkLabel(link.label.trim(), curve, side, points, measured, others, taken, top, weight) : null;
+    return [{ link, curve, weight, label, cost, blocked }];
+  });
 }
 
 // Where the picture takes place, drawn calmly behind its items in the look's colors: the ground in layers under a
@@ -453,13 +500,15 @@ function fitLabel(text: string, fontSize: number, width: number): Label {
   return labelOf(lines.length > 2 ? [lines[0], `${lines[1]}…`] : lines, MIN_LABEL_SIZE);
 }
 
-function measure(item: Item, scale: number): Measured {
+// An item drawn `scale` times its usual size, with its label `labelScale` times but no bigger than `maxLabel`: the two
+// scales are the same, except when a picture drawn bigger keeps smaller labels because bigger ones would crowd.
+function measure(item: Item, scale: number, labelScale: number, maxLabel: number): Measured {
   const kind = item.size ?? "medium";
   const size = Math.round(SIZES[kind] * scale);
   const width = item.figure ? size * FIGURE_ASPECT : size;
   const text = item.label?.trim();
-  const fontSize = Math.max(MIN_LABEL_SIZE, Math.round(LABEL_SIZES[kind] * Math.max(0.8, scale)));
-  const label = text ? fitLabel(text, fontSize, Math.max(260, size * 1.7)) : null;
+  const fontSize = Math.min(maxLabel, Math.max(MIN_LABEL_SIZE, Math.round(LABEL_SIZES[kind] * Math.max(0.8, labelScale))));
+  const label = text ? fitLabel(text, fontSize, Math.max(260, Math.round(SIZES[kind] * labelScale) * 1.7)) : null;
   return {
     size,
     width,
@@ -475,18 +524,155 @@ const boxOf = ([x, y]: Point, { half, above, below }: Measured): Box => ({ left:
 const clamp = (value: number, low: number, high: number) => (high < low ? (low + high) / 2 : Math.min(high, Math.max(low, value)));
 
 // Fits the items into the free area: at full size if they fit without touching, else smaller and smaller, and as an
-// even grid as the last resort. Many items are drawn smaller from the start: full size up to four.
-function layOut(items: Item[], top: number, gapOf: GapOf): Layout {
+// even grid as the last resort. Many items are drawn smaller from the start: full size up to four. A sparse picture
+// is then drawn bigger, to fill the free area (see zoomIn). `routeOf` finds the arrows' ways in a layout.
+function layOut(items: Item[], top: number, gapOf: GapOf, routeOf: RouteOf, backdrop: Backdrop | undefined, maxLabel: number): Fitted {
   const crowd = Math.min(1, Math.sqrt(4 / Math.max(1, items.length)));
   const attempt = (wanted: Item[], scale: number): Layout => {
-    const measured = wanted.map((item) => measure(item, scale * crowd));
+    const measured = wanted.map((item) => measure(item, scale * crowd, scale * crowd, maxLabel));
     return { points: nudge(place(wanted, measured, top), measured, top, gapOf), measured };
   };
   for (const scale of SCALES) {
     const layout = attempt(items, scale);
-    if (!crowded(layout, gapOf)) return layout;
+    if (!crowded(layout, gapOf)) return zoomIn(items, layout, scale * crowd, top, gapOf, routeOf, backdrop, maxLabel);
   }
-  return attempt(gridOf(items), SCALES[SCALES.length - 1]);
+  const grid = attempt(gridOf(items), SCALES[SCALES.length - 1]);
+  return { ...grid, zoom: 1, gridY: gridYOf(grid.measured, top), routes: routeOf({ ...grid, zoom: 1 }) };
+}
+
+// Where a height on the 0 to 100 grid lands on screen, as place() puts items, so a backdrop's ground or water line
+// sits where the director put it.
+function gridYOf(measured: Measured[], top: number) {
+  const above = Math.max(0, ...measured.map((item) => item.above));
+  const below = Math.max(0, ...measured.map((item) => item.below));
+  return (share: number) => top + above + share * Math.max(0, BOTTOM - top - above - below);
+}
+
+// The box around all the items with their labels.
+function boundsOf({ points, measured }: Layout): Box {
+  const boxes = points.map((point, index) => boxOf(point, measured[index]));
+  return {
+    left: Math.min(...boxes.map((box) => box.left)),
+    right: Math.max(...boxes.map((box) => box.right)),
+    top: Math.min(...boxes.map((box) => box.top)),
+    bottom: Math.max(...boxes.map((box) => box.bottom)),
+  };
+}
+
+// A sparse picture, with few items or items in a small part of the frame, drawn bigger as if the camera came closer:
+// the pictures, labels, room between items and arrows all grow, and the items spread out from the middle of the
+// picture. Each axis spreads as far as it can on its own, so a row of items across the frame can still grow taller.
+// The picture keeps its place: one on the left of the free area stays on the left. The backdrop grows with it, and
+// its lines stay in the free area too. The biggest zoom wins that fits without touching, and whose arrows find their
+// way as well as before and keep every arrow and label; labels grow less, or not at all, if bigger ones would crowd.
+// A picture that already fills the free area, or that cannot grow without its arrows running into something, stays
+// exactly as it was laid out. The zoom is the same for the whole scene, so nothing moves while it plays.
+function zoomIn(
+  items: Item[],
+  first: Layout,
+  scale: number,
+  top: number,
+  gapOf: GapOf,
+  routeOf: RouteOf,
+  backdrop: Backdrop | undefined,
+  maxLabel: number,
+): Fitted {
+  const firstRoutes = routeOf({ ...first, zoom: 1 });
+  const labelsOf = (routes: Route[]) => routes.filter((route) => route.label).length;
+  const costOf = (routes: Route[]) => routes.reduce((sum, route) => sum + route.cost, 0);
+  const blockedOf = (routes: Route[]) => routes.reduce((sum, route) => sum + route.blocked, 0);
+  // Every arrow drawn before, and every arrow label placed before, is still there.
+  const keepsAll = (routes: Route[]) =>
+    firstRoutes.every((before) => routes.some((route) => route.link === before.link && (route.label || !before.label)));
+  const labelled = firstRoutes.filter((route) => route.link.label?.trim()).length;
+  const box = boundsOf(first);
+  const [boxWidth, boxHeight] = [box.right - box.left, box.bottom - box.top];
+  const free: Point = [RIGHT - LEFT, BOTTOM - top];
+  const room = Math.max(free[0] / Math.max(1, boxWidth), free[1] / Math.max(1, boxHeight));
+  const most = Math.min(MAX_PICTURE / Math.max(...first.measured.map((item) => item.size)), room);
+  const middle: Point = [(box.left + box.right) / 2, (box.top + box.bottom) / 2];
+  const fromMiddle = first.points.map(([x, y]): Point => [x - middle[0], y - middle[1]]);
+  // How far along the free area's spare room the picture sits, from 0 at the left or top to 1 at the right or bottom.
+  const along: Point = [
+    boxWidth < free[0] - 1 ? (box.left - LEFT) / (free[0] - boxWidth) : 0.5,
+    boxHeight < free[1] - 1 ? (box.top - top) / (free[1] - boxHeight) : 0.5,
+  ];
+  const firstGridY = gridYOf(first.measured, top);
+  const unchanged: Fitted = { ...first, zoom: 1, gridY: firstGridY, routes: firstRoutes };
+  let routed = 0;
+  for (const zoom of ZOOMS.filter((zoom) => zoom <= most)) {
+    for (const labelZoom of [zoom, Math.sqrt(zoom), 1]) {
+      const measured = items.map((item) => measure(item, scale * zoom, scale * labelZoom, maxLabel));
+      // The items spread out `spread` times from the middle of the picture and put where the picture was in the free
+      // area, with the box around them and where a height on the grid lands then, for the backdrop. A body is drawn in
+      // the middle of the frame and grows with the grid, so with a body the items spread out from the middle of the
+      // frame and keep their places in it.
+      const arrange = (spread: Point): Placed => {
+        const points = fromMiddle.map(([x, y]): Point => [x * spread[0], y * spread[1]]);
+        const grown = boundsOf({ points, measured });
+        const shift: Point = [
+          backdrop === "body"
+            ? VIDEO.width / 2 + (middle[0] - VIDEO.width / 2) * spread[0]
+            : LEFT + along[0] * (free[0] - (grown.right - grown.left)) - grown.left,
+          top + along[1] * (free[1] - (grown.bottom - grown.top)) - grown.top,
+        ];
+        return {
+          points: points.map(([x, y]): Point => [x + shift[0], y + shift[1]]),
+          measured,
+          box: { left: grown.left + shift[0], right: grown.right + shift[0], top: grown.top + shift[1], bottom: grown.bottom + shift[1] },
+          gridY: (share: number) => (firstGridY(share) - middle[1]) * spread[1] + shift[1],
+        };
+      };
+      const fitsAcross = ({ box }: Placed) => box.left >= LEFT - 1 && box.right <= RIGHT + 1;
+      const fitsDown = ({ box, gridY }: Placed) => box.top >= top - 1 && box.bottom <= BOTTOM + 1 && backdropFits(backdrop, gridY, top);
+      // The most the items can spread out on each axis, up to `limit`, still inside the free area. A body grows as
+      // much across as down, so the items spread out as much both ways too.
+      const spreadUpTo = (limit: number): Point => {
+        const spread: Point = [limit, limit];
+        while (spread[0] > 1 && !fitsAcross(arrange(spread))) spread[0] = Math.max(1, spread[0] - 0.02);
+        while (spread[1] > 1 && !fitsDown(arrange(spread))) spread[1] = Math.max(1, spread[1] - 0.02);
+        return backdrop === "body" ? [Math.min(...spread), Math.min(...spread)] : spread;
+      };
+      // The items spread out as much as the pictures grow, which keeps the picture's shape and room around it for
+      // arrows that go around the outside. If arrows find no way then, or labels no room, the items spread out as far
+      // as the free area allows.
+      let chosen: Fitted | null = null;
+      for (const spread of zoom < MAX_SPREAD ? [spreadUpTo(zoom), spreadUpTo(MAX_SPREAD)] : [spreadUpTo(zoom)]) {
+        const layout = arrange(spread);
+        if (!fitsAcross(layout) || !fitsDown(layout)) continue;
+        // The room between items grows with them, but no more than they spread out.
+        if (crowded(layout, (a, b) => gapOf(a, b) * Math.min(zoom, ...spread))) continue;
+        // Finding the arrows is the slow part, so only so many layouts get that far.
+        if (routed === MAX_ROUTED) break;
+        routed++;
+        // Its arrows must do as well as before: every arrow and label kept, nothing more in their way.
+        const routes = routeOf({ points: layout.points, measured, zoom });
+        const asGood = keepsAll(routes) && blockedOf(routes) <= blockedOf(firstRoutes) && costOf(routes) <= costOf(firstRoutes) + ROUTE_SLACK;
+        if (!asGood || (chosen && labelsOf(routes) <= labelsOf(chosen.routes))) continue;
+        chosen = { points: layout.points, measured, zoom, gridY: layout.gridY, routes };
+        if (labelsOf(routes) === labelled) break;
+      }
+      if (chosen) return chosen;
+      if (routed === MAX_ROUTED) return unchanged;
+    }
+  }
+  return unchanged;
+}
+
+// Whether a backdrop stays in the free area, below the title and the notes and above the captions, when a height on
+// the grid lands at `gridY`: the surface of the ground or of the waves, the layers under the ground, the sea floor and
+// the sky's ground, each LINE_MARGIN inside it, and the whole person, whose head BackdropLayer draws from 0.06 - 0.1 of
+// the grid's height and whose body ends at 1.1.
+function backdropFits(backdrop: Backdrop | undefined, gridY: (share: number) => number, top: number): boolean {
+  const [highest, lowest] = [top + LINE_MARGIN, BOTTOM - LINE_MARGIN];
+  if (backdrop === "underground") return gridY(0.3) >= highest && gridY(0.85) <= lowest;
+  if (backdrop === "sea") return gridY(0.3) - 10 >= highest && gridY(0.92) <= lowest;
+  if (backdrop === "sky") return gridY(0.88) <= lowest;
+  if (backdrop === "body") {
+    const span = gridY(1) - gridY(0);
+    return gridY(0) - 0.04 * span >= top && gridY(0) + 1.1 * span <= BOTTOM;
+  }
+  return true;
 }
 
 // Where x and y from 0 to 100 put each item: the whole free area is used, and an item at 0 or 100 still fits with its
@@ -583,7 +769,8 @@ function onItem([x, y]: Point, [centerX, centerY]: Point, { size, width, label }
   return Math.abs(x - centerX) <= label.width / 2 + pad && y >= labelTop - pad && y <= labelTop + label.height + pad;
 }
 
-const distance = (a: Point, b: Point) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+// Math.hypot would do, but it is many times slower, and arrows measure thousands of distances while a scene is planned.
+const distance = (a: Point, b: Point) => Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
 
 const samplesOf = (curve: Curve) => Array.from({ length: 31 }, (_, index) => pointAt(curve, index / 30));
 
@@ -594,8 +781,9 @@ const inFrame = ([x, y]: Point, top: number) => x > 24 && x < VIDEO.width - 24 &
 // ends at the edge of the second, picture or label, whichever it meets. It bends a little to the left of where it
 // goes, so an arrow to the right curves up and its way back curves down. Of the bends in BENDS it takes the one with
 // the least in its way: other items and the edges of the free area most, then the heads and lines of the arrows
-// already drawn. `side` is the side it bulges to.
-function arrowPath(from: number, to: number, points: Point[], measured: Measured[], top: number, drawn: Curve[]): ArrowPath | null {
+// already drawn. `side` is the side it bulges to. In a picture drawn `zoom` times bigger, it keeps that much more room
+// from the items it joins.
+function arrowPath(from: number, to: number, points: Point[], measured: Measured[], top: number, drawn: Curve[], zoom: number): ArrowPath | null {
   const [start, end] = [points[from], points[to]];
   const [dx, dy] = [end[0] - start[0], end[1] - start[1]];
   const length = Math.hypot(dx, dy);
@@ -606,9 +794,9 @@ function arrowPath(from: number, to: number, points: Point[], measured: Measured
     const full: Curve = [start, [(start[0] + end[0]) / 2 + dy * bend, (start[1] + end[1]) / 2 - dx * bend], end];
     // It ends where it first meets the second item, and starts where it last leaves the first one.
     let t1 = 0;
-    while (t1 < 1 && !onItem(pointAt(full, t1), end, measured[to], 18)) t1 += 0.005;
+    while (t1 < 1 && !onItem(pointAt(full, t1), end, measured[to], 18 * zoom)) t1 += 0.005;
     let t0 = t1;
-    while (t0 > 0 && !onItem(pointAt(full, t0), start, measured[from], 14)) t0 -= 0.005;
+    while (t0 > 0 && !onItem(pointAt(full, t0), start, measured[from], 14 * zoom)) t0 -= 0.005;
     const curve = partOf(full, t0 + 0.005, t1);
     if (distance(curve[0], curve[2]) < 50) continue;
     const samples = samplesOf(curve);
@@ -619,8 +807,9 @@ function arrowPath(from: number, to: number, points: Point[], measured: Measured
     const alongside = samples.filter((point) => drawnPoints.some((other) => distance(point, other) < 16)).length;
     // Its head must not land on another arrow's head or start, nor its start on another's head.
     const clash = drawn.some((other) => Math.min(distance(other[2], curve[2]), distance(other[0], curve[2]), distance(other[2], curve[0])) < 60);
-    const cost = 10 * blocked + (clash ? 30 : 0) + 2 * alongside;
-    if (!best || cost < best.cost) best = { curve, side: [(Math.sign(bend) * dy) / length, (-Math.sign(bend) * dx) / length], cost };
+    const inWay = 10 * blocked + (clash ? 30 : 0);
+    const cost = inWay + 2 * alongside;
+    if (!best || cost < best.cost) best = { curve, side: [(Math.sign(bend) * dy) / length, (-Math.sign(bend) * dx) / length], cost, blocked: inWay };
   }
   return best;
 }
@@ -637,7 +826,7 @@ function touchesItem(box: Box, [x, y]: Point, { size, width, label }: Measured, 
 
 // A link's label goes beside the middle of its arrow, on the side the arrow bulges to, else on the other side, else
 // on the line itself, clear of the items, the other arrows and the labels placed before it. A label with no free spot
-// is left out, so the picture never gets cluttered.
+// is left out, so the picture never gets cluttered. It is `weight` times its usual size, as its arrow is.
 function placeLinkLabel(
   text: string,
   curve: Curve,
@@ -647,9 +836,10 @@ function placeLinkLabel(
   others: Curve[],
   taken: Box[],
   top: number,
+  weight: number,
 ): (Label & { at: Point }) | null {
   const otherPoints = others.flatMap(samplesOf);
-  const label = fitLabel(text, LINK_LABEL_SIZE, 320);
+  const label = fitLabel(text, Math.round(LINK_LABEL_SIZE * weight), 320 * weight);
   const { width, height } = label;
   const middle = pointAt(curve, 0.5);
   const reach = (Math.abs(side[0]) * width) / 2 + (Math.abs(side[1]) * height) / 2 + 14;
