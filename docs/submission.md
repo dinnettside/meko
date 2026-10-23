@@ -27,8 +27,9 @@ plays right away in the browser, with a voice-over and captions. Next to it is t
 supported, rewritten or removed, with the source words behind it and links to the sources. The sentence being spoken is
 marked as the video plays.
 
-A feed of videos made by Meko lets anyone scroll through them, open the fact-check of each, and like or comment without
-an account. Finished videos are saved, so the same request plays again at once, for free.
+A feed of videos made by Meko plays like a short-video app: the video on screen starts by itself, one tap turns the
+sound on, and search finds a topic or offers to make a video about it. Anyone can open the fact-check of each video and
+like or comment without an account. Finished videos are saved, so the same request plays again at once, for free.
 
 ### How we built it
 
@@ -85,7 +86,10 @@ an account. Finished videos are saved, so the same request plays again at once, 
   access or load their text with JavaScript.
 - A 90-second video takes under a minute and about 6.5 cents of Nemotron calls (see `docs/eval.md`), and watching
   it again costs nothing.
-- Videos do not look alike: the look, the opening and the kind of picture for each scene follow the topic.
+- Videos do not look alike: the look, the opening and the kind of picture for each scene follow the topic. Scrolling
+  the feed, the 10 videos open in 8 different ways (before: 4, with 6 of 10 on the same title card), often with the
+  video's own first sentence, like a number counting up as the voice says it, and no two videos in a row share a look
+  or an opening. That pass only changes how a scene is drawn, never what it says.
 
 ### What we learned
 
@@ -126,9 +130,10 @@ Additional info, which only judges and organizers see. The file says what is bel
 hand. Never put the code in the repository.
 
 1. Open https://meko-kappa.vercel.app.
-2. Choose **Watch** to scroll through videos Meko made. Open **Fact-check** under a video to see each sentence with the
-   source words behind it, and click a sentence to play the video from there. The feed and the fact-checks need no
-   code.
+2. Choose **Watch** to scroll through videos Meko made. The video on screen plays by itself; tap it for sound. Type a
+   topic in the search box to find a video, or to start one when there is none. Open **Fact-check** under a video to see
+   each sentence with the source words behind it, and click a sentence to play the video from there. The feed and the
+   fact-checks need no code.
 3. To make a video, go back to the start page, type a topic, pick an audience and a length, type the demo code in the
    **Demo code** field next to **Make video**, and choose **Make video**. It takes about a minute. A topic someone
    already made, with the same audience and length, plays at once from the library, so a topic that is not in the feed
@@ -149,8 +154,8 @@ order with these captions; Devpost allows 140 characters per caption. The projec
 3. `docs/images/gallery-3.png`: Fact-check: the source says the plague "might have" ended feudalism, so Meko revised the
    sentence to "may have helped end feudalism".
 4. `docs/images/gallery-4.png`: A drawn scene from the volcano video. Every picture in a Meko video is drawn in code.
-5. `docs/images/gallery-5.png`: The feed on a phone. One video per screen, with likes, comments, the fact-check and a
-   link to share.
+5. `docs/images/gallery-5.png`: The feed on a phone. Videos play as you scroll, with search, sound on one tap, likes,
+   comments and the fact-check.
 
 ## YouTube
 
