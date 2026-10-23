@@ -24,7 +24,7 @@ The point: explainer videos people can trust, made in about a minute.
 - **Never commit secrets.** Keys live in `.env.local` (gitignored). Keep `.env.example` updated with variable names only.
 - Generated videos contain **no copyrighted music, images or third-party trademarks**. All visuals are drawn in code. Map data comes from open sources.
 - Third-party APIs (Tavily, ElevenLabs) are used within their terms.
-- Deadline: **Oct 30, 2026, 10:00 PDT (18:00 Oslo)**. Target: submit Oct 29.
+- Deadline: **Oct 30, 2026, 10:00 PDT (18:00 Oslo)**. Ready to submit Oct 23, 2026; the project can be edited on Devpost until the deadline.
 
 ## Stack
 
@@ -34,7 +34,7 @@ The point: explainer videos people can trust, made in about a minute.
   - base URL: `https://api.tokenfactory.nebius.com/v1/`
   - env: `NEBIUS_API_KEY`, `NEBIUS_MODEL` (picked in Phase 0: `nvidia/Nemotron-3-Ultra-550b-a55b`, see `docs/model-check.md`)
   - thinking off by default: `chat_template_kwargs: { enable_thinking: false }`
-- Web search: Tavily JS SDK (search + extract), env `TAVILY_API_KEY`
+- Web search: Tavily's REST API over fetch (advanced search with passages, and usage for the health check), env `TAVILY_API_KEY`
 - Voice (Phase 2): ElevenLabs, env `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`
 - Validation: zod
 - Maps (Phase 2): d3-geo, topojson-client, world-atlas
@@ -147,8 +147,8 @@ Current phase: **4**
 ### Phase 4: ship (Oct 27-29)
 - [x] Deploy to Vercel with environment variables
 - [x] README: setup, architecture, how Nemotron and Token Factory are used
-- [ ] Design polish, demo video (under 3 min, public on YouTube), Devpost text
-- [ ] Make the repo public (Trym does it right before submitting on Oct 29; a hackathon rule, and it must stay public through judging, Dec 1-15. History checked for secrets on Oct 20: none)
+- [x] Design polish, demo video (under 3 min, public on YouTube), Devpost text
+- [x] Make the repo public (done Oct 23, 2026, right before submitting; a hackathon rule, and it must stay public through judging, Dec 1-15. History checked for secrets on Oct 20 and Oct 23: none)
 
 ## How to work with Trym
 
