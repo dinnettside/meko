@@ -162,9 +162,10 @@ Video link: https://youtu.be/LNudZHtkS2A (Public on the channel meko since Oct 2
 
 Fact-checked explainer videos in under a minute | Nebius x NVIDIA Global AI Hackathon
 
-**Thumbnail:** `docs/images/youtube-thumbnail.png`, 1280 x 720. YouTube takes a custom thumbnail only after the channel
-turns on its intermediate features with a phone check (Settings, Channel, Feature access), which also makes the links in
-the description clickable.
+**Thumbnail:** `docs/images/youtube-thumbnail.png`, 1280 x 720, on the video since Oct 23, 2026. YouTube took it once
+the channel had turned on its intermediate features with a phone check (Settings, Channel, Feature access). The links in
+the description are still plain text. YouTube makes them clickable only after one more short verification, for its
+advanced features, on the same page.
 
 **Description:**
 
