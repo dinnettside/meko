@@ -14,7 +14,8 @@ const graticule = geoGraticule10();
 
 // The opening: a big serif heading with an amber rule under it. When the video has maps, a globe turns to the
 // part of the world the story is about; in a video without places, a big icon for the topic can take its place.
-export function TitleScene({ heading, subheading, icon, region }: { heading: string; subheading?: string; icon?: string; region: string[] }) {
+// `seed` is the video's title, so a choice made from it is the same every time the video plays.
+export function TitleScene({ heading, subheading, icon, region }: { heading: string; subheading?: string; icon?: string; region: string[]; seed?: string }) {
   const { colors, fonts } = useTheme();
   const headingIn = useEase(0.2, 0.8);
   const ruleIn = useEase(0.7, 0.8);

@@ -192,7 +192,7 @@ function SceneView({
   if (scene.look) return <TemplateScene template={scene.look.template} params={scene.look.params} {...timing} />;
   switch (scene.kind) {
     case "title":
-      return <TitleScene heading={scene.heading} subheading={scene.subheading} icon={scene.icon} region={region} />;
+      return <TitleScene heading={scene.heading} subheading={scene.subheading} icon={scene.icon} region={region} seed={storyboard.title} />;
     case "text":
       return <TextScene lines={scene.lines} {...timing} />;
     case "map":

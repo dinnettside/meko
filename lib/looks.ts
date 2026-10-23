@@ -1,3 +1,6 @@
+import { moreIntroLooks } from "./looks-intro.ts";
+import type { IntroContext } from "./looks-intro.ts";
+import { moreLooksFor } from "./looks-more.ts";
 import type { Scene } from "./storyboard.ts";
 
 // Other ways to draw the director's own kinds with Trym's templates (remotion/filmmotor), so two videos with the
@@ -23,8 +26,13 @@ const RACE_UNITS = /^(km|kilomet(?:er|re)s?|miles?|met(?:er|re)s?|m|feet|ft|km\/
 // Words for people, so a count of them can be drawn as little figures.
 const PEOPLE_WORDS = /\b(people|persons?|men|women|children|adults|deaths?|died|killed|soldiers?|workers?|citizens?|voters?|residents?|patients?|students?|survivors?|victims?|inhabitants?|population)\b/i;
 
-// The looks a scene could have. The scene's own drawing is always an option too; see pickLooks.
+// The looks a scene could have: these, and more in looks-more.ts. The scene's own drawing is always an option too; see
+// pickLooks.
 export function looksFor(scene: Scene, context: LookContext): Look[] {
+  return [...ownLooks(scene, context), ...moreLooksFor(scene, context)];
+}
+
+function ownLooks(scene: Scene, context: LookContext): Look[] {
   switch (scene.kind) {
     case "steps": {
       const nodes = scene.steps.map((text) => ({ text }));
@@ -148,16 +156,14 @@ export function looksFor(scene: Scene, context: LookContext): Look[] {
 }
 
 // The ways a video can open besides its own title card: the question it answers in big letters, the years its opening
-// spans rolling by, or a plain title card. Its own title card has a globe in a video about places, or a big icon for the
-// topic; with neither it would be only a heading, so then it is not one of the options.
-export function introOptions(
-  scene: Extract<Scene, { kind: "title" }>,
-  context: { question?: string; years?: [number, number]; places: boolean },
-): { own: boolean; looks: Look[] } {
+// spans rolling by, a plain title card, and more in looks-intro.ts. Its own title card has a globe in a video about
+// places, or a big icon for the topic; with neither it would be only a heading, so then it is not one of the options.
+export function introOptions(scene: Extract<Scene, { kind: "title" }>, context: IntroContext): { own: boolean; looks: Look[] } {
   const looks: Look[] = [];
   if (context.question) looks.push({ template: "question_card", params: { label: "", question: context.question } });
   if (context.years) looks.push({ template: "year_roll", params: { from: context.years[0], to: context.years[1], label: scene.heading } });
   looks.push({ template: "title_card", params: { title: scene.heading, subtitle: scene.subheading ?? "" } });
+  looks.push(...moreIntroLooks(scene, context));
   return { own: context.places || scene.icon !== undefined, looks };
 }
 

@@ -18,4 +18,6 @@ import "./diagrams-life.js";
 import "./diagrams-sky.js";
 import "./kit-scenes.js";
 import "./kit-systems.js";
+import "./intros.js";
+import "./looks-more.js";
 import "./variants.js";
