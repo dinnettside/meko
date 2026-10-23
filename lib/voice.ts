@@ -64,7 +64,7 @@ async function mapLimited<T, R>(
 // Records the narration of every scene. The scene lasts as long as its speech plus a short pause.
 export async function recordVoice({ storyboard }: z.infer<typeof VoiceInputSchema>): Promise<VoiceResult> {
   if (!voiceIsConfigured()) {
-    return { storyboard, voice: {}, characters: 0, skipped: "No ElevenLabs key is set up." };
+    return { storyboard, voice: {}, characters: 0, skipped: "No ElevenLabs key or voice is set up." };
   }
   const scenes = storyboard.scenes;
   const characters = scenes.reduce((total, scene) => total + scene.narration.length, 0);

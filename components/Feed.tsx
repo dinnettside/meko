@@ -7,7 +7,7 @@ import Link from "next/link";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { FormEvent, SyntheticEvent } from "react";
 import { flushSync } from "react-dom";
-import { checkedLine } from "@/lib/example";
+import { checkedLine, madeOn } from "@/lib/example";
 import type { FeedItem } from "@/lib/example";
 import { viewerName } from "@/lib/names";
 import { searchFeed, searchWords } from "@/lib/search";
@@ -597,7 +597,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
                       {duration(item.seconds)} · {item.sources} sources · {checkedLine(item)}
                     </p>
                     <p className="mt-1 text-sm text-muted">
-                      Made once in {Math.round(item.ms / 1000)} s for ${item.costUsd.toFixed(2)}; every view after that is free.{" "}
+                      Made on {madeOn(item.madeAt)} in {Math.round(item.ms / 1000)} s for ${item.costUsd.toFixed(2)} of Nemotron calls; every view after that is free.{" "}
                       {item.domains.length > 0 ? <span>Sources include {item.domains.join(", ")}.</span> : null}
                     </p>
                   </div>

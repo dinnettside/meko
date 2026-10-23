@@ -61,9 +61,10 @@ let fastDownUntil = 0;
 // a fresh copy runs with only NEBIUS_API_KEY set.
 const DEFAULT_MAIN_MODEL = "nvidia/Nemotron-3-Ultra-550b-a55b";
 
-// The model that directs each scene: Nemotron 3 Super. Re-directing four saved videos with it cost a third of Ultra
-// (about $0.04 against $0.12 a video), was a little faster, and broke the rules a little less often, with pictures as
-// good (Oct 20, 2026). The plan, the critique and the check of places stay on Ultra. NEBIUS_SCENE_MODEL overrides it.
+// The model that directs each scene: Nemotron 3 Super. Re-directing the ten eval videos with it cost about a third of
+// Ultra ($0.037 against $0.120 a video), took about as long (19.9 s against 17.8 s) and passed the same checks
+// (docs/eval.md, Oct 20, 2026). The plan, the critique and the check of places stay on Ultra. NEBIUS_SCENE_MODEL
+// overrides it.
 const DEFAULT_SCENE_MODEL = "nvidia/nemotron-3-super-120b-a12b";
 
 // Which model a call uses: "main" is NEBIUS_MODEL, "fast" the fast model, and "scene" the scene model.

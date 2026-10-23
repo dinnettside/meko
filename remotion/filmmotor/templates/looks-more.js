@@ -508,10 +508,11 @@ register('odometer', {
     const { size, cells, unitS, width } = S, gap = size * 0.06, cellH = size * 1.2, top = 330, base = top + size * 0.93, figures = ' style="font-variant-numeric:lining-nums tabular-nums"';
     const label = p.label ? fitText(U, p.label, [54, 50, 46, 42, 38], 1400, 2, { w: 600 }) : null;
     const columns = cells.filter((q) => q.digit).length;
-    // The wheels start as the narration says the number (`at`) and the last one lands 1.8 seconds later. The unit and
-    // the label come in only then, so they are never read with a number the wheels pass on the way.
-    const start = typeof p.at === 'number' ? Math.max(0.02, p.at) : 0.03, dur = c.dur || 6;
-    const rollOf = (k) => Math.min(0.95 - start, (1 + (0.8 * k) / Math.max(1, columns - 1)) / dur), land = start + rollOf(columns - 1);
+    // The wheels start as the narration says the number (`at`), at the latest at 0.6 of the scene as in number_hook,
+    // and the last one lands up to 1.8 seconds later, by 0.88, so the label is fully in before the scene settles. The
+    // unit and the label come in only then, so they are never read with a number the wheels pass on the way.
+    const start = typeof p.at === 'number' ? Math.min(0.6, Math.max(0.02, p.at)) : 0.03, dur = c.dur || 6;
+    const rollOf = (k) => Math.min(0.88 - start, (1 + (0.8 * k) / Math.max(1, columns - 1)) / dur), land = start + rollOf(columns - 1);
     let x = 960 - width / 2, j = 0, cards = '', wheels = '', marks = '';
     cells.forEach((q) => {
       if (!q.digit) { marks += U.T(f1(x + q.w / 2), f1(base), q.ch, { ...o, s: size, f: th.accent }); x += q.w; return; }

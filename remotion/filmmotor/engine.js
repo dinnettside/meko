@@ -10,8 +10,8 @@
  * does all of that itself. The map templates are left out too, with the libraries and data they need: d3-array,
  * d3-geo and topojson-client (ISC license) and Natural Earth data (public domain). Meko has its own maps.
  *
- * Changed: the five themes are replaced by one Night atlas theme, which TemplateScene passes in (see theme.ts, built
- * from lib/theme.ts). Built-in text is in English, and numbers are written the English way. U.bg() draws nothing
+ * Changed: the five themes are replaced by the video's own look (Night atlas, Blueprint or Field guide), which
+ * TemplateScene passes in (see theme.ts, built from lib/themes.ts). Built-in text is in English, and numbers are written the English way. U.bg() draws nothing
  * unless it is given a color, since the scene behind a template already gives the dark ground. Added for Meko:
  * U.tw (text width measured on Meko's fonts), the halo text option, H.niceStep (round axis ticks), and counts that
  * keep their thousands separators all the way.
