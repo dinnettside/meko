@@ -4,25 +4,67 @@
 import { register } from "../engine.js";
 
 const f1 = (n) => Number(n).toFixed(1);
-// Quotation marks as the pairs a quote can be wrapped in.
-const WRAPS = ['“”', '""', '‘’', "''", '«»', '„“'];
-// A quote without the quotation marks around it, since the templates draw their own. Only a pair around the whole
-// quote goes; marks of a quoted word at its start or end ("“Glasnost” meant openness") stay, since they are the
-// source's own, but as single marks, the way a quote inside a quote is set.
+// Single quotation marks and guillemets as the pairs a quote can be wrapped in. Double marks are paired by doubleMarks.
+const SINGLE_WRAPS = ['‘’', "''", '«»'];
+// A figure right before place i of a text: a digit, or a fraction like ½.
+const afterFigure = (text, i) => /\p{N}/u.test(text[i - 1] || '');
+// The double quotation marks of a text, paired: `partner` maps the place of each opening or closing mark to the place of
+// its partner, `inch` holds the places of inch marks, and `german` the places of „…“ pairs. A straight mark opens at the
+// start and after a space, a bracket, a dash, a colon or a hyphen, as in He said:"Never", and closes anywhere else. A
+// closing mark right after a figure is an inch mark, as in 12" or 5’7”, when no quote is open, and also when the marks
+// would not pair up otherwise, as in "a 12" gun that could sink anything." A „ is closed by the next “ or ”.
+function doubleMarks(text) {
+  const partner = new Map(), inch = new Set(), german = new Set();
+  for (let i = text.indexOf('„'); i >= 0; i = text.indexOf('„', i + 1)) {
+    let j = i + 1;
+    while (j < text.length && !((text[j] === '“' || text[j] === '”') && !german.has(j))) j++;
+    if (j >= text.length) continue;
+    german.add(i).add(j);
+    partner.set(i, j).set(j, i);
+  }
+  const pair = (open, close, forced) => {
+    const stack = [], pairs = new Map(), inches = new Set();
+    let unmatched = 0;
+    for (let i = 0; i < text.length; i++) {
+      if (german.has(i) || (text[i] !== open && text[i] !== close)) continue;
+      if (open === close ? i === 0 || /[\s([{—–:-]/.test(text[i - 1]) : text[i] === open) stack.push(i);
+      else if (forced === i || (!stack.length && afterFigure(text, i))) inches.add(i);
+      else if (stack.length) { const j = stack.pop(); pairs.set(i, j).set(j, i); }
+      else unmatched++;
+    }
+    return { pairs, inches, unmatched: unmatched + stack.length };
+  };
+  for (const [open, close] of [['“', '”'], ['"', '"']]) {
+    let best = pair(open, close, -1);
+    // Marks that do not pair up: the first closing mark after a figure may be an inch mark instead, when that pairs up more.
+    const first = [...best.pairs].find(([i, j]) => i > j && afterFigure(text, i));
+    if (best.unmatched && first) {
+      const tried = pair(open, close, first[0]);
+      if (tried.unmatched < best.unmatched) best = tried;
+    }
+    best.pairs.forEach((j, i) => partner.set(i, j));
+    best.inches.forEach((i) => inch.add(i));
+  }
+  return { partner, inch, german };
+}
+// A quote without the quotation marks around it, since the templates draw their own, and with its words as the source
+// has them. Only a pair around the whole quote goes, and a mark at its very start or end that has no partner, which is
+// the other half of a pair the quote was cut from. Marks of a quoted word inside it ("“Glasnost” meant openness") stay,
+// since they are the source's own, but a pair of double marks becomes single marks, the way a quote inside a quote is
+// set. Inch marks, apostrophes, „…“ and marks without a partner inside the quote stay as they are.
 const bare = (quote) => {
-  const text = String(quote == null ? '' : quote).trim(), wrap = WRAPS.find((pair) => text.length > 2 && text[0] === pair[0] && text.endsWith(pair[1]));
-  // An apostrophe inside a word, as in "don't", is not a quotation mark.
-  const inner = wrap ? text.slice(1, -1) : '', marks = inner.replace(/(?<=\p{L})['’](?=\p{L})/gu, '');
-  const own = wrap && !marks.includes(wrap[0]) && !marks.includes(wrap[1]) ? inner.trim() : text;
-  // A straight mark at the start of a word opens a quoted word and any other closes it, except one right after a figure
-  // while none is open: that is an inch mark, as in 12" wide, and stays as it is.
-  let open = false;
-  return own.replace(/“/g, '‘').replace(/”/g, '’').replace(/(^|[\s([—–])"|"/g, (mark, lead, at, all) => {
-    if (lead !== undefined) { open = true; return `${lead}‘`; }
-    if (!open && /\d/.test(all[at - 1] || '')) return mark;
-    open = false;
-    return '’';
-  });
+  const text = String(quote == null ? '' : quote).trim(), last = text.length - 1;
+  if (text.length < 2) return text;
+  // Single marks and guillemets around the whole quote go when no mark of theirs is left inside it. An apostrophe is
+  // not one: inside a word, as in "don't", or after the s of a plural, as in "workers' rights".
+  const single = SINGLE_WRAPS.find((pair) => text.length > 2 && text[0] === pair[0] && text[last] === pair[1]);
+  const marks = text.slice(1, -1).replace(/(?<=\p{L})['’](?=\p{L})/gu, '').replace(/(?<=s)['’](?=[\s,.;:!?)]|$)/gu, '');
+  if (single && !marks.includes(single[0]) && !marks.includes(single[1])) return bare(text.slice(1, -1));
+  const { partner, inch, german } = doubleMarks(text), quoteMark = (i) => '“”"„'.includes(text[i]) && !inch.has(i);
+  if (text.length > 2 && partner.get(0) === last) return bare(text.slice(1, -1));
+  if (quoteMark(0) && !partner.has(0)) return bare(text.slice(1));
+  if (quoteMark(last) && !partner.has(last)) return bare(text.slice(0, -1));
+  return text.split('').map((ch, i) => (partner.has(i) && !german.has(i) ? (partner.get(i) > i ? '‘' : '’') : ch)).join('');
 };
 const wordsOf = (text) => String(text == null ? '' : text).split(/\s+/).filter(Boolean);
 
