@@ -191,6 +191,9 @@ export function Feed({ items }: { items: FeedItem[] }) {
   // viewer paused stays paused. Null while the video on screen still loads. The player's listeners read it as the video
   // the player plays.
   const playerSlug = useRef<string | null>(null);
+  // The video that ended and that the feed scrolls on from (see onEnded), until the player plays again or is started for
+  // another video.
+  const movingOn = useRef<string | null>(null);
   // Whether the video on screen was paused because the tab was hidden, so it plays on when the tab is back.
   const pausedByHiding = useRef(false);
   const soundTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -284,6 +287,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
     };
     const onPlay = () => {
       if (unlocking.current) return;
+      movingOn.current = null;
       update({ playing: true });
       setPlayed(playerSlug.current);
       if (!handle.isMuted()) checkSound();
@@ -312,7 +316,9 @@ export function Feed({ items }: { items: FeedItem[] }) {
       if (!autoplayRef.current || sheetRef.current) return;
       const list = visibleRef.current;
       const index = list.findIndex((item) => item.slug === playerSlug.current);
-      if (index >= 0 && index < list.length - 1) sections.current.get(list[index + 1].slug)?.scrollIntoView({ behavior: "smooth" });
+      if (index < 0 || index >= list.length - 1) return;
+      movingOn.current = playerSlug.current;
+      sections.current.get(list[index + 1].slug)?.scrollIntoView({ behavior: "smooth" });
     };
     handle.addEventListener("play", onPlay);
     handle.addEventListener("pause", onPause);
@@ -339,6 +345,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
     (slug: string | null) => {
       if (!player || playerSlug.current === slug) return;
       playerSlug.current = slug;
+      movingOn.current = null;
       if (player.isPlaying()) player.pause();
       if (player.getCurrentFrame() !== 0) player.seekTo(0);
       if (!slug) return;
@@ -378,10 +385,11 @@ export function Feed({ items }: { items: FeedItem[] }) {
       if (!player) return;
       const gesture = event as SyntheticEvent;
       // While the video on screen still loads, the player holds the one before, which must not be heard, and a key on
-      // a paused video only turns sound on. The player is played muted for a moment all the same, since that unlocks
-      // its sound within the tap or key press, and then paused again. The video on screen starts with sound once it
-      // loads (see startVideo), or once the viewer plays it.
-      if (!playerSlug.current || (event instanceof KeyboardEvent && !player.isPlaying())) {
+      // a paused video only turns sound on. Nor is a video that ended played again while the feed scrolls on from it:
+      // Remotion plays an ended video from its start. The player is played muted for a moment all the same, since that
+      // unlocks its sound within the tap or key press, and then paused again. The video on screen starts with sound
+      // once it loads (see startVideo), or once the viewer plays it.
+      if (!playerSlug.current || playerSlug.current === movingOn.current || (event instanceof KeyboardEvent && !player.isPlaying())) {
         unlocking.current = true;
         flushSync(() => player.mute());
         player.play(gesture);
