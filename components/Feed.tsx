@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { FormEvent, SyntheticEvent } from "react";
-import { flushSync } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { checkedLine, madeOn } from "@/lib/example";
 import type { FeedItem } from "@/lib/example";
 import { viewerName } from "@/lib/names";
@@ -34,6 +34,11 @@ const VIEWER_KEY = "meko-viewer";
 const COMMENT_CHARS = 280;
 // How long a video that should play with sound may stand still before it plays on muted instead (see checkSound).
 const SOUND_WAIT_MS = 1500;
+// How many sound elements the feed's one player keeps (see `holder` in Feed). Remotion gives each sound playing at a
+// moment one of its own, five unless told otherwise, and when the player changes videos in the middle of a scene, the
+// new video's sounds take theirs before the old one's give theirs back. In today's videos that can reach all five, and
+// one more is an error that stops the player. The tap on "Tap for sound" unlocks them all at once.
+const SHARED_AUDIO_TAGS = 8;
 
 // This browser's random viewer ID, made once and kept, so a viewer's likes and comments stay theirs. Storage can be
 // blocked; then the ID lasts until the page reloads.
@@ -69,7 +74,7 @@ const readReducedMotion = () => window.matchMedia(REDUCED_MOTION).matches;
 // Keys that do not count as the viewer's first key press, since they move the focus or do nothing on their own.
 const QUIET_KEYS = ["Tab", "Escape", "Shift", "Control", "Alt", "Meta", "CapsLock"];
 
-// Whether a tap on a video's player should play or pause it. A tap on the picture does, and so does one on the bare
+// Whether a tap on the player should play or pause it. A tap on the picture does, and so does one on the bare
 // strip of Remotion's control bar, as in Remotion itself; the bar's buttons, time and seek bar do their own thing. The
 // bar is the last element in the player, with its buttons in its first row.
 function tapsPicture(target: EventTarget, player: PlayerRef): boolean {
@@ -78,7 +83,7 @@ function tapsPicture(target: EventTarget, player: PlayerRef): boolean {
   return target === bar || target === bar.firstElementChild;
 }
 
-// Whether a video's player is playing and muted, as its events last said.
+// Whether the player is playing and muted, as its events last said.
 type Playback = { playing: boolean; muted: boolean };
 const NOT_PLAYING: Playback = { playing: false, muted: true };
 
@@ -117,25 +122,64 @@ export function Feed({ items }: { items: FeedItem[] }) {
   // The video on screen, the only one that plays: the first one until the feed has looked.
   const current = visible[active]?.slug ?? null;
   const [videos, setVideos] = useState<Record<string, SavedVideo>>({});
+  // The video the feed's one player shows (see `holder` below): the one on screen once its data has loaded, and until
+  // then the one it showed before, since the player needs a video to stay drawn.
+  const [shown, setShown] = useState<string | null>(null);
+  if (current && videos[current] && shown !== current) setShown(current);
+  // The video on screen once the player shows it. Null while its data loads; the player then hides behind its still.
+  const live = current !== null && current === shown ? current : null;
+  const shownVideo = shown ? videos[shown] : undefined;
+  // The player is made anew only when its video failed (see FeedPlayer), since Remotion then shows an error in place of
+  // the video until the player is made again, and with one player for the feed that stopped every video after. It is
+  // made again at once, and should the same video fail again, once the viewer moves on to another. A new player has
+  // sound elements no tap has unlocked, so on an iPhone "Tap for sound" comes back (see onPlayer).
+  const [failed, setFailed] = useState<SavedVideo | null>(null);
+  const [retried, setRetried] = useState<SavedVideo | null>(null);
+  const [playerKey, setPlayerKey] = useState(0);
+  if (failed && (failed !== retried || failed !== shownVideo)) {
+    setRetried(failed === shownVideo ? failed : null);
+    setFailed(null);
+    setPlayerKey(playerKey + 1);
+  }
   const [social, setSocial] = useState<Record<string, VideoSocial>>({});
-  // The open panel, with the player of its video, taken when the panel opens.
-  const [sheet, setSheet] = useState<{ slug: string; kind: "comments" | "factcheck"; player: PlayerRef | null } | null>(null);
+  // The open panel. Its video is the one on screen, whose player the fact-check follows.
+  const [sheet, setSheet] = useState<{ slug: string; kind: "comments" | "factcheck" } | null>(null);
   // Browsers only let a page play sound after a tap or a key press, so videos start muted. Once the viewer turns sound
   // on, it stays on for every video after.
   const [soundOn, setSoundOn] = useState(false);
-  // What each video's player last said it does, shown on its section as data-playing and data-muted for tests.
-  const [playback, setPlayback] = useState<Record<string, Playback>>({});
+  // The player once it has loaded, and what it last said it does, shown on the section on screen as data-playing and
+  // data-muted for tests.
+  const [player, setPlayer] = useState<PlayerRef | null>(null);
+  const [playback, setPlayback] = useState<Playback>(NOT_PLAYING);
+  // The video on screen once the viewer has played it. Until then, viewers who asked for less motion see its poster.
+  // It is forgotten as soon as another video is on screen, so one they scroll back to shows its poster again.
+  const [played, setPlayed] = useState<string | null>(null);
+  if (played !== null && played !== live) setPlayed(null);
   const reducedMotion = useSyncExternalStore(subscribeReducedMotion, readReducedMotion, () => false);
   const scroller = useRef<HTMLElement>(null);
   const searchBox = useRef<HTMLInputElement>(null);
   const sections = useRef(new Map<string, HTMLElement>());
-  const players = useRef(new Map<string, PlayerRef>());
-  // How to take each player's listeners off again, by slug.
-  const unlisten = useRef(new Map<string, () => void>());
-  // Copies of the video on screen, the videos shown, the sound, whether videos start by themselves and the open panel,
-  // for the players' listeners and timers, which outlive a render. They are brought up to date after every render, just
-  // below.
-  const currentRef = useRef(current);
+  // Each section's video box, where the player goes while that video is on screen, and the dock where it waits while
+  // no video is shown.
+  const boxes = useRef(new Map<string, HTMLElement>());
+  const dock = useRef<HTMLDivElement>(null);
+  // The feed has one player for all its videos. It is made once and, unless a video fails (see `failed` above), never
+  // made again: it takes each video's props as that video comes on screen. Safari on an iPhone lets a page start sound
+  // only inside a tap, for each sound element on its own. A player keeps one set of sound elements for its whole life
+  // (Remotion's shared audio tags), and the tap on "Tap for sound" unlocks them, so every video after plays through
+  // them with sound, also one the feed moves on to by itself at the end of the last. With a player for each video,
+  // every new one had sound elements no tap had unlocked, and the viewer had to tap again. The player is drawn through
+  // a portal into this element of its own, which moves into the video box of the section on screen (see below): a
+  // moved element is not drawn again, so the player, its sound elements and its AudioContext live on. It exists in the
+  // browser only.
+  const [holder] = useState(() => {
+    if (typeof document === "undefined") return null;
+    const element = document.createElement("div");
+    element.className = "h-full w-full";
+    return element;
+  });
+  // Copies of the videos shown, the sound, whether videos start by themselves and the open panel, for the player's
+  // listeners, which outlive a render. They are brought up to date after every render, just below.
   const visibleRef = useRef(visible);
   const soundRef = useRef(false);
   const autoplayRef = useRef(true);
@@ -143,16 +187,22 @@ export function Feed({ items }: { items: FeedItem[] }) {
   // Whether the viewer has turned sound on or off themselves. Until then, their first tap on a video turns sound on
   // instead of pausing it, and their first key press turns it on too.
   const soundChosen = useRef(false);
-  // The video the feed last started, so it starts once as it comes on screen, and one the viewer paused stays paused.
-  const startedSlug = useRef<string | null>(null);
+  // The video on screen the player was last started for, so each video starts once as it comes on screen, and one the
+  // viewer paused stays paused. Null while the video on screen still loads. The player's listeners read it as the video
+  // the player plays.
+  const playerSlug = useRef<string | null>(null);
   // Whether the video on screen was paused because the tab was hidden, so it plays on when the tab is back.
   const pausedByHiding = useRef(false);
   const soundTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  // Videos waiting for their pictures or sound to load.
-  const buffering = useRef(new Set<string>());
+  // Whether the player waits for its pictures or sound to load.
+  const buffering = useRef(false);
+  // Whether the feed plays the player for a moment only to unlock its sound (see turnOnSound), which its listeners
+  // then take no notice of.
+  const unlocking = useRef(false);
+  // How to take the player's listeners off again.
+  const unlisten = useRef<() => void>(undefined);
 
   useEffect(() => {
-    currentRef.current = current;
     visibleRef.current = visible;
     soundRef.current = soundOn;
     autoplayRef.current = !reducedMotion;
@@ -183,7 +233,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
     return () => observer.disconnect();
   }, [visible]);
 
-  // The active video and its neighbours are loaded, so scrolling never waits.
+  // The active video and its neighbours are loaded, so the player has the next video at once.
   const nearby = useMemo(() => visible.slice(Math.max(0, active - 1), active + 2).map((item) => item.slug), [visible, active]);
   useEffect(() => {
     for (const slug of nearby) {
@@ -194,74 +244,165 @@ export function Feed({ items }: { items: FeedItem[] }) {
     }
   }, [nearby, videos]);
 
-  // Some browsers refuse sound that no tap started, like Safari on an iPhone for a video further down the feed. Remotion
-  // then waits for the sound and the video stands still. So a video that plays with sound but has not moved on after a
-  // moment plays on muted, and the "Tap for sound" button comes back: a video never hangs. One still loading gets longer.
-  const checkSound = useCallback(function check(slug: string, tries = 0) {
+  // The player is handed up once it has loaded, and handed back (null) should it ever go. Its listeners keep what it
+  // does in `playback`, for the sound button and for tests, and come off with it.
+  const onPlayer = useCallback((handle: PlayerRef | null) => {
+    unlisten.current?.();
+    unlisten.current = undefined;
     clearTimeout(soundTimer.current);
-    const player = players.current.get(slug);
-    if (!player) return;
-    const from = player.getCurrentFrame();
-    soundTimer.current = setTimeout(() => {
-      if (players.current.get(slug) !== player || !player.isPlaying() || player.isMuted()) return;
-      if (buffering.current.has(slug) && tries < 4) return check(slug, tries + 1);
-      if (player.getCurrentFrame() !== from) return;
-      player.mute();
+    buffering.current = false;
+    playerSlug.current = null;
+    setPlayer(handle);
+    if (!handle) {
+      setPlayback(NOT_PLAYING);
+      return;
+    }
+    const update = (change: Partial<Playback>) => setPlayback((before) => ({ ...before, ...change }));
+    update({ playing: handle.isPlaying(), muted: handle.isMuted() });
+    // The browser refused the sound: the video plays on muted, and the "Tap for sound" button comes back, so the viewer's
+    // next tap can unlock it.
+    const refused = () => {
       soundRef.current = false;
       soundChosen.current = false;
       setSoundOn(false);
-    }, SOUND_WAIT_MS);
+    };
+    // Some browsers refuse sound that no tap started, like Safari on an iPhone before the viewer's first tap. Remotion
+    // then waits for the sound and the video stands still. So a video that plays with sound but has not moved on after
+    // a moment plays on muted, and the "Tap for sound" button comes back: a video never hangs. One still loading gets
+    // longer.
+    const checkSound = (tries = 0) => {
+      clearTimeout(soundTimer.current);
+      const slug = playerSlug.current;
+      const from = handle.getCurrentFrame();
+      soundTimer.current = setTimeout(() => {
+        if (playerSlug.current !== slug || !handle.isPlaying() || handle.isMuted()) return;
+        if (buffering.current && tries < 4) return checkSound(tries + 1);
+        if (handle.getCurrentFrame() !== from) return;
+        handle.mute();
+        refused();
+      }, SOUND_WAIT_MS);
+    };
+    const onPlay = () => {
+      if (unlocking.current) return;
+      update({ playing: true });
+      setPlayed(playerSlug.current);
+      if (!handle.isMuted()) checkSound();
+    };
+    const onPause = () => {
+      if (!unlocking.current) update({ playing: false });
+    };
+    // Remotion mutes the player itself when the browser refuses to start its sound, as Safari on an iPhone can for a
+    // video no tap started. The feed mutes a video it plays only once its own sound is off, so a mute while it is on
+    // is that refusal, and the button then never shows sound on over a muted video.
+    const onMuteChange = ({ detail }: { detail: { isMuted: boolean } }) => {
+      if (unlocking.current) return;
+      update({ muted: detail.isMuted });
+      if (detail.isMuted && soundRef.current && playerSlug.current) refused();
+      else if (!detail.isMuted && handle.isPlaying()) checkSound();
+    };
+    const onWaiting = () => {
+      buffering.current = true;
+    };
+    const onResume = () => {
+      buffering.current = false;
+    };
+    // At the end, the next video comes up, like turning a page. Not for viewers who asked for less motion, and not
+    // under an open panel, where the next video would start unseen and the fact-check would lose the video it follows.
+    const onEnded = () => {
+      if (!autoplayRef.current || sheetRef.current) return;
+      const list = visibleRef.current;
+      const index = list.findIndex((item) => item.slug === playerSlug.current);
+      if (index >= 0 && index < list.length - 1) sections.current.get(list[index + 1].slug)?.scrollIntoView({ behavior: "smooth" });
+    };
+    handle.addEventListener("play", onPlay);
+    handle.addEventListener("pause", onPause);
+    handle.addEventListener("mutechange", onMuteChange);
+    handle.addEventListener("waiting", onWaiting);
+    handle.addEventListener("resume", onResume);
+    handle.addEventListener("ended", onEnded);
+    unlisten.current = () => {
+      handle.removeEventListener("play", onPlay);
+      handle.removeEventListener("pause", onPause);
+      handle.removeEventListener("mutechange", onMuteChange);
+      handle.removeEventListener("waiting", onWaiting);
+      handle.removeEventListener("resume", onResume);
+      handle.removeEventListener("ended", onEnded);
+    };
   }, []);
 
-  // Only the video on screen plays. One that leaves the screen pauses and goes back to its start, so it starts over
-  // when the viewer scrolls back, like TikTok. The one on screen starts by itself, with sound if the viewer turned it
-  // on, unless they asked for less motion; in a hidden tab it waits until the tab is shown.
-  const syncPlayers = useCallback(() => {
-    const slug = currentRef.current;
-    players.current.forEach((player, other) => {
-      if (other === slug) return;
+  // Only the video on screen plays, and always from its start: the player goes back to the start whenever it is started
+  // for another video, so a video the viewer scrolls back to starts over, like TikTok. The video on screen starts by
+  // itself, with sound if the viewer turned it on, unless they asked for less motion or a panel is open, under which
+  // it waits at its start as one that ends there does (see onEnded); in a hidden tab it waits until the tab is shown.
+  // Null only stops the player, while the video on screen still loads.
+  const startVideo = useCallback(
+    (slug: string | null) => {
+      if (!player || playerSlug.current === slug) return;
+      playerSlug.current = slug;
       if (player.isPlaying()) player.pause();
       if (player.getCurrentFrame() !== 0) player.seekTo(0);
-    });
-    const player = slug ? players.current.get(slug) : undefined;
-    if (!player) {
-      // Its player is still loading, and it starts once it is handed up.
-      startedSlug.current = null;
-      return;
-    }
-    if (startedSlug.current === slug) return;
-    startedSlug.current = slug;
-    if (soundRef.current) player.unmute();
-    else player.mute();
-    if (!autoplayRef.current) return;
-    if (document.visibilityState === "hidden") pausedByHiding.current = true;
-    else player.play();
-  }, []);
+      if (!slug) return;
+      if (soundRef.current) player.unmute();
+      else player.mute();
+      if (!autoplayRef.current || sheetRef.current) return;
+      if (document.visibilityState === "hidden") pausedByHiding.current = true;
+      else player.play();
+    },
+    [player],
+  );
 
-  // Sound on, for the video on screen and every one after it. A tap passes its event, since Safari on an iPhone lets
-  // sound start only inside the tap itself: the player is unmuted at once rather than on the next render, so its sound
-  // exists within the tap, and the video is played again, as Remotion starts sound in a tap only through play(event).
-  const turnOnSound = useCallback((event?: SyntheticEvent) => {
-    soundChosen.current = true;
-    soundRef.current = true;
-    setSoundOn(true);
-    const player = currentRef.current ? players.current.get(currentRef.current) : undefined;
-    if (!player) return;
-    if (!event) {
-      player.unmute();
-      return;
-    }
-    flushSync(() => player.unmute());
-    if (player.isPlaying()) player.pause();
-    player.play(event);
-  }, []);
+  // The player moves into the video box of the section on screen. Both this and the start below happen before the
+  // browser paints, so a box is never seen empty, and a video never shows a frame from where the one before it was. A
+  // search with no match leaves no box, and the player then waits in the dock, which keeps it in the page at the same
+  // size: out of the page it measured nothing, and once back Remotion took two frames to scale the video down to its
+  // box again, showing it huge.
+  useLayoutEffect(() => {
+    const box = (current ? boxes.current.get(current) : undefined) ?? dock.current;
+    if (holder && box && holder.parentElement !== box) box.appendChild(holder);
+  }, [current, holder]);
+  useLayoutEffect(() => startVideo(live), [live, startVideo]);
+
+  // Sound on, for the video on screen and every one after it. The tap or key press passes its event, since Safari on an
+  // iPhone lets sound start only inside it, for each sound element on its own: the player is unmuted at once rather
+  // than on the next render, so its sound exists within the tap, and the video is played again, as Remotion unlocks
+  // all its sound elements only in play(event), which only checks that it got an event, so a key press's will do.
+  // Played again, the player also asks anew to start its AudioContext, which Chrome left waiting when the video started
+  // muted before the browser allowed sound, so the video stood still once unmuted. That one tap unlocks the sound of
+  // every video after, since they all play in the same player. Before the player has loaded there is nothing to unlock
+  // yet: an iPhone then refuses the first video's sound, and the button comes back (see onPlayer).
+  const turnOnSound = useCallback(
+    (event: SyntheticEvent | KeyboardEvent) => {
+      soundChosen.current = true;
+      soundRef.current = true;
+      setSoundOn(true);
+      if (!player) return;
+      const gesture = event as SyntheticEvent;
+      // While the video on screen still loads, the player holds the one before, which must not be heard, and a key on
+      // a paused video only turns sound on. The player is played muted for a moment all the same, since that unlocks
+      // its sound within the tap or key press, and then paused again. The video on screen starts with sound once it
+      // loads (see startVideo), or once the viewer plays it.
+      if (!playerSlug.current || (event instanceof KeyboardEvent && !player.isPlaying())) {
+        unlocking.current = true;
+        flushSync(() => player.mute());
+        player.play(gesture);
+        player.pause();
+        unlocking.current = false;
+        if (playerSlug.current) player.unmute();
+        return;
+      }
+      flushSync(() => player.unmute());
+      if (player.isPlaying()) player.pause();
+      player.play(gesture);
+    },
+    [player],
+  );
 
   const turnOffSound = useCallback(() => {
     soundChosen.current = true;
     soundRef.current = false;
     setSoundOn(false);
-    if (currentRef.current) players.current.get(currentRef.current)?.mute();
-  }, []);
+    player?.mute();
+  }, [player]);
 
   // A link with #slug opens at that video, which then becomes the active one as it comes into view. It is read once the
   // page runs in the browser, when the search from the address is applied too. This effect must stay above the next
@@ -278,13 +419,12 @@ export function Feed({ items }: { items: FeedItem[] }) {
     if (wanted && sections.current.has(wanted)) sections.current.get(wanted)?.scrollIntoView();
   }, [hydrated]);
 
-  // The video on screen plays and the others pause. The address follows the video on screen once the feed has seen
-  // which one that is, so a link's #slug is not replaced by the first video's before the feed has scrolled to it.
+  // The address follows the video on screen once the feed has seen which one that is, so a link's #slug is not replaced
+  // by the first video's before the feed has scrolled to it.
   useEffect(() => {
     if (!hydrated) return;
-    syncPlayers();
     if (activeSlug && current && window.location.hash !== `#${current}`) window.history.replaceState(null, "", `#${current}`);
-  }, [activeSlug, current, hydrated, syncPlayers]);
+  }, [activeSlug, current, hydrated]);
 
   // The search follows into the address as the viewer types, so the page can be linked to or reloaded as it is.
   useEffect(() => {
@@ -297,20 +437,19 @@ export function Feed({ items }: { items: FeedItem[] }) {
 
   // A hidden tab pauses the video on screen, and it plays on when the tab is shown again.
   useEffect(() => {
+    if (!player) return;
     const onVisibility = () => {
-      const player = currentRef.current ? players.current.get(currentRef.current) : undefined;
-      if (!player) return;
       if (document.visibilityState === "hidden") {
         if (player.isPlaying()) pausedByHiding.current = true;
         player.pause();
       } else if (pausedByHiding.current) {
         pausedByHiding.current = false;
-        player.play();
+        if (playerSlug.current) player.play();
       }
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, []);
+  }, [player]);
 
   const scrollToIndex = useCallback(
     (index: number) => {
@@ -337,12 +476,11 @@ export function Feed({ items }: { items: FeedItem[] }) {
       }
       if (event.key === "m" || event.key === "M") {
         if (soundRef.current) turnOffSound();
-        else turnOnSound();
+        else turnOnSound(event);
         return;
       }
       const pressesControl = (event.key === "Enter" || event.key === " ") && Boolean(target?.closest?.("button, a, summary, select, [role=button]"));
-      if (!soundChosen.current && !QUIET_KEYS.includes(event.key) && !pressesControl) turnOnSound();
-      const player = current ? players.current.get(current) : undefined;
+      if (!soundChosen.current && !QUIET_KEYS.includes(event.key) && !pressesControl) turnOnSound(event);
       if (sheet && ["ArrowDown", "ArrowUp", "j", "k"].includes(event.key)) {
         // The browser scrolls what has the focus or was last clicked. The panel takes the focus when it opens (see
         // Sheet), but should a control in the feed get it back, the browser would scroll the feed.
@@ -355,80 +493,20 @@ export function Feed({ items }: { items: FeedItem[] }) {
       } else if (event.key === "ArrowUp" || event.key === "k") {
         event.preventDefault();
         scrollToIndex(active - 1);
-      } else if (event.key === " " && player && !target?.closest?.("button, a, summary, select, [role=button], [role=dialog]")) {
+      } else if (event.key === " " && player && live && !target?.closest?.("button, a, summary, select, [role=button], [role=dialog]")) {
         event.preventDefault();
         player.toggle();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [active, current, sheet, scrollToIndex, turnOnSound, turnOffSound]);
+  }, [active, live, player, sheet, scrollToIndex, turnOnSound, turnOffSound]);
 
-  // A video's player is handed up once it has loaded, and handed back (null) when it goes. Its listeners keep what it
-  // does in `playback`, for the sound button and for tests, and come off with it.
-  const registerPlayer = useCallback(
-    (slug: string, player: PlayerRef | null) => {
-      unlisten.current.get(slug)?.();
-      unlisten.current.delete(slug);
-      players.current.delete(slug);
-      buffering.current.delete(slug);
-      const update = (change: Partial<Playback>) => setPlayback((all) => ({ ...all, [slug]: { ...(all[slug] ?? NOT_PLAYING), ...change } }));
-      if (!player) {
-        if (startedSlug.current === slug) startedSlug.current = null;
-        update(NOT_PLAYING);
-        return;
-      }
-      players.current.set(slug, player);
-      update({ playing: player.isPlaying(), muted: player.isMuted() });
-      const onPlay = () => {
-        update({ playing: true });
-        // A video that is not on screen never plays, whatever started it, except the one whose fact-check is open: a
-        // click on one of its sentences plays it.
-        if (slug !== currentRef.current && slug !== sheetRef.current?.slug) {
-          player.pause();
-          player.seekTo(0);
-        } else if (!player.isMuted()) checkSound(slug);
-      };
-      const onPause = () => update({ playing: false });
-      const onMuteChange = ({ detail }: { detail: { isMuted: boolean } }) => {
-        update({ muted: detail.isMuted });
-        if (!detail.isMuted && player.isPlaying()) checkSound(slug);
-      };
-      const onWaiting = () => buffering.current.add(slug);
-      const onResume = () => buffering.current.delete(slug);
-      // At the end, the next video comes up, like turning a page. Not for viewers who asked for less motion, and not
-      // under an open panel, where the next video would start unseen and the fact-check would lose the video it follows.
-      const onEnded = () => {
-        if (!autoplayRef.current || sheetRef.current) return;
-        const list = visibleRef.current;
-        const index = list.findIndex((item) => item.slug === slug);
-        if (index >= 0 && index < list.length - 1) sections.current.get(list[index + 1].slug)?.scrollIntoView({ behavior: "smooth" });
-      };
-      player.addEventListener("play", onPlay);
-      player.addEventListener("pause", onPause);
-      player.addEventListener("mutechange", onMuteChange);
-      player.addEventListener("waiting", onWaiting);
-      player.addEventListener("resume", onResume);
-      player.addEventListener("ended", onEnded);
-      unlisten.current.set(slug, () => {
-        player.removeEventListener("play", onPlay);
-        player.removeEventListener("pause", onPause);
-        player.removeEventListener("mutechange", onMuteChange);
-        player.removeEventListener("waiting", onWaiting);
-        player.removeEventListener("resume", onResume);
-        player.removeEventListener("ended", onEnded);
-      });
-      syncPlayers();
-    },
-    [checkSound, syncPlayers],
-  );
-
-  // A tap on a video: the viewer's first one turns sound on instead of pausing it, as on TikTok, and later ones play or
+  // A tap on the video: the viewer's first one turns sound on instead of pausing it, as on TikTok, and later ones play or
   // pause it. It is taken as a click, which a swipe never makes, since the player's own click-to-play reacts as soon
   // as a finger lands, so a short swipe on the video paused it.
-  function tapVideo(slug: string, event: React.MouseEvent) {
-    const player = players.current.get(slug);
-    if (!player || !tapsPicture(event.target, player)) return;
+  function tapVideo(event: React.MouseEvent) {
+    if (!player || !live || !tapsPicture(event.target, player)) return;
     if (!soundChosen.current) turnOnSound(event);
     else player.toggle(event);
   }
@@ -477,13 +555,18 @@ export function Feed({ items }: { items: FeedItem[] }) {
     });
   }
 
-  const sheetItem = sheet ? items.find((item) => item.slug === sheet.slug) : undefined;
-  // A fact-check may play its video while another is on screen (see onPlay), so once it closes, only the video on
-  // screen plays.
-  function closeSheet() {
-    setSheet(null);
-    syncPlayers();
+  // A panel opens over its video, which stays on screen under it. Opened while the feed scrolls on by itself at the end
+  // of the video, the feed goes back to that video, so the next one does not start unseen under the panel and the
+  // fact-check keeps the video it follows, which waits at its start until a sentence is chosen (see startVideo). A
+  // smooth scroll under way can still move the feed a frame after it was stopped, and is stopped again then.
+  function openSheet(slug: string, kind: "comments" | "factcheck") {
+    const section = sections.current.get(slug);
+    section?.scrollIntoView({ block: "start" });
+    requestAnimationFrame(() => section?.scrollIntoView({ block: "start" }));
+    setSheet({ slug, kind });
   }
+
+  const sheetItem = sheet ? items.find((item) => item.slug === sheet.slug) : undefined;
 
   return (
     <div className="flex h-[100dvh] flex-col">
@@ -547,6 +630,13 @@ export function Feed({ items }: { items: FeedItem[] }) {
 
       <main ref={scroller} className="flex-1 snap-y snap-mandatory overflow-y-scroll overscroll-contain">
         <h1 className="sr-only">Videos made by Meko</h1>
+        {/* The dock, where the player waits unseen while no video is shown. It is laid out like a section's video box,
+            so the player keeps its size. */}
+        <div aria-hidden className="pointer-events-none invisible h-0">
+          <div className="flex justify-center px-4 sm:px-6">
+            <div ref={dock} className="aspect-video w-full max-w-4xl border border-transparent" />
+          </div>
+        </div>
         {search && visible.length === 0 ? (
           <div className="mx-auto flex h-full max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
             <p className="break-words font-serif text-3xl leading-tight">No video about “{search}” yet.</p>
@@ -563,16 +653,15 @@ export function Feed({ items }: { items: FeedItem[] }) {
           </div>
         ) : null}
         {visible.map((item, index) => {
-          const video = videos[item.slug];
-          const near = Math.abs(index - active) <= 1;
           const counts = social[item.slug];
-          const state = playback[item.slug] ?? NOT_PLAYING;
+          // Whether the player shows this video, on screen.
+          const here = item.slug === live;
           return (
             <section
               key={item.slug}
               data-slug={item.slug}
-              data-playing={state.playing ? "yes" : "no"}
-              data-muted={state.muted ? "yes" : "no"}
+              data-playing={here && playback.playing ? "yes" : "no"}
+              data-muted={here && !playback.muted ? "no" : "yes"}
               ref={(element) => {
                 if (element) sections.current.set(item.slug, element);
                 else sections.current.delete(item.slug);
@@ -580,13 +669,16 @@ export function Feed({ items }: { items: FeedItem[] }) {
               className="flex h-full snap-start snap-always items-center justify-center px-4 py-5 sm:px-6"
             >
               <article className="flex w-full max-w-4xl flex-col gap-4">
-                <div className="relative aspect-video overflow-hidden rounded-xl border border-rule bg-black">
-                  {near && video ? (
-                    <div className="h-full w-full" onClick={(event) => tapVideo(item.slug, event)}>
-                      <FeedPlayer slug={item.slug} video={video} onPlayer={registerPlayer} poster={reducedMotion} initiallyMuted={!soundOn} />
-                    </div>
-                  ) : (
-                    // The first still is the largest thing on screen until its player loads, so it loads first.
+                <div
+                  ref={(element) => {
+                    if (element) boxes.current.set(item.slug, element);
+                    else boxes.current.delete(item.slug);
+                  }}
+                  className="relative aspect-video overflow-hidden rounded-xl border border-rule bg-black"
+                >
+                  {/* Every video but the one in the player shows its still. The first still is the largest thing on
+                      screen until the player loads, so it loads first. */}
+                  {here ? null : (
                     <Image src={`/examples/${item.slug}.jpg`} alt="" fill unoptimized loading={index === 0 ? "eager" : "lazy"} className="object-cover opacity-80" />
                   )}
                 </div>
@@ -609,14 +701,10 @@ export function Feed({ items }: { items: FeedItem[] }) {
                       <ActionButton label={counts?.liked ? "Unlike" : "Like"} pressed={counts?.liked} onClick={() => void toggleLike(item.slug)} count={counts?.likes ?? 0}>
                         <HeartIcon filled={Boolean(counts?.liked)} />
                       </ActionButton>
-                      <ActionButton label="Comments" onClick={() => setSheet({ slug: item.slug, kind: "comments", player: null })} count={counts?.comments.length ?? 0}>
+                      <ActionButton label="Comments" onClick={() => openSheet(item.slug, "comments")} count={counts?.comments.length ?? 0}>
                         <CommentIcon />
                       </ActionButton>
-                      <ActionButton
-                        label="Fact-check"
-                        onClick={() => setSheet({ slug: item.slug, kind: "factcheck", player: players.current.get(item.slug) ?? null })}
-                        text="Fact-check"
-                      >
+                      <ActionButton label="Fact-check" onClick={() => openSheet(item.slug, "factcheck")} text="Fact-check">
                         <CheckIcon />
                       </ActionButton>
                       <ShareButton slug={item.slug} />
@@ -629,8 +717,19 @@ export function Feed({ items }: { items: FeedItem[] }) {
         })}
       </main>
 
+      {/* The one player, in its holder in the video box of the section on screen. While that video's data loads, the
+          player keeps the video before and hides behind the still. */}
+      {holder && shownVideo
+        ? createPortal(
+            <div className="h-full w-full" style={live ? undefined : { visibility: "hidden" }} onClick={tapVideo}>
+              <FeedPlayer key={playerKey} video={shownVideo} onPlayer={onPlayer} onFailed={setFailed} posterShown={reducedMotion && played !== live} />
+            </div>,
+            holder,
+          )
+        : null}
+
       {sheet && sheetItem ? (
-        <Sheet title={sheet.kind === "comments" ? `Comments on “${sheetItem.title}”` : `Fact-check of “${sheetItem.title}”`} onClose={closeSheet}>
+        <Sheet title={sheet.kind === "comments" ? `Comments on “${sheetItem.title}”` : `Fact-check of “${sheetItem.title}”`} onClose={() => setSheet(null)}>
           {sheet.kind === "comments" ? (
             <Comments
               slug={sheet.slug}
@@ -639,7 +738,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
               onAdded={(comment) => addComment(sheet.slug, comment)}
             />
           ) : (
-            <FactCheckSheet video={videos[sheet.slug]} player={sheet.player} />
+            <FactCheckSheet video={videos[sheet.slug]} player={sheet.slug === live ? player : null} />
           )}
         </Sheet>
       ) : null}
@@ -647,36 +746,42 @@ export function Feed({ items }: { items: FeedItem[] }) {
   );
 }
 
-// One video in the feed. It hands its player up, so the feed can play the one on screen and pause the rest, and the
+// The feed's one player (see `holder` in Feed). It hands itself up, so the feed can start the video on screen and the
 // fact-check can play it from a sentence. The player loads after this mounts (see StoryboardPlayer above), so a callback
 // ref hands it up when it arrives; an effect here would run too early and hand up nothing. It is drawn again only when
-// its own props change, not each time the feed's state does, since redrawing a player redraws its whole video.
+// its own props change, not each time the feed's state does, since redrawing a player redraws its whole video. It is
+// made with sound on, and the feed mutes it before it first plays (see startVideo): Remotion makes a player's
+// AudioContext the first time the player has sound, and every sound playing at that moment lost its sound element, so
+// after the first "Tap for sound" the voice was gone for a scene or two, and in the next video too. It plays at full
+// volume whatever the start page's volume slider was left at (see StoryboardPlayer), which also lets it make its
+// AudioContext then.
 const FeedPlayer = memo(function FeedPlayer({
-  slug,
   video,
   onPlayer,
-  poster,
-  initiallyMuted,
+  onFailed,
+  posterShown,
 }: {
-  slug: string;
   video: SavedVideo;
-  onPlayer: (slug: string, player: PlayerRef | null) => void;
-  poster: boolean;
-  initiallyMuted: boolean;
+  onPlayer: (player: PlayerRef | null) => void;
+  onFailed: (video: SavedVideo) => void;
+  posterShown: boolean;
 }) {
-  const playerRef = useCallback((player: PlayerRef | null) => onPlayer(slug, player), [slug, onPlayer]);
   const sites = useMemo(() => sceneSites(video.storyboard, video.facts), [video]);
+  const fail = useCallback(() => onFailed(video), [onFailed, video]);
   return (
     <StoryboardPlayer
       storyboard={video.storyboard}
       voice={video.voice}
       sites={sites}
       checks={video.report}
-      playerRef={playerRef}
-      poster={poster}
-      initiallyMuted={initiallyMuted}
+      playerRef={onPlayer}
+      poster={false}
+      posterWhenPaused={posterShown}
       volumeControls={false}
       clickToPlay={false}
+      sharedAudioTags={SHARED_AUDIO_TAGS}
+      initialVolume={1}
+      onError={fail}
     />
   );
 });
