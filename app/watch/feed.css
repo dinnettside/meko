@@ -9,6 +9,15 @@
   container-type: size;
   /* The rail of buttons: six of 58 px with 4 px between them. */
   --feed-rail: 368px;
+  /* What the header takes off the top of a section wider than tall (see the phone on its side, below): on a touch
+     screen held sideways the header goes, and with a mouse, as in a short window or a laptop zoomed in, it stays, with
+     the search and the way home. */
+  --feed-side-head: var(--feed-head);
+}
+@media (pointer: coarse) {
+  .feed-section {
+    --feed-side-head: 0px;
+  }
 }
 
 /* Upright phone: the video full width, edge to edge, a little above the middle. It goes higher when the rail and the
@@ -81,11 +90,16 @@
   .feed-caption {
     /* The tap area, the row (a word of two lines under the sound button) and a caption of two and two lines. */
     --feed-under: 230px;
-    --feed-top: max(var(--feed-head), calc(var(--feed-head) + (100cqh - var(--feed-head) - 56.25cqw - var(--feed-under)) * 0.4));
-    --feed-row: calc(var(--feed-top) + 56.25cqw + 36px);
+    /* Full width, unless the header, the video, the row and a caption of two and one lines do not fit, as in a short
+       window with a panel open beside the feed and a search: the video is then narrower, centred. */
+    --feed-w: min(100cqw, calc((100cqh - var(--feed-head) - var(--feed-under) + 16px) * 16 / 9));
+    --feed-top: max(var(--feed-head), calc(var(--feed-head) + (100cqh - var(--feed-head) - var(--feed-w) * 9 / 16 - var(--feed-under)) * 0.4));
+    --feed-row: calc(var(--feed-top) + var(--feed-w) * 9 / 16 + 36px);
   }
   .feed-box {
     top: var(--feed-top);
+    left: calc((100cqw - var(--feed-w)) / 2);
+    width: var(--feed-w);
   }
   .feed-rail {
     top: var(--feed-row);
@@ -224,15 +238,16 @@
      video is centred where the rail fits beside it, and moves left where it would not, as with a panel open beside
      the feed, so it keeps all the width the rail leaves. The caption and the header go, and the progress bar's tap
      area stays on the picture, under its captions. The same for any other section wider than tall and too narrow
-     for the rail beside a video with a caption, as in a small window with a panel open. */
+     for the rail beside a video with a caption, as in a small window with a panel open, and for a short window used
+     with a mouse, where the header stays and the video and the rail fill the height under it (--feed-side-head). */
   .feed-box,
   .feed-rail {
-    --feed-w: min(calc(100cqh * 16 / 9), calc(100cqw - 64px));
+    --feed-w: min(calc((100cqh - var(--feed-side-head)) * 16 / 9), calc(100cqw - 64px));
     --feed-left: max(0px, min(calc((100cqw - var(--feed-w)) / 2), calc(100cqw - var(--feed-w) - 64px)));
   }
   .feed-box {
     left: var(--feed-left);
-    top: calc((100cqh - var(--feed-w) * 9 / 16) / 2);
+    top: calc(var(--feed-side-head) + (100cqh - var(--feed-side-head) - var(--feed-w) * 9 / 16) / 2);
     width: var(--feed-w);
   }
   .feed-caption {
@@ -241,7 +256,7 @@
   .feed-rail {
     left: auto;
     right: max(2px, calc((100cqw - var(--feed-left) - var(--feed-w) - 52px) / 2));
-    top: 50%;
+    top: calc(50% + var(--feed-side-head) / 2);
     bottom: auto;
     width: 52px;
     gap: 6px;
@@ -281,6 +296,56 @@
     top: max(var(--feed-head), calc((100cqh - var(--feed-w) * 9 / 16) / 2));
   }
 }
+/* A phone on its side with the browser's bars, as an iPhone in Safari, is too short for the rail with the button that
+   clears a search (data-clear), and a shorter phone for the rail of six: the buttons close up there, and the words of
+   "Tap for sound" are left to screen readers. On the shortest the buttons are smaller too, so none is cut off. */
+@container (orientation: landscape) and (max-height: 380px) {
+  .feed-rail[data-clear] {
+    gap: 2px;
+  }
+  .feed-rail[data-clear] .feed-sound-slot {
+    height: 44px;
+  }
+  .feed-rail[data-clear] .feed-sound-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+@container (orientation: landscape) and (max-height: 330px) {
+  .feed-rail,
+  .feed-rail[data-clear] {
+    gap: 0;
+  }
+  .feed-sound-slot,
+  .feed-rail[data-clear] .feed-sound-slot {
+    height: 44px;
+  }
+  .feed-sound-off .feed-sound-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+@container (orientation: landscape) and (max-height: 310px) {
+  .feed-sound-slot,
+  .feed-rail[data-clear] .feed-sound-slot {
+    height: 38px;
+  }
+  .feed-icon,
+  .feed-sound-off .feed-sound-icon {
+    width: 38px;
+    height: 38px;
+  }
+}
 
 /* An upright phone with a panel open: the video moves up under the header, so it stays in view above the panel, which
    slides up from the bottom. Not on a wider screen, where the panel opens beside the feed. */
@@ -307,11 +372,12 @@
   }
 }
 
-/* The button in the rail that clears a search shows only where the header, with its count line and Clear, is gone. */
+/* The button in the rail that clears a search shows only where the header, with its count line and Clear, is gone: on
+   a touch screen held sideways. With a mouse a short window keeps its header. */
 .feed-clear {
   display: none;
 }
-@media (orientation: landscape) and (max-height: 500px) {
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
   .feed-header-row,
   .feed-count {
     display: none;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { RefObject } from "react";
 import type { FactCheckReport as Report, ResearchFact, SentenceCheck } from "@/lib/pipeline";
 import type { Source } from "@/lib/storyboard";
 
@@ -17,27 +18,30 @@ type Props = {
   numbered: Source[]; // the sources listed next to the video, in that order
   activeSentenceId: string | null; // the sentence being spoken right now
   onSelect: (sentenceId: string) => void; // jump the video to this sentence
+  scroller?: RefObject<HTMLElement | null>; // the panel that scrolls the list, when the list does not scroll on its own
 };
 
 // Every sentence of the narration with its fact-check result, read like a transcript with footnotes: the numbers point
 // to the sources, and the quotes behind each sentence open under it. The sentence being spoken is marked with the
 // highlighter, and clicking a sentence plays the video from there.
-export function FactCheckReport({ report, facts, sources, numbered, activeSentenceId, onSelect }: Props) {
+export function FactCheckReport({ report, facts, sources, numbered, activeSentenceId, onSelect, scroller }: Props) {
   const panel = useRef<HTMLOListElement>(null);
   const rows = useRef(new Map<string, HTMLLIElement>());
   const factById = new Map(facts.map((fact) => [fact.id, fact]));
   const sourceById = new Map(sources.map((source) => [source.id, source]));
   const numberOf = new Map(numbered.map((source, index) => [source.id, index + 1]));
 
-  // Keep the spoken sentence in view inside the panel, without scrolling the page.
+  // Keep the spoken sentence in view inside the list, or the panel that scrolls it, without scrolling the page. What
+  // the panel keeps at its top, like tabs, is its scroll padding.
   useEffect(() => {
     const row = activeSentenceId ? rows.current.get(activeSentenceId) : undefined;
-    const list = panel.current;
-    if (!row || !list) return;
-    const above = row.offsetTop < list.scrollTop;
-    const below = row.offsetTop + row.offsetHeight > list.scrollTop + list.clientHeight;
-    if (above || below) list.scrollTo({ top: row.offsetTop - 16, behavior: "smooth" });
-  }, [activeSentenceId]);
+    const box = scroller?.current ?? panel.current;
+    if (!row || !box) return;
+    const view = box.getBoundingClientRect();
+    const top = view.top + (parseFloat(getComputedStyle(box).scrollPaddingTop) || 0);
+    const at = row.getBoundingClientRect();
+    if (at.top < top || at.bottom > view.bottom) box.scrollTo({ top: box.scrollTop + at.top - top - 16, behavior: "smooth" });
+  }, [activeSentenceId, scroller]);
 
   return (
     <section className="flex min-h-0 min-w-0 flex-col break-words">
@@ -46,7 +50,7 @@ export function FactCheckReport({ report, facts, sources, numbered, activeSenten
         <span className="text-ok">{report.supported} supported</span>, <span className="text-warn">{report.revised} revised</span>,{" "}
         <span className="text-bad">{report.removed} removed</span>. Click a sentence to hear it.
       </p>
-      <ol ref={panel} className="relative mt-4 flex max-h-[68vh] flex-col overflow-y-auto pr-2">
+      <ol ref={panel} className={`relative mt-4 flex flex-col ${scroller ? "" : "max-h-[68vh] overflow-y-auto pr-2"}`}>
         {report.checks.map((check) => (
           <li
             key={check.sentenceId}

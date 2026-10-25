@@ -134,10 +134,9 @@ hand. Never put the code in the repository.
 
 1. Open https://meko-kappa.vercel.app.
 2. Choose **Watch** to scroll through videos Meko made. The video on screen plays by itself; tap it for sound. Type a
-   topic in the search box to find a video, or to start one when there is none. Open **Fact-check** under a video to see
-   each sentence with the source words behind it (on a phone it is the check mark), and click a sentence to play the
-   video from there. The feed and the
-   fact-checks need no code.
+   topic in the search box to find a video, or to start one when there is none. Tap **Check**, the check mark next to a
+   video, to see each sentence with the source words behind it, and click a sentence to play the video from there. The
+   feed and the fact-checks need no code.
 3. To make a video, go back to the start page, type a topic, pick an audience and a length, type the demo code in the
    **Demo code** field next to **Make video**, and choose **Make video**. It takes about a minute. If the video plays at
    once marked "From the library", someone made the same request before; choose **Make a new one** to watch the agent
@@ -149,7 +148,7 @@ hand. Never put the code in the repository.
 
 ## Gallery
 
-Five screenshots of the live site, taken with headless Chrome on Oct 21, 2026 (gallery-5 again on Oct 23, after the feed began to play by itself), 1800 x 1200 PNG. Upload them in this
+Five screenshots of the live site, taken with headless Chrome on Oct 21, 2026 (gallery-5 again on Oct 23, after the feed began to play by itself), 1800 x 1200 PNG. gallery-2 and gallery-5 still show the feed before it became Shorts-like (the theme switch, buttons under the video and the line saying when and for how much each video was made): retake them from the live site once the new feed is deployed, before Oct 30. Upload them in this
 order with these captions; Devpost allows 140 characters per caption. The project's thumbnail is `gallery-2.png`.
 
 1. `docs/images/gallery-1.png`: The start page. Type a topic, pick an audience and a length, and choose Make video.
@@ -251,7 +250,7 @@ recording: once it is made, the same request plays at once from the library. Tha
 | 0:20 | The same page | The progress steps |
 | 0:45 | The same page | The video plays |
 | 1:15 | The same page | The fact-check next to the video; click a sentence |
-| 1:35 | https://meko-kappa.vercel.app/watch#black-death | Open **Fact-check** and click a sentence |
+| 1:35 | https://meko-kappa.vercel.app/watch#black-death | Open **Check** (the fact-check) and click a sentence |
 | 2:00 | The same page | Like the video, post a comment, search for "heart". The comment stays on the site |
 | 2:15 | https://meko-kappa.vercel.app | The same topic, audience and length again: it plays at once from the library |
 | 2:40 | https://meko-kappa.vercel.app | The start page |
