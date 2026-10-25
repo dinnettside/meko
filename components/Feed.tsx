@@ -120,7 +120,18 @@ const fullscreenElement = () => document.fullscreenElement ?? (document as Fulls
 // Keys that do not count as the viewer's first key press, since they move the focus or do nothing on their own.
 const QUIET_KEYS = ["Tab", "Escape", "Shift", "Control", "Alt", "Meta", "CapsLock"];
 // The keys that move the progress bar's slider (see the keys in Feed).
-const SLIDER_KEYS = ["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft", "Home", "End"];
+const SLIDER_KEYS = ["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft", "PageUp", "PageDown", "Home", "End"];
+// Whether a phone's or a tablet's keyboard is up, which leaves less of the screen to the page than the page has. Not
+// a hardware keyboard, nor a phone's keyboard hidden with the back gesture while the box keeps the focus. A browser
+// without visualViewport is taken to have it up.
+function keyboardUp(): boolean {
+  const view = window.visualViewport;
+  return !view || view.height * view.scale < document.documentElement.clientHeight * 0.85;
+}
+
+// A comment being written, for each video, so it is still there when its panel opens again, as after a tap on the
+// video above the panel on a phone, which closes it. Kept until the page reloads.
+const drafts = new Map<string, string>();
 
 // Whether the player is playing and muted, as its events last said.
 type Playback = { playing: boolean; muted: boolean };
@@ -272,6 +283,9 @@ export function Feed({ items }: { items: FeedItem[] }) {
   // viewer paused stays paused. Null while the video on screen still loads. The player's listeners read it as the video
   // the player plays.
   const playerSlug = useRef<string | null>(null);
+  // The player the feed has, as soon as it is handed up or back (see onPlayer), which `player` says only from the next
+  // render on (see startVideo).
+  const playerNow = useRef<PlayerRef | null>(null);
   // The video that ended and that the feed scrolls on from (see onEnded), until the player plays again or is started for
   // another video.
   const movingOn = useRef<string | null>(null);
@@ -337,6 +351,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
     clearTimeout(soundTimer.current);
     buffering.current = false;
     playerSlug.current = null;
+    playerNow.current = handle;
     setPlayer(handle);
     if (!handle) {
       setPlayback(NOT_PLAYING);
@@ -437,10 +452,13 @@ export function Feed({ items }: { items: FeedItem[] }) {
   // for another video, so a video the viewer scrolls back to starts over, like TikTok. The video on screen starts by
   // itself, with sound if the viewer turned it on, unless they asked for less motion or a panel is open, under which
   // it waits at its start as one that ends there does (see onEnded); in a hidden tab it waits until the tab is shown.
-  // Null only stops the player, while the video on screen still loads.
+  // Null only stops the player, while the video on screen still loads. Only the player the feed still has is started:
+  // when the viewer moves on from a video that failed twice, the player is made again in the same render as the feed
+  // moves on, and this first runs with the player before, which is gone, so taking the video as started then kept the
+  // new player from starting it, and the next video stood still.
   const startVideo = useCallback(
     (slug: string | null) => {
-      if (!player || playerSlug.current === slug) return;
+      if (!player || player !== playerNow.current || playerSlug.current === slug) return;
       playerSlug.current = slug;
       movingOn.current = null;
       if (player.isPlaying()) player.pause();
@@ -459,15 +477,18 @@ export function Feed({ items }: { items: FeedItem[] }) {
   // start below happen before the browser paints, so a box is never seen empty, and a video never shows a frame from
   // where the one before it was. A search with no match leaves no box, and the player then waits in the dock, which
   // keeps it in the page at the same size: out of the page it measured nothing, and once back Remotion took two frames
-  // to scale the video down to its box again, showing it huge. A moved element loses the focus, so a keyboard on the
-  // progress bar or the Pause button gets it back there, as the feed moves on.
+  // to scale the video down to its box again, showing it huge. A moved element loses the focus, and while the next
+  // video loads, its controls hide and the Pause button goes, so a keyboard on the progress bar or the Pause button
+  // (holderFocus) gets it back there as the feed moves on, and again once that video is shown. That is forgotten once
+  // the focus moves on to something else, or a finger or mouse presses anywhere but on the progress bar.
+  const holderFocus = useRef<"slider" | "button" | null>(null);
   useLayoutEffect(() => {
     const box = (full ? stageBox.current : current ? boxes.current.get(current) : undefined) ?? dock.current;
-    if (!holder || !box || holder.parentElement === box) return;
-    const focused = document.activeElement instanceof HTMLElement && holder.contains(document.activeElement) ? document.activeElement : null;
-    box.appendChild(holder);
-    focused?.focus({ preventScroll: true });
-  }, [current, holder, full]);
+    if (!holder || !box) return;
+    if (holder.parentElement !== box) box.appendChild(holder);
+    const now = document.activeElement;
+    if (holderFocus.current && (!now || now === document.body)) holder.querySelector<HTMLElement>(holderFocus.current === "slider" ? "[role=slider]" : "button")?.focus({ preventScroll: true });
+  }, [current, holder, full, live]);
   useLayoutEffect(() => startVideo(live), [live, startVideo]);
 
   // Sound on, for the video on screen and every one after it. The tap or key press passes its event, since Safari on an
@@ -568,13 +589,24 @@ export function Feed({ items }: { items: FeedItem[] }) {
       });
   }, []);
 
+  // A keyboard's focus in the stage as full screen closes is kept for the page too (see the effect below), since the
+  // stage is hidden then, and while the browser leaves its own full screen the page takes no focus: on the progress
+  // bar or the Pause button, which move back with the player, or, from the stage's own buttons, on the button that
+  // opened full screen, or else the video's Full screen button.
+  const keepFullFocus = useCallback(() => {
+    const focused = document.activeElement;
+    if (!(focused instanceof HTMLElement) || focused === stage.current || !stage.current?.contains(focused) || !focused.matches(":focus-visible")) return;
+    fullOpener.current = holder?.contains(focused) ? focused : (fullOpener.current ?? document.querySelector<HTMLElement>('.feed-rail [aria-label="Full screen"]'));
+  }, [holder]);
+
   const exitFull = useCallback(() => {
     const doc = document as FullscreenDocument;
+    keepFullFocus();
     if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
     else if (doc.webkitFullscreenElement) doc.webkitExitFullscreen?.();
     fullRef.current = null;
     setFull(null);
-  }, []);
+  }, [keepFullFocus]);
 
   // The browser leaves its full screen by itself too, as with Escape, and the stage then goes with it.
   useEffect(() => {
@@ -584,6 +616,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
         screen.orientation?.unlock?.();
       } catch {}
       if (fullRef.current === "api") {
+        keepFullFocus();
         fullRef.current = null;
         setFull(null);
       }
@@ -594,13 +627,13 @@ export function Feed({ items }: { items: FeedItem[] }) {
       document.removeEventListener("fullscreenchange", onChange);
       document.removeEventListener("webkitfullscreenchange", onChange);
     };
-  }, []);
+  }, [keepFullFocus]);
 
-  // However full screen was left, the button that opened it from the keyboard gets the focus back, once the feed takes
-  // the focus again; the stage it had is hidden by then, which left the focus nowhere. While the browser is still
-  // leaving its own full screen, as after the Escape key here, everything outside the stage stays inert and takes no
-  // focus, so it waits for that. Should the feed have moved on in full screen, the same button of the video now on
-  // screen gets it, so the focus stays where the viewer is.
+  // However full screen was left, the button that opened it from the keyboard gets the focus back (or what kept it, see
+  // keepFullFocus), once the feed takes the focus again; the stage it had is hidden by then, which left the focus
+  // nowhere. While the browser is still leaving its own full screen, as after the Escape key here, everything outside
+  // the stage stays inert and takes no focus, so it waits for that. Should the feed have moved on in full screen, the
+  // same button of the video now on screen gets it, so the focus stays where the viewer is.
   useEffect(() => {
     const opener = fullOpener.current;
     if (full || !opener) return;
@@ -708,20 +741,32 @@ export function Feed({ items }: { items: FeedItem[] }) {
   }, [current]);
 
   // On a phone the search box opens over the header from its button, and takes the focus inside the tap, as Safari
-  // on an iPhone shows its keyboard only then.
+  // on an iPhone shows its keyboard only then. On a touch screen held sideways the header is hidden, and shows only
+  // while the box has the focus (inBox), as after the / key on a tablet's keyboard, so it is shown before the box
+  // takes the focus, which a hidden box cannot.
+  const [inBox, setInBox] = useState(false);
   const openSearch = useCallback(() => {
-    flushSync(() => setSearchOpen(true));
+    flushSync(() => {
+      setSearchOpen(true);
+      setInBox(true);
+    });
     searchBox.current?.focus();
+    if (document.activeElement !== searchBox.current) setInBox(false);
   }, []);
+
+  // Whether the last press anywhere in the feed was in the panel (see the feed's onPointerDownCapture).
+  const pressedInSheet = useRef(false);
 
   // Arrow keys and j/k move between videos, the space bar plays or pauses the one on screen, the arrows to the sides
   // move it back or on, m turns sound on or off, f goes in and out of full screen and / goes to the search box, unless
   // the viewer is typing. A button, a link or the fact-check keeps the space bar for itself, and an open panel keeps
-  // the arrow keys, which scroll it while the feed behind stays where it is. The progress bar, once the keyboard has
-  // reached it, is a slider (see Progress): all four arrows move it, also beside an open panel, and Home and End go to
-  // the start and the end; after a click on it, up and down still move between videos. The viewer's first key press
-  // also turns sound on, like a first tap, except Enter or the space bar on a button or link: that presses the
-  // control, like a tap on it, and the sound button then turns sound on by itself.
+  // the arrow keys, which scroll it while the feed behind stays where it is, as do the space bar after a click in it
+  // and, from a control in the feed, Page Up and Down, Home and End. The progress bar, once the keyboard has reached
+  // it, is a slider (see Progress): all four arrows move it, Page Up and Down three times as far, also beside an open
+  // panel, and Home and End go to the start and the end; after a click on it, up and down still move between videos.
+  // Until the player is ready, those keys and the space bar do nothing there, rather than scroll the feed on. The
+  // viewer's first key press also turns sound on, like a first tap, except Enter or the space bar on a button or link:
+  // that presses the control, like a tap on it, and the sound button then turns sound on by itself.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -743,12 +788,20 @@ export function Feed({ items }: { items: FeedItem[] }) {
       const pressesControl = (event.key === "Enter" || event.key === " ") && Boolean(target?.closest?.("button, a, summary, select, [role=button]"));
       if (!soundChosen.current && !QUIET_KEYS.includes(event.key) && !pressesControl) turnOnSound(event);
       const slider = target?.getAttribute?.("role") === "slider" && target.matches(":focus-visible");
+      if (slider && (SLIDER_KEYS.includes(event.key) || event.key === " ") && !(player && live && shownVideo)) {
+        event.preventDefault();
+        return;
+      }
       if (slider && player && live && shownVideo && SLIDER_KEYS.includes(event.key)) {
         event.preventDefault();
         const frames = storyboardFrames(shownVideo.storyboard);
-        const step = SEEK_STEP * shownVideo.storyboard.fps * (event.key === "ArrowUp" || event.key === "ArrowRight" ? 1 : -1);
-        const to = event.key === "Home" ? 0 : event.key === "End" ? frames : player.getCurrentFrame() + step;
-        player.seekTo(Math.min(frames - 2, Math.max(0, to)));
+        const forward = event.key === "ArrowUp" || event.key === "ArrowRight" || event.key === "PageUp";
+        const step = SEEK_STEP * shownVideo.storyboard.fps * (event.key.startsWith("Page") ? 3 : 1) * (forward ? 1 : -1);
+        const to = Math.min(frames - 2, Math.max(0, event.key === "Home" ? 0 : event.key === "End" ? frames : player.getCurrentFrame() + step));
+        // Beside a panel a video that ends goes back to its start and waits there (see onEnded), so one sent to its end
+        // waits at the end instead, paused.
+        if (sheet && to >= frames - 2) player.pause();
+        player.seekTo(to);
         return;
       }
       if ((event.key === "f" || event.key === "F") && !sheet) {
@@ -756,7 +809,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
         else enterFull();
         return;
       }
-      if (sheet && ["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "j", "k"].includes(event.key)) {
+      if (sheet && ["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "j", "k", "PageDown", "PageUp", "Home", "End"].includes(event.key)) {
         // The browser scrolls what has the focus or was last clicked. The panel takes the focus when it opens (see
         // Sheet), but should a control in the feed get it back, the browser would scroll the feed.
         if (target?.closest?.("main")) event.preventDefault();
@@ -772,7 +825,14 @@ export function Feed({ items }: { items: FeedItem[] }) {
         event.preventDefault();
         const step = SEEK_STEP * shownVideo.storyboard.fps * (event.key === "ArrowLeft" ? -1 : 1);
         player.seekTo(Math.min(storyboardFrames(shownVideo.storyboard) - 2, Math.max(0, player.getCurrentFrame() + step)));
-      } else if (event.key === " " && player && live && !target?.closest?.("button, a, summary, select, [role=button], .feed-sheet")) {
+      } else if (
+        event.key === " " &&
+        player &&
+        live &&
+        !target?.closest?.("button, a, summary, select, [role=button], .feed-sheet") &&
+        // After a click on the text of the panel the focus is on the page, and the browser scrolls the panel.
+        !(sheet && pressedInSheet.current && target === document.body)
+      ) {
         event.preventDefault();
         togglePlay();
       }
@@ -786,20 +846,20 @@ export function Feed({ items }: { items: FeedItem[] }) {
   // before; after a first tap that only turned sound on, it only likes, so the video plays on with its sound. It is
   // taken as a click, which a swipe never makes, since the player's own click-to-play reacts as soon as a finger lands,
   // so a short swipe on the video paused it. The progress bar along the bottom of the video keeps its taps to itself
-  // (see Progress). A finger that taps while the phone's keyboard is up, as for the search, only puts it away.
+  // (see Progress). A finger that taps while the phone's keyboard is up, as for the search, only puts it away; a tap
+  // while a text box has the focus with no keyboard up, as with a tablet's hardware keyboard, also leaves the box.
   const lastToggle = useRef(-Infinity);
   // Whether the last tap on the video only turned sound on.
   const soundTap = useRef(false);
   // What pressed last anywhere in the feed, a finger or a mouse, and whether a finger pressed while a text box had the
-  // focus, with the phone's keyboard up (see the feed's onPointerDownCapture).
+  // focus with the phone's keyboard up (see the feed's onPointerDownCapture).
   const lastPointer = useRef("mouse");
   const leavingBox = useRef(false);
   function tapVideo(event: React.MouseEvent) {
     if (!player || !live) return;
-    if (leavingBox.current) {
-      (document.activeElement as HTMLElement | null)?.blur();
-      return;
-    }
+    const focused = document.activeElement;
+    if (leavingBox.current || focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement) (focused as HTMLElement | null)?.blur();
+    if (leavingBox.current) return;
     if (!soundChosen.current) {
       turnOnSound(event);
       lastToggle.current = event.timeStamp;
@@ -814,8 +874,9 @@ export function Feed({ items }: { items: FeedItem[] }) {
     if (double && !social[live]?.liked) void toggleLike(live);
   }
 
-  // The sound button in the rail. The second tap of an impatient double tap on "Tap for sound" is let go: it would turn
-  // sound off again, or, landing where the pill was before it shrank to the speaker, pause the video (see tapAround).
+  // The sound button in the rail and in full screen. The second tap of an impatient double tap on "Tap for sound" is let
+  // go: it would turn sound off again, or, landing where the pill was before it shrank to the speaker, pause the video
+  // (see tapAround).
   const soundPressed = useRef(-Infinity);
   function pressSound(event: React.MouseEvent) {
     if (event.timeStamp - soundPressed.current < DOUBLE_TAP_MS) return;
@@ -894,14 +955,19 @@ export function Feed({ items }: { items: FeedItem[] }) {
   const sheetItem = sheet ? items.find((item) => item.slug === sheet.slug) : undefined;
 
   return (
+    // No double tap here zooms the page, even once Safari has zoomed into a field, so a double tap always likes.
     <div
       data-sheet={sheet ? "" : undefined}
-      className="relative h-[100dvh] overflow-hidden bg-black text-fg"
+      data-count={countInHeader ? "" : undefined}
+      className="relative h-[100dvh] touch-manipulation overflow-hidden bg-black text-fg"
       style={{ ...DARK, "--feed-head": countInHeader ? HEAD_WITH_COUNT : HEAD } as CSSProperties}
       onPointerDownCapture={(event) => {
         lastPointer.current = event.pointerType;
         const focused = document.activeElement;
-        leavingBox.current = event.pointerType === "touch" && (focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement);
+        leavingBox.current = event.pointerType === "touch" && (focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement) && keyboardUp();
+        const target = event.target as Element;
+        pressedInSheet.current = Boolean(target.closest?.(".feed-sheet"));
+        if (!holder?.contains(target) || !target.closest?.("[data-seek]")) holderFocus.current = null;
       }}
     >
       {/* Black behind the feed too, so a phone that bounces the page shows no light edge. */}
@@ -912,7 +978,10 @@ export function Feed({ items }: { items: FeedItem[] }) {
           takes no focus or clicks. */}
       <div inert={full !== null} className={`@container relative h-full ${sheet ? "sm:mr-[min(440px,50vw)]" : ""}`}>
         <header className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-linear-to-b from-black/80 to-transparent">
-          <div className="feed-header-row flex h-14 items-center gap-2 px-3 @min-[640px]:h-16 @min-[640px]:gap-3 @min-[640px]:px-6">
+          <div
+            data-open={inBox ? "" : undefined}
+            className="feed-header-row flex h-14 items-center gap-2 px-3 @min-[640px]:h-16 @min-[640px]:gap-3 @min-[640px]:px-6"
+          >
             <Link
               href="/"
               className={`pointer-events-auto h-11 items-center px-1 font-serif text-2xl font-semibold tracking-tight ${searching ? "hidden @min-[640px]:flex" : "flex"}`}
@@ -950,15 +1019,17 @@ export function Feed({ items }: { items: FeedItem[] }) {
                     event.currentTarget.blur();
                   }
                 }}
+                onFocus={() => setInBox(true)}
                 // On a phone an empty box closes again once the viewer leaves it.
                 onBlur={() => {
+                  setInBox(false);
                   if (!query) setSearchOpen(false);
                 }}
                 maxLength={100}
                 enterKeyHint="search"
                 aria-keyshortcuts="/"
                 placeholder="Search the videos"
-                className="h-11 w-full rounded-full border border-rule bg-surface/90 pl-10 pr-4 text-base text-fg outline-none placeholder:text-muted focus:border-fg @min-[640px]:text-sm"
+                className="h-11 w-full rounded-full border border-rule bg-surface/90 pl-10 pr-4 text-base text-fg outline-none placeholder:text-muted focus:border-fg @min-[640px]:pointer-fine:text-sm"
               />
             </label>
             {searching ? (
@@ -1037,6 +1108,10 @@ export function Feed({ items }: { items: FeedItem[] }) {
             const counts = social[item.slug];
             // Whether the player shows this video, on screen.
             const here = item.slug === live;
+            // Only the buttons of the video on screen are in the order of the Tab key, so it goes from the header to that
+            // video, and from its last button to an open panel, which follows the videos in the page: it never reaches
+            // another video, which the browser would scroll to, closing the panel and starting that video over.
+            const tab = item.slug === current ? undefined : -1;
             return (
               <section
                 key={item.slug}
@@ -1074,23 +1149,23 @@ export function Feed({ items }: { items: FeedItem[] }) {
                   </p>
                 </div>
                 <div data-clear={countShown ? "" : undefined} className="feed-rail absolute bottom-3.5 right-2 flex w-16 flex-col items-center gap-1">
-                  <SoundButton on={soundOn} onClick={pressSound} />
-                  <RailButton label={counts?.liked ? "Unlike" : "Like"} caption={String(counts?.likes ?? 0)} pressed={Boolean(counts?.liked)} onClick={() => void toggleLike(item.slug)}>
+                  <SoundButton on={soundOn} tabIndex={tab} onClick={pressSound} />
+                  <RailButton label={counts?.liked ? "Unlike" : "Like"} caption={String(counts?.likes ?? 0)} pressed={Boolean(counts?.liked)} tabIndex={tab} onClick={() => void toggleLike(item.slug)}>
                     <HeartIcon filled={Boolean(counts?.liked)} />
                   </RailButton>
-                  <RailButton label="Comments" caption={String(counts?.comments.length ?? 0)} onClick={() => openSheet(item.slug, "comments")}>
+                  <RailButton label="Comments" caption={String(counts?.comments.length ?? 0)} tabIndex={tab} onClick={() => openSheet(item.slug, "comments")}>
                     <CommentIcon />
                   </RailButton>
-                  <RailButton label="Fact-check" caption="Check" onClick={() => openSheet(item.slug, "factcheck")}>
+                  <RailButton label="Fact-check" caption="Check" tabIndex={tab} onClick={() => openSheet(item.slug, "factcheck")}>
                     <CheckIcon />
                   </RailButton>
-                  <ShareButton slug={item.slug} title={item.title} />
-                  <RailButton label="Full screen" caption="Full screen" title="Full screen (F)" keys="F" onClick={enterFull}>
+                  <ShareButton slug={item.slug} title={item.title} tabIndex={tab} />
+                  <RailButton label="Full screen" caption="Full screen" title="Full screen (F)" keys="F" tabIndex={tab} onClick={enterFull}>
                     <ExpandIcon />
                   </RailButton>
                   {/* On a phone on its side the header and its count line are gone, so a search is cleared from here. */}
                   {countShown ? (
-                    <RailButton label={`Clear the search for “${search}”`} caption="Clear" className="feed-clear" onClick={() => clearSearch()}>
+                    <RailButton label={`Clear the search for “${search}”`} caption="Clear" className="feed-clear" tabIndex={tab} onClick={() => clearSearch()}>
                       <SearchClearIcon />
                     </RailButton>
                   ) : null}
@@ -1108,7 +1183,10 @@ export function Feed({ items }: { items: FeedItem[] }) {
         still={full && !live ? current : null}
         hideControls={idle && !roomy && playback.playing}
         soundOn={soundOn}
-        onSound={toggleSound}
+        onSound={pressSound}
+        onTap={(event) => {
+          if (lastPointer.current === "touch") tapVideo(event);
+        }}
         onClose={exitFull}
         onSwipe={(step) => scrollToIndex(active + step)}
       />
@@ -1119,7 +1197,17 @@ export function Feed({ items }: { items: FeedItem[] }) {
           the video. */}
       {holder && shownVideo
         ? createPortal(
-            <div className="relative h-full w-full select-none" style={live ? undefined : { visibility: "hidden" }} onClick={tapVideo}>
+            <div
+              className="relative h-full w-full select-none"
+              style={live ? undefined : { visibility: "hidden" }}
+              onClick={tapVideo}
+              onFocus={(event) => {
+                holderFocus.current = event.target.getAttribute("role") === "slider" ? "slider" : event.target instanceof HTMLButtonElement ? "button" : null;
+              }}
+              onBlur={(event) => {
+                if (event.relatedTarget instanceof Node && !holder.contains(event.relatedTarget)) holderFocus.current = null;
+              }}
+            >
               <div className="feed-round h-full w-full overflow-hidden">
                 <FeedPlayer key={playerKey} video={shownVideo} onPlayer={onPlayer} onFailed={setFailed} posterShown={reducedMotion && played !== live} />
               </div>
@@ -1150,6 +1238,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
         >
           {sheet.kind === "comments" ? (
             <Comments
+              key={sheet.slug}
               slug={sheet.slug}
               viewer={viewer}
               comments={social[sheet.slug]?.comments ?? []}
@@ -1227,8 +1316,12 @@ function Progress({
   const bar = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const fill = useRef<HTMLDivElement>(null);
-  // Whether the last press on the bar was a finger's, for its click.
+  // Whether the last press on the bar was a finger's, for its click, and whether the press that ends in this click began
+  // on the bar. One on the video can end with its click on the bar: a tap that wakes full screen's faded controls
+  // shows the bar under the finger before the click, and that click goes on to the video, which plays or pauses,
+  // rather than seek to where it landed.
   const finger = useRef(false);
+  const pressed = useRef(false);
   const [dragging, setDragging] = useState(false);
   const frames = storyboardFrames(video.storyboard);
   const fps = video.storyboard.fps;
@@ -1257,6 +1350,15 @@ function Progress({
     };
   }, [player, slug, sections, frames, fps, seconds]);
 
+  // Heard before the bar's own press, which then says it began there.
+  useEffect(() => {
+    const forget = () => {
+      pressed.current = false;
+    };
+    window.addEventListener("pointerdown", forget, true);
+    return () => window.removeEventListener("pointerdown", forget, true);
+  }, []);
+
   // Never quite the last frame, which Remotion takes as the end, so the feed would move on in the middle of a drag.
   const seekTo = (frame: number) => player?.seekTo(Math.min(frames - 2, Math.max(0, frame)));
   function seekAt(clientX: number) {
@@ -1277,6 +1379,7 @@ function Progress({
   function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
     const isFinger = event.pointerType === "touch";
     finger.current = isFinger;
+    pressed.current = true;
     if ((!isFinger && event.button !== 0) || !player) return;
     const target = event.currentTarget;
     const id = event.pointerId;
@@ -1336,6 +1439,8 @@ function Progress({
       aria-keyshortcuts="ArrowLeft ArrowRight"
       onPointerDown={onPointerDown}
       onClick={(event) => {
+        if (!pressed.current) return;
+        pressed.current = false;
         // The tap is the bar's, not the video's, which would play or pause.
         event.stopPropagation();
         if (finger.current) seekAt(event.clientX);
@@ -1410,7 +1515,9 @@ function PlayPause({ playing, paused, onToggle }: { playing: boolean; paused: bo
 // behind it never moves. The swipe is heard on the stage's element itself, not through React: the player is drawn
 // through a portal from the feed, so React passes its touches up to the feed and never to the stage, though it lies
 // in the stage, and a swipe on the video, most of the screen on a phone on its side, did nothing. One that starts on
-// the progress bar seeks instead.
+// the progress bar seeks instead. A tap on the black around the video counts as a tap on it (onTap), as in the feed;
+// taps on the video itself reach the feed through the portal and never come here. Its buttons are read from where the
+// tap began, as in the feed (see tapAround).
 function Stage({
   full,
   stageRef,
@@ -1419,6 +1526,7 @@ function Stage({
   hideControls,
   soundOn,
   onSound,
+  onTap,
   onClose,
   onSwipe,
 }: {
@@ -1429,6 +1537,7 @@ function Stage({
   hideControls: boolean;
   soundOn: boolean;
   onSound: (event: React.MouseEvent) => void;
+  onTap: (event: React.MouseEvent) => void;
   onClose: () => void;
   onSwipe: (step: 1 | -1) => void;
 }) {
@@ -1476,6 +1585,9 @@ function Stage({
       aria-label={full ? "Full screen video" : undefined}
       data-full={full ?? undefined}
       data-idle={hideControls ? "yes" : "no"}
+      onClick={(event) => {
+        if (!event.nativeEvent.composedPath().some((node) => node instanceof Element && node.matches("button, [data-seek]"))) onTap(event);
+      }}
       className={`feed-stage group/stage fixed inset-0 z-50 touch-none bg-black outline-none ${full ? "" : "hidden"} ${hideControls ? "cursor-none" : ""}`}
     >
       <div ref={boxRef} className="feed-stage-box aspect-video">
@@ -1526,7 +1638,7 @@ function Stage({
 // a speaker like the other buttons once sound is on. It is outside the player, so tapping it never also pauses the
 // video. Both are the same <button> in the same place, which React changes rather than replaces, so a keyboard keeps
 // its focus on it as sound turns on and off.
-function SoundButton({ on, onClick }: { on: boolean; onClick: (event: React.MouseEvent<HTMLButtonElement>) => void }) {
+function SoundButton({ on, tabIndex, onClick }: { on: boolean; tabIndex?: number; onClick: (event: React.MouseEvent<HTMLButtonElement>) => void }) {
   const click = (event: React.MouseEvent<HTMLButtonElement>) => {
     onClick(event);
     blurAfterClick(event);
@@ -1535,7 +1647,7 @@ function SoundButton({ on, onClick }: { on: boolean; onClick: (event: React.Mous
     // As tall as the other buttons with their words, so the rail does not move when sound turns on.
     <div className="feed-sound-slot flex h-[58px] w-full flex-col items-center justify-center">
       {on ? (
-        <button type="button" onClick={click} aria-label="Turn sound off" aria-keyshortcuts="M" title="Turn sound off (M)" className={`${RAIL_BUTTON} max-w-full`}>
+        <button type="button" onClick={click} tabIndex={tabIndex} aria-label="Turn sound off" aria-keyshortcuts="M" title="Turn sound off (M)" className={`${RAIL_BUTTON} max-w-full`}>
           <span className={RAIL_ICON}>
             <SpeakerIcon />
           </span>
@@ -1545,6 +1657,7 @@ function SoundButton({ on, onClick }: { on: boolean; onClick: (event: React.Mous
         <button
           type="button"
           onClick={click}
+          tabIndex={tabIndex}
           aria-keyshortcuts="M"
           title="Turn sound on (M)"
           className="feed-sound-off mr-2.5 flex h-11 items-center self-end rounded-full bg-white pl-4 text-black shadow-lg shadow-black/40 outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black"
@@ -1579,6 +1692,7 @@ function RailButton({
   keys,
   pressed,
   className = "",
+  tabIndex,
   onClick,
   children,
 }: {
@@ -1588,6 +1702,7 @@ function RailButton({
   keys?: string;
   pressed?: boolean;
   className?: string;
+  tabIndex?: number;
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   children: React.ReactNode;
 }) {
@@ -1599,6 +1714,7 @@ function RailButton({
         onClick(event);
         blurAfterClick(event);
       }}
+      tabIndex={tabIndex}
       aria-label={name}
       aria-pressed={pressed}
       aria-keyshortcuts={keys}
@@ -1613,7 +1729,7 @@ function RailButton({
 
 // On a phone the system's share sheet opens, as on TikTok. On a computer, or should the phone have none, the link is
 // copied, and the button says whether that worked.
-function ShareButton({ slug, title }: { slug: string; title: string }) {
+function ShareButton({ slug, title, tabIndex }: { slug: string; title: string; tabIndex?: number }) {
   const [said, setSaid] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   function say(words: string) {
@@ -1640,7 +1756,7 @@ function ShareButton({ slug, title }: { slug: string; title: string }) {
     }
   }
   return (
-    <RailButton label="Share a link to this video" caption={said ?? "Share"} onClick={() => void share()}>
+    <RailButton label="Share a link to this video" caption={said ?? "Share"} tabIndex={tabIndex} onClick={() => void share()}>
       <LinkIcon />
     </RailButton>
   );
@@ -1656,8 +1772,9 @@ function ShareButton({ slug, title }: { slug: string; title: string }) {
 // keyboard gets the focus back on that button when it closes, unless the focus has gone elsewhere meanwhile, as to the
 // search box, whose typing moves the feed on and so closes the panel; after a tap or click the focus stays on the
 // page, so the space bar plays and pauses the video again. Shift+Tab from its top goes back to the buttons of its
-// video (`previous`), not to those of the last video, which come before the panel in the page. What it shows scrolls
-// by itself (see Comments and FactCheckSheet).
+// video (`previous`), even while the feed still scrolls back to that video, and Tab from its last button comes back
+// into the panel, which follows the videos in the page: only the buttons of the video on screen are in the order of
+// the Tab key. What it shows scrolls by itself (see Comments and FactCheckSheet).
 function Sheet({
   title,
   onClose,
@@ -1768,7 +1885,13 @@ function Sheet({
 }
 
 function Comments({ slug, viewer, comments, onAdded }: { slug: string; viewer: string | null; comments: FeedComment[]; onAdded: (comment: FeedComment) => void }) {
-  const [text, setText] = useState("");
+  // What the viewer writes is kept for the video as they write it (see drafts), and starts from what they wrote before.
+  const [text, setTextState] = useState(() => drafts.get(slug) ?? "");
+  function setText(value: string) {
+    setTextState(value);
+    if (value) drafts.set(slug, value);
+    else drafts.delete(slug);
+  }
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -1831,8 +1954,9 @@ function Comments({ slug, viewer, comments, onAdded }: { slug: string; viewer: s
             maxLength={COMMENT_CHARS}
             rows={writing ? 3 : 1}
             placeholder="Add a comment"
-            // 16 px on a phone, like the search box, since Safari on an iPhone zooms into a smaller field it focuses.
-            className="min-h-11 min-w-0 flex-1 resize-none rounded-xl border border-rule bg-surface px-3 py-[9px] text-base leading-6 text-fg outline-none placeholder:text-muted focus:border-fg sm:text-sm sm:leading-6"
+            // 16 px on a touch screen, also a phone on its side, like the search box, since Safari on an iPhone zooms into
+            // a smaller field it focuses, and stays zoomed in.
+            className="min-h-11 min-w-0 flex-1 resize-none rounded-xl border border-rule bg-surface px-3 py-[9px] text-base leading-6 text-fg outline-none placeholder:text-muted focus:border-fg pointer-fine:text-sm"
           />
           <button
             type="submit"
