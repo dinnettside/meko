@@ -16,8 +16,10 @@ export function StoryboardPlayer({
   sites,
   checks,
   playerRef,
+  controls = true,
   poster = true,
   posterWhenPaused = false,
+  posterLook = "button",
   volumeControls = true,
   clickToPlay = true,
   sharedAudioTags,
@@ -45,6 +47,10 @@ export function StoryboardPlayer({
   sharedAudioTags?: number;
   initialVolume?: number;
   onError?: () => void;
+  // The feed also draws its own progress bar along the bottom of the video, in place of Remotion's control bar, and its
+  // poster is a large play icon, like a paused short video.
+  controls?: boolean;
+  posterLook?: "button" | "icon";
 }) {
   // Remotion's space key works by moving the focus to its play button whenever a player loads, plays or pauses. That
   // pulled the focus out of the feed's search box while someone typed, so it is off, and the pages handle the space
@@ -58,7 +64,7 @@ export function StoryboardPlayer({
       fps={storyboard.fps}
       compositionWidth={storyboard.width}
       compositionHeight={storyboard.height}
-      controls
+      controls={controls}
       clickToPlay={clickToPlay}
       showVolumeControls={volumeControls}
       spaceKeyToPlayOrPause={false}
@@ -66,7 +72,9 @@ export function StoryboardPlayer({
       initialVolume={initialVolume}
       acknowledgeRemotionLicense
       style={{ width: "100%" }}
-      renderPoster={poster || posterWhenPaused ? () => <Poster title={storyboard.title} /> : undefined}
+      renderPoster={
+        poster || posterWhenPaused ? () => (posterLook === "icon" ? <IconPoster title={storyboard.title} /> : <Poster title={storyboard.title} />) : undefined
+      }
       showPosterWhenUnplayed={poster}
       showPosterWhenPaused={posterWhenPaused}
       errorFallback={onError ? () => <Failed onError={onError} /> : undefined}
@@ -92,6 +100,25 @@ function Poster({ title }: { title: string }) {
       <span className="rounded-full px-5 py-2 text-sm font-medium" style={{ background: APP_COLORS.dark.fg, color: APP_COLORS.dark.bg }}>
         ▶ Play
       </span>
+    </div>
+  );
+}
+
+// The feed's poster, for viewers who asked for less motion: the title under a large play icon, in the app's dark mode
+// like the poster above. Its sizes are parts of the player's width, so it looks the same on a phone and in full screen.
+function IconPoster({ title }: { title: string }) {
+  return (
+    <div
+      data-poster
+      className="@container flex h-full w-full flex-col items-center justify-center gap-[4cqw] px-[9%] text-center"
+      style={{ background: APP_COLORS.dark.bg, color: APP_COLORS.dark.fg }}
+    >
+      <span className="flex size-[15cqw] items-center justify-center rounded-full" style={{ background: APP_COLORS.dark.fg, color: APP_COLORS.dark.bg }}>
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className="ml-[1cqw] size-[6.5cqw]">
+          <path d="M7 4.5v15l12.5-7.5z" />
+        </svg>
+      </span>
+      <p className="line-clamp-2 font-serif text-[4.6cqw] leading-tight">{title}</p>
     </div>
   );
 }

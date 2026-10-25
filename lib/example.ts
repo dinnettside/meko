@@ -47,20 +47,7 @@ export function exampleMeta(slug: string, example: Example): ExampleMeta {
 // searched by (its title, topic, narration and source titles).
 export type FeedItem = ExampleMeta & {
   title: string;
-  madeAt: string; // ISO date
-  costUsd: number;
-  ms: number;
-  tokens?: number;
-  domains: string[]; // the sites of its first sources
   searchText: string;
-};
-
-const hostname = (url: string) => {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
 };
 
 export function feedItem(slug: string, example: Example): FeedItem {
@@ -68,20 +55,11 @@ export function feedItem(slug: string, example: Example): FeedItem {
   return {
     ...exampleMeta(slug, example),
     title: example.storyboard.title,
-    madeAt: example.madeAt,
-    costUsd: example.costUsd,
-    ms: example.ms,
-    tokens: example.tokens,
-    domains: [...new Set(sources.map((source) => hostname(source.url)))].slice(0, 3),
     searchText: [example.storyboard.title, example.request.topic, ...example.storyboard.scenes.map((scene) => scene.narration), ...sources.map((source) => source.title)]
       .join(" ")
       .toLowerCase(),
   };
 }
-
-// The day a video was made, like "Oct 18". The feed's videos are older runs, so their time and cost say when they were
-// made: Meko has become cheaper since.
-export const madeOn = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 
 // A finished video saved as files, for "Watch an example". Made by scripts/make-example.ts.
 // The MP3 for each scene sits next to the JSON, in public/examples/<slug>/<scene id>.mp3.

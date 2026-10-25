@@ -139,7 +139,7 @@ export function StatScene({
       ) : null}
       {/* A low thud as the number lands. */}
       <Sequence from={Math.round((start + countSec) * fps)} layout="none">
-        <Html5Audio src={sounds().thud} volume={0.22} />
+        <Html5Audio src={sounds().thud} />
       </Sequence>
     </AbsoluteFill>
   );

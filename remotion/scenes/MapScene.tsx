@@ -49,7 +49,6 @@ const FACES_LEFT: Record<string, boolean> = { ship: false, camel: true, horse: t
 const fontSize = (strong: boolean) => (strong ? VIDEO.fontSize.mapLabelStrong : VIDEO.fontSize.mapLabel);
 // A map that zooms into its cities flies in over this long. A shorter scene has no time to show the countries first.
 const ZOOM_SEC = 1.6;
-const FLIGHT_VOLUME = 0.14;
 const MIN_ZOOM_SCENE_SEC = 5.5;
 const CENTER_X = WIDTH / 2;
 const CENTER_Y = (BOX[0][1] + BOX[1][1]) / 2;
@@ -507,7 +506,7 @@ export function MapScene({
           come often. */}
       {zoom ? (
         <Sequence from={Math.round(zoom.startSec * fps)} layout="none">
-          <Html5Audio src={sounds().flight} volume={FLIGHT_VOLUME} />
+          <Html5Audio src={sounds().flight} />
         </Sequence>
       ) : null}
     </AbsoluteFill>

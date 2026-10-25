@@ -36,8 +36,6 @@ import { TitleScene } from "./scenes/TitleScene";
 export { creditsFrames, sceneFrames, sceneStarts, storyboardFrames } from "./timing";
 
 const NO_VOICE: Record<string, SceneVoice> = {};
-// The sound effects are quiet, under the voice.
-const CHIME_VOLUME = 0.18;
 // An opening's animations play out within this many seconds (see SceneView).
 const OPENING_SEC = 4;
 const NO_SITES: Record<string, string[]> = {};
@@ -102,7 +100,7 @@ export function StoryboardVideo({
                 </Fade>
                 {voice[scene.id] ? <Html5Audio src={voice[scene.id].audio} /> : null}
                 {/* A soft bell opens the video. Scenes come in without a sound: one on every scene got repetitive. */}
-                {index === 0 ? <Html5Audio src={sounds().chime} volume={CHIME_VOLUME} /> : null}
+                {index === 0 ? <Html5Audio src={sounds().chime} /> : null}
               </Series.Sequence>
             );
           })}
@@ -111,7 +109,7 @@ export function StoryboardVideo({
               <Fade frames={credits} fade={overlap} fadeOut>
                 <Credits sources={storyboard.sources} checks={checks} />
               </Fade>
-              <Html5Audio src={sounds().chime} volume={CHIME_VOLUME} />
+              <Html5Audio src={sounds().chime} />
             </Series.Sequence>
           ) : null}
         </Series>

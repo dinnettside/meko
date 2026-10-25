@@ -1,0 +1,357 @@
+/* Where things sit in the feed (components/Feed.tsx), by the shape of the screen: a phone held upright (the rules
+   outside the @container blocks), an upright phone too short for the rail beside the caption, a wider screen, a tablet
+   held upright, and a phone on its side. Each section is a size container, so the sizes are parts of the section (cqw, cqh) rather than of
+   the window, which is wider than the feed while a panel is open beside it. The Tailwind classes on these elements
+   give the upright phone's look, and the blocks below change it, since plain CSS outranks Tailwind's layers whatever
+   the order. */
+
+.feed-section {
+  container-type: size;
+  /* The rail of buttons: six of 58 px with 4 px between them. */
+  --feed-rail: 368px;
+}
+
+/* Upright phone: the video full width, edge to edge, a little above the middle. It goes higher when the rail and the
+   progress bar's tap area would not fit under it, but never under the header (--feed-head, set on the feed). A
+   screen too short for that gets the row of buttons below. A browser without the section's units (cqw, cqh), like
+   Safari before iOS 16, gets the video full width under the header. */
+.feed-box {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  top: var(--feed-head);
+}
+@supports (width: 1cqw) {
+  .feed-box {
+    width: 100cqw;
+    top: clamp(var(--feed-head), calc((100cqh - 56.25cqw) * 0.42), calc(100cqh - 56.25cqw - var(--feed-rail) - 48px));
+  }
+}
+
+/* The rail is above the progress bar's tap area wherever the two meet, so a tap on a button is always the button's. */
+.feed-rail {
+  z-index: 20;
+}
+
+/* The progress bar lies just under the bottom edge of the video, in the black, where it shows on a light picture too,
+   and its tap area reaches past it, so a thumb finds it without covering the picture. The bar fills by a transform
+   set on every frame. Where it lies on the picture (below), a dark edge keeps it apart from a light one. */
+.feed-seek {
+  bottom: -32px;
+  height: 44px;
+}
+.feed-track {
+  left: 0;
+  right: 0;
+  bottom: 30px;
+  height: 2px;
+  /* Grey rather than a see-through white: as light on a dark picture, and darker than the white fill on a light one. */
+  background: rgb(160 160 160 / 0.45);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.25),
+    0 1px 3px rgb(0 0 0 / 0.35);
+}
+.feed-fill {
+  transform: scaleX(0);
+  transform-origin: left;
+  box-shadow: 0 0 2px rgb(0 0 0 / 0.5);
+}
+/* Thicker under a mouse and while it drags, so it is easy to hit and follow. */
+@media (hover: hover) {
+  .feed-seek:hover .feed-track {
+    height: 5px;
+  }
+}
+.feed-seek[data-dragging] .feed-track {
+  height: 5px;
+}
+/* The bar is a slider a keyboard reaches, with a ring once it does. */
+.feed-seek:focus-visible .feed-track {
+  height: 5px;
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+@container (max-width: 639px) and (orientation: portrait) and ((max-height: 770px) or (min-aspect-ratio: 100/179)) {
+  /* An upright phone too short for the rail of six beside the caption, like an iPhone in Safari with its bars or a
+     small Android: the buttons go in a row under the video, past the progress bar's tap area, and the caption under
+     them. The three move up together as the screen gets shorter, the video never under the header. */
+  .feed-box,
+  .feed-rail,
+  .feed-caption {
+    /* The tap area, the row (a word of two lines under the sound button) and a caption of two and two lines. */
+    --feed-under: 230px;
+    --feed-top: max(var(--feed-head), calc(var(--feed-head) + (100cqh - var(--feed-head) - 56.25cqw - var(--feed-under)) * 0.4));
+    --feed-row: calc(var(--feed-top) + 56.25cqw + 36px);
+  }
+  .feed-box {
+    top: var(--feed-top);
+  }
+  .feed-rail {
+    top: var(--feed-row);
+    bottom: auto;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0;
+  }
+  .feed-rail > * {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+  }
+  .feed-caption {
+    top: calc(var(--feed-row) + 84px);
+    bottom: auto;
+    right: 16px;
+  }
+}
+
+@container (min-width: 640px) {
+  /* A wider screen: the video as large as fits between the header and the caption under it, centred, with room for
+     the rail on its right. */
+  .feed-box,
+  .feed-caption,
+  .feed-rail {
+    --feed-w: min(calc(100cqw - 200px), calc((100cqh - var(--feed-head) - 120px) * 16 / 9));
+    --feed-h: calc(var(--feed-w) * 9 / 16);
+    --feed-top: calc(var(--feed-head) + (100cqh - var(--feed-head) - 120px - var(--feed-h)) / 2);
+    --feed-left: calc((100cqw - var(--feed-w)) / 2);
+  }
+  .feed-box {
+    left: var(--feed-left);
+    top: var(--feed-top);
+    width: var(--feed-w);
+  }
+  .feed-caption {
+    left: var(--feed-left);
+    right: auto;
+    top: calc(var(--feed-top) + var(--feed-h) + 22px);
+    bottom: auto;
+    width: var(--feed-w);
+  }
+  /* The rail's foot is level with the video's, unless its top would then reach the header, as in a short window or
+     beside a small video: it then stays under the header and reaches down beside the caption. */
+  .feed-rail {
+    left: calc(var(--feed-left) + var(--feed-w) + 14px);
+    right: auto;
+    bottom: min(calc(100cqh - var(--feed-top) - var(--feed-h)), calc(100cqh - var(--feed-head) - var(--feed-rail) - 16px));
+    width: 72px;
+  }
+  .feed-round {
+    border-radius: 10px;
+  }
+  .feed-seek {
+    bottom: -14px;
+  }
+  .feed-track {
+    left: 12px;
+    right: 12px;
+    bottom: 24px;
+    height: 3px;
+  }
+}
+
+@container (min-width: 640px) and (orientation: portrait) {
+  /* A tablet held upright, or a tall window: the video as wide as fits, with the buttons in a row under it, past the
+     progress bar's tap area, and the caption under them, the three together a little above the middle, as on a short
+     upright phone. Beside the video the rail left most of the screen empty. */
+  .feed-box,
+  .feed-caption,
+  .feed-rail {
+    /* The tap area, the row (a word of two lines under the sound button) and a caption of two and one lines. */
+    --feed-under: 210px;
+    --feed-w: min(calc(100cqw - 48px), calc((100cqh - var(--feed-head) - var(--feed-under)) * 16 / 9));
+    --feed-h: calc(var(--feed-w) * 9 / 16);
+    --feed-top: calc(var(--feed-head) + (100cqh - var(--feed-head) - var(--feed-h) - var(--feed-under)) * 0.4);
+    --feed-row: calc(var(--feed-top) + var(--feed-h) + 24px);
+  }
+  .feed-rail {
+    left: var(--feed-left);
+    top: var(--feed-row);
+    bottom: auto;
+    width: var(--feed-w);
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .feed-rail > * {
+    flex: 0 0 72px;
+    width: 72px;
+  }
+  .feed-caption {
+    top: calc(var(--feed-row) + 90px);
+  }
+}
+
+@container (min-width: 640px) or ((orientation: landscape) and ((max-height: 500px) or (max-width: 639px))) or ((max-width: 639px) and (orientation: portrait) and ((max-height: 770px) or (min-aspect-ratio: 100/179))) {
+  /* No room to the left of the sound button here, beside the picture or in the row under it: the icon is white and
+     the words go under it. */
+  .feed-sound-slot {
+    height: auto;
+  }
+  .feed-sound-off {
+    flex-direction: column-reverse;
+    gap: 2px;
+    height: auto;
+    margin-right: 0;
+    align-self: center;
+    background: none;
+    padding: 0;
+    color: #fff;
+    /* Square enough that a tap in the corners of the icon and its words is the button's too. */
+    border-radius: 12px;
+  }
+  .feed-sound-off .feed-sound-icon {
+    background: #fff;
+    color: #000;
+    border-radius: 9999px;
+  }
+  .feed-sound-off .feed-sound-text {
+    max-width: 72px;
+    white-space: normal;
+    font-size: 11px;
+    line-height: 12px;
+    text-align: center;
+  }
+}
+
+@container (orientation: landscape) and ((max-height: 500px) or (max-width: 639px)) {
+  /* A phone on its side: the video fills the height, on black, with the rail small in the black on its right. The
+     video is centred where the rail fits beside it, and moves left where it would not, as with a panel open beside
+     the feed, so it keeps all the width the rail leaves. The caption and the header go, and the progress bar's tap
+     area stays on the picture, under its captions. The same for any other section wider than tall and too narrow
+     for the rail beside a video with a caption, as in a small window with a panel open. */
+  .feed-box,
+  .feed-rail {
+    --feed-w: min(calc(100cqh * 16 / 9), calc(100cqw - 64px));
+    --feed-left: max(0px, min(calc((100cqw - var(--feed-w)) / 2), calc(100cqw - var(--feed-w) - 64px)));
+  }
+  .feed-box {
+    left: var(--feed-left);
+    top: calc((100cqh - var(--feed-w) * 9 / 16) / 2);
+    width: var(--feed-w);
+  }
+  .feed-caption {
+    display: none;
+  }
+  .feed-rail {
+    left: auto;
+    right: max(2px, calc((100cqw - var(--feed-left) - var(--feed-w) - 52px) / 2));
+    top: 50%;
+    bottom: auto;
+    width: 52px;
+    gap: 6px;
+    transform: translateY(-50%);
+  }
+  .feed-label {
+    display: none;
+  }
+  /* As tall as "Tap for sound" with its words, so the rail, centred, does not move once sound is on. */
+  .feed-sound-slot {
+    height: 68px;
+    justify-content: flex-start;
+  }
+  .feed-round {
+    border-radius: 0;
+  }
+  .feed-seek {
+    bottom: 0;
+    height: 36px;
+  }
+  .feed-track {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+  }
+  /* The words of "Tap for sound" stay, smaller, under its white icon, the one label the rail keeps here. */
+  .feed-sound-off .feed-sound-text {
+    max-width: 60px;
+    font-size: 10px;
+    line-height: 11px;
+  }
+}
+/* Where such a section is taller than a phone on its side, the header stays, and the video stays under it. */
+@container (orientation: landscape) and (min-height: 501px) and (max-width: 639px) {
+  .feed-box {
+    top: max(var(--feed-head), calc((100cqh - var(--feed-w) * 9 / 16) / 2));
+  }
+}
+
+/* An upright phone with a panel open: the video moves up under the header, so it stays in view above the panel, which
+   slides up from the bottom. Not on a wider screen, where the panel opens beside the feed. */
+@media (max-width: 639px) {
+  @container (max-width: 639px) and (orientation: portrait) {
+    [data-sheet] .feed-box {
+      top: var(--feed-head);
+    }
+  }
+}
+@keyframes feed-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .feed-box {
+    transition: top 0.25s ease;
+  }
+  @media (max-width: 639px) {
+    .feed-sheet {
+      animation: feed-sheet-up 0.25s ease-out;
+    }
+  }
+}
+
+/* The button in the rail that clears a search shows only where the header, with its count line and Clear, is gone. */
+.feed-clear {
+  display: none;
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .feed-header-row,
+  .feed-count {
+    display: none;
+  }
+  .feed-clear {
+    display: flex;
+  }
+}
+
+/* Full screen: the video as large as fits, on black, with square corners. */
+.feed-stage {
+  container-type: size;
+}
+.feed-stage-box {
+  position: absolute;
+  width: min(100%, 177.78vh);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+@supports (width: 1cqw) {
+  .feed-stage-box {
+    --feed-w: min(100cqw, calc(100cqh * 16 / 9));
+    width: var(--feed-w);
+    left: calc((100cqw - var(--feed-w)) / 2);
+    top: calc((100cqh - var(--feed-w) * 9 / 16) / 2);
+    transform: none;
+  }
+}
+.feed-stage .feed-round {
+  border-radius: 0;
+}
+/* Only on a touch screen held upright, where turning it gives the video the whole width. */
+.feed-stage-hint {
+  display: none;
+}
+@media (pointer: coarse) {
+  @container (orientation: portrait) {
+    .feed-stage-hint {
+      display: flex;
+    }
+  }
+}

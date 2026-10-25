@@ -4,7 +4,7 @@ import type { PlayerRef } from "@remotion/player";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { FormEvent } from "react";
 import type { DirectResult } from "@/lib/direct";
-import { EXAMPLES, checkedLine, madeOn } from "@/lib/example";
+import { EXAMPLES, checkedLine } from "@/lib/example";
 import type { FeedItem } from "@/lib/example";
 import type { LibraryVideo } from "@/lib/library";
 import type { FactCheckResult } from "@/lib/factcheck";
@@ -546,7 +546,7 @@ export function MakeVideo({ codeRequired, featured }: { codeRequired: boolean; f
               <h2 className="font-serif text-3xl leading-tight sm:text-4xl">{finished.storyboard.title}</h2>
               <p className="font-mono text-sm text-muted">
                 {finished.example ? "Example · " : finished.library ? "From the library · " : ""}
-                Made {finished.example ? `on ${madeOn(finished.example.madeAt)} ` : ""}in {Math.round(finished.ms / 1000)} s · ${finished.costUsd.toFixed(3)} ·{" "}
+                Made in {Math.round(finished.ms / 1000)} s · ${finished.costUsd.toFixed(3)} ·{" "}
                 {finished.storyboard.sources.length} sources ·{" "}
                 {checkedLine({ sentences: finished.report.checks.length, revised: finished.report.revised, removed: finished.report.removed })}
               </p>

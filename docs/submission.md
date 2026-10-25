@@ -85,7 +85,7 @@ like or comment without an account. Finished videos are saved, so the same reque
   them were found word for word on the pages. The other 8 could not be checked, because the pages block automated
   access or load their text with JavaScript.
 - A video asked for 90 seconds takes under a minute and about 6.5 cents of Nemotron calls (see `docs/eval.md`), and
-  watching it again costs nothing. The feed shows higher numbers, up to 140 s and $0.40, because its videos were made
+  watching it again costs nothing. The examples on the start page show higher numbers, up to 140 s and $0.40, because they were made
   on Oct 18, before Nemotron 3 Super directed the scenes, and for some the director ran twice so we could keep the
   better picture for each scene.
 - Videos do not look alike: the look, the opening and the kind of picture for each scene follow the topic. Scrolling

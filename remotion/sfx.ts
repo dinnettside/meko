@@ -3,8 +3,14 @@
 
 const RATE = 22050;
 
-// A mono 16-bit WAV file of the samples, as a data: URL.
-function wav(samples: Float32Array): string {
+// How loud each effect plays, as a gain on its samples. The level is in the samples rather than in the audio tag's
+// volume, because Safari on the iPhone ignores that volume and played the effects at full level, louder than the
+// voice. The narration speaks at about -24 LUFS (momentary loudness, ITU-R BS.1770); at these gains the whoosh and
+// the bell are about 12 LU quieter than it, and the thud about 10, since the ear hears a low tone as quieter.
+const GAIN = { flight: 0.045, pop: 0.2, thud: 0.13, chime: 0.13 };
+
+// A mono 16-bit WAV file of the samples at the given gain, as a data: URL.
+function wav(samples: Float32Array, gain: number): string {
   const bytes = new Uint8Array(44 + samples.length * 2);
   const view = new DataView(bytes.buffer);
   const text = (offset: number, value: string) => [...value].forEach((char, index) => view.setUint8(offset + index, char.charCodeAt(0)));
@@ -21,7 +27,7 @@ function wav(samples: Float32Array): string {
   view.setUint16(34, 16, true); // bits per sample
   text(36, "data");
   view.setUint32(40, samples.length * 2, true);
-  samples.forEach((sample, index) => view.setInt16(44 + index * 2, Math.max(-1, Math.min(1, sample)) * 32767, true));
+  samples.forEach((sample, index) => view.setInt16(44 + index * 2, Math.max(-1, Math.min(1, sample * gain)) * 32767, true));
   let binary = "";
   for (let index = 0; index < bytes.length; index += 0x8000) binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
   return `data:audio/wav;base64,${btoa(binary)}`;
@@ -93,10 +99,10 @@ function chime(): Float32Array {
 let cache: Record<"flight" | "pop" | "thud" | "chime", string> | null = null;
 export function sounds() {
   cache ??= {
-    flight: wav(whoosh(1.4, 11)),
-    pop: wav(pop()),
-    thud: wav(thud()),
-    chime: wav(chime()),
+    flight: wav(whoosh(1.4, 11), GAIN.flight),
+    pop: wav(pop(), GAIN.pop),
+    thud: wav(thud(), GAIN.thud),
+    chime: wav(chime(), GAIN.chime),
   };
   return cache;
 }

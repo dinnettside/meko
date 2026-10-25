@@ -137,7 +137,7 @@ function SentenceRow({
       {check.reason ? <p className="mt-1 text-sm text-muted">{check.reason}</p> : null}
       {cited.length > 0 ? (
         <details className="mt-2 text-sm text-muted">
-          <summary className="cursor-pointer select-none hover:text-fg">Show the source words</summary>
+          <summary className="-my-3 cursor-pointer select-none py-3 hover:text-fg">Show the source words</summary>
           <ul className="mt-2 flex flex-col gap-2 border-l-2 border-rule pl-3">
             {cited.map((fact) => (
               <li key={fact.id} className="font-serif text-base italic leading-snug">
