@@ -148,8 +148,9 @@ hand. Never put the code in the repository.
 
 ## Gallery
 
-Five screenshots of the live site, taken with headless Chrome on Oct 21, 2026 (gallery-5 again on Oct 23, after the feed began to play by itself), 1800 x 1200 PNG. gallery-2 and gallery-5 still show the feed before it became Shorts-like (the theme switch, buttons under the video and the line saying when and for how much each video was made): retake them from the live site once the new feed is deployed, before Oct 30. Upload them in this
-order with these captions; Devpost allows 140 characters per caption. The project's thumbnail is `gallery-2.png`.
+Five screenshots of the live site, taken with headless Chrome on Oct 21, 2026 (gallery-2 and gallery-5 again on Oct 26,
+after the feed became Shorts-like), 1800 x 1200 PNG. Upload them in this order with these captions; Devpost allows 140
+characters per caption. The project's thumbnail is `gallery-2.png`.
 
 1. `docs/images/gallery-1.png`: The start page. Type a topic, pick an audience and a length, and choose Make video.
 2. `docs/images/gallery-2.png`: The feed. In the Black Death video, a map marks Strasbourg and Mainz as the voice names
@@ -237,7 +238,8 @@ recording: once it is made, the same request plays at once from the library. Tha
 - The window at 1920 x 1080, zoom at 100 % (Cmd+0). If the screen is smaller than that, use 1440 x 810, the same
   shape. On a Retina screen the recording is still sharp at 1080p.
 - Bookmarks bar hidden (Cmd+Shift+B). Notifications off: turn on Do Not Disturb, and quit Messages, Mail and chat apps.
-- Pick light or dark mode before you start, and keep it for the whole video. The switch is in the header.
+- Pick light or dark mode before you start, and keep it for the whole video. The switch is in the start page's
+  header; the feed is always dark.
 - The **Demo code** field shows the code as dots, so it can be typed on camera. Do not show it anywhere else.
 - Keep the video's own voice-over low or muted while you speak.
 
